@@ -1,7 +1,7 @@
 let tileRadius = 40;
 let perspRatio = 0.4;
 let offsets = [{x:1,y:0},{x:0.5,y:0.8660254037844386},{x:-0.5,y:0.8660254037844387},{x:-1,y:0},{x:-0.5,y:-0.8660254037844387},{x:0.5,y:-0.8660254037844387}];
-let tileViewRadius = 5;
+let tileViewRadius = 11;
 
 
 function drawHexTile(context, scrX, scrY){
@@ -38,7 +38,7 @@ function renderMap(context,tiles){
         if(t.hasPlayer){
             context.strokeStyle = "#000000";
             context.fillStyle = "#0000FF";
-            context.fillRect(scrX - 5,scrY - 5,10,10);
+            context.fillRect(scrX - 5,scrY - 10,10,10);
         }
     });
 }

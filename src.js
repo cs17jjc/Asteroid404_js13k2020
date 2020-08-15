@@ -15,8 +15,10 @@ var playerPosition = {x:0,y:0};
 
 var tiles = [];
 
+noise.seed(Math.random());
+
 for(var y = 0; y < 5;y++){
-    for(var x = 0; x < 25;x++){
+    for(var x = 0; x < 50;x++){
         tiles.push(new Tile(x,y,new Colour(255,0,0,255)));
     }
 }
