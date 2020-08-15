@@ -1,7 +1,7 @@
 let tileRadius = 40;
 let perspRatio = 0.4;
 let offsets = [{x:1,y:0},{x:0.5,y:0.8660254037844386},{x:-0.5,y:0.8660254037844387},{x:-1,y:0},{x:-0.5,y:-0.8660254037844387},{x:0.5,y:-0.8660254037844387}];
-let tileViewRadius = 2;
+let tileViewRadius = 5;
 
 
 function drawHexTile(context, scrX, scrY){
@@ -22,9 +22,10 @@ function drawHexTile(context, scrX, scrY){
 }
 
 function renderMap(context,tiles){
-    var visableTiles = tiles;
+    var tileWithPlayer = tiles.find(t => t.hasPlayer);
+    var visableTiles = tiles.filter(t => Math.abs(t.x - tileWithPlayer.x) <= tileViewRadius).sort((a,b) => a.height - b.height);
     visableTiles.forEach(t => {
-        var scrX = t.x * tileRadius * 1.5;
+        var scrX = t.x * tileRadius * 1.5 + canvas.width/2 - tileWithPlayer.x * tileRadius * 1.5;
         var scrY = t.y * tileRadius * 2 * 0.8660254037844387 * perspRatio + 0.5 * canvas.height - t.height;
     
         if(t.x % 2 != 0){
@@ -43,7 +44,9 @@ function renderMap(context,tiles){
 }
 function updatePlayerPos(tiles,newX,newY){
     var playerTile = tiles.find(t => t.hasPlayer);
-    if(playerTile.x != Math.trunc(newX) || playerTile.y != Math.trunc(newY)){
+    if(playerTile == null){
+        tiles.find(t => t.x == Math.trunc(newX) && t.y == Math.trunc(newY)).hasPlayer = true;
+    } else if(playerTile.x != Math.trunc(newX) || playerTile.y != Math.trunc(newY)){
         playerTile.hasPlayer = false;
         playerTile = tiles.find(t => t.x == Math.trunc(newX) && t.y == Math.trunc(newY));
         playerTile.hasPlayer = true;

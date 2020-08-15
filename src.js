@@ -21,25 +21,11 @@ for(var y = 0; y < 5;y++){
     }
 }
 
-tiles[0].hasPlayer = true;
-
 function gameloop(){
     var frameSpeedFactor = new Date().getTime() - millisOnLastFrame;
     ctx.fillStyle = "#000000";
     ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight);
     
-    if(inputs.right){
-        playerPosition.x += (frameSpeedFactor/300.0);
-    }
-    if(inputs.left){
-        playerPosition.x -= (frameSpeedFactor/300.0);
-    }
-    if(inputs.up){
-        playerPosition.y -= (frameSpeedFactor/300.0);
-    }
-    if(inputs.down){
-        playerPosition.y += (frameSpeedFactor/300.0);
-    }
     updatePlayerPos(tiles,playerPosition.x,playerPosition.y);
     renderMap(ctx,tiles);
     millisOnLastFrame = new Date().getTime();
@@ -63,15 +49,19 @@ document.addEventListener('keydown', (event) => {
 document.addEventListener('keyup', (event) => {
     if(event.keyCode == 87){
         inputs.up = false;
+        playerPosition.y -= 1;
     }
     if(event.keyCode == 83){
         inputs.down = false;
+        playerPosition.y += 1;
     }
     if(event.keyCode == 68){
         inputs.right = false;
+        playerPosition.x += 1;
     }
     if(event.keyCode == 65){
         inputs.left = false;
+        playerPosition.x -= 1;
     }
 });
 
