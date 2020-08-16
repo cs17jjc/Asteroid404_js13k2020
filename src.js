@@ -11,25 +11,40 @@ var inputs = {up:false,down:false,left:false,right:false};
 var millisOnLastFrame = new Date().getTime();
 
 var mousePosition = {x:0,y:0};
-var playerPosition = {x:0,y:0};
 
 var tiles = [];
+var messages = [];
 
 noise.seed(Math.random());
 
+var marsColourScheme = [{levels:[0,1,2],colour:new Colour(69,24,4,255)},{levels:[3,4],colour:new Colour(193,68,14,255)},{levels:[5,6,7],colour:new Colour(231,125,17,255)},{levels:[8,9],colour:new Colour(253,166,0,255)}]
+
 for(var y = 0; y < 5;y++){
     for(var x = 0; x < 50;x++){
-        tiles.push(new Tile(x,y,new Colour(255,0,0,255)));
+        if(x < 25){
+            tiles.push(new Tile(x,y,marsColourScheme,0,0));
+        } else {
+            tiles.push(new Tile(x,y,marsColourScheme,0,1));
+        }
     }
 }
-
+updatePlayerPos(tiles,0,0);
 function gameloop(){
     var frameSpeedFactor = new Date().getTime() - millisOnLastFrame;
     ctx.fillStyle = "#000000";
     ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight);
-    
-    updatePlayerPos(tiles,playerPosition.x,playerPosition.y);
+
     renderMap(ctx,tiles);
+    
+    ctx.font = "15px Arial";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.strokeStyle = "#000000";
+    messages.forEach(message => {
+        ctx.fillText(message.text,10,canvas.height - 25 - messages.indexOf(message) * 25);
+        message.time += frameSpeedFactor;
+    });
+    messages = messages.slice(0,5).filter(m => m.time < 2000);
+
     millisOnLastFrame = new Date().getTime();
 }
 
@@ -51,19 +66,19 @@ document.addEventListener('keydown', (event) => {
 document.addEventListener('keyup', (event) => {
     if(event.keyCode == 87){
         inputs.up = false;
-        playerPosition.y -= 1;
+        updatePlayerPos(tiles,0,-1);
     }
     if(event.keyCode == 83){
         inputs.down = false;
-        playerPosition.y += 1;
+        updatePlayerPos(tiles,0,+1);
     }
     if(event.keyCode == 68){
         inputs.right = false;
-        playerPosition.x += 1;
+        updatePlayerPos(tiles,+1,0);
     }
     if(event.keyCode == 65){
         inputs.left = false;
-        playerPosition.x -= 1;
+        updatePlayerPos(tiles,-1,0);
     }
 });
 

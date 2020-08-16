@@ -8,4 +8,7 @@ class Colour{
     toHex(){
         return rgbToHex(this.r,this.g,this.b,this.a);
     }
+    darkend(factor){
+        return new Colour(Math.trunc(this.r * factor),Math.trunc(this.g * factor),Math.trunc(this.b * factor),this.a);
+    }
 }

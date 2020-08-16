@@ -2,6 +2,8 @@ let tileRadius = 40;
 let perspRatio = 0.4;
 let offsets = [{x:1,y:0},{x:0.5,y:0.8660254037844386},{x:-0.5,y:0.8660254037844387},{x:-1,y:0},{x:-0.5,y:-0.8660254037844387},{x:0.5,y:-0.8660254037844387}];
 let tileViewRadius = 11;
+let tileStepHeight = 5;
+var maxStepHeight = 1;
 
 
 function drawHexTile(context, scrX, scrY){
@@ -32,8 +34,9 @@ function renderMap(context,tiles){
             scrY += 0.8660254037844387 * tileRadius * perspRatio;
         }
 
-        context.strokeStyle = t.colour.toHex();
-        context.fillStyle = "#000000";
+        context.strokeStyle = t.colour.darkend(0.2).toHex();
+        context.fillStyle = t.colour.toHex();
+        context.lineWidth = 3;
         drawHexTile(context,scrX,scrY);
         if(t.hasPlayer){
             context.strokeStyle = "#000000";
@@ -42,14 +45,19 @@ function renderMap(context,tiles){
         }
     });
 }
-function updatePlayerPos(tiles,newX,newY){
+function updatePlayerPos(tiles,deltaX,deltaY){
     var playerTile = tiles.find(t => t.hasPlayer);
     if(playerTile == null){
-        tiles.find(t => t.x == Math.trunc(newX) && t.y == Math.trunc(newY)).hasPlayer = true;
-    } else if(playerTile.x != Math.trunc(newX) || playerTile.y != Math.trunc(newY)){
-        playerTile.hasPlayer = false;
-        playerTile = tiles.find(t => t.x == Math.trunc(newX) && t.y == Math.trunc(newY));
+        playerTile = tiles.find(t => t.x == 20 && t.y == 0);
         playerTile.hasPlayer = true;
+    } else {
+        var newTile = tiles.find(t => t.x == playerTile.x + deltaX && t.y == playerTile.y + deltaY);
+        if(newTile.height - playerTile.height <= maxStepHeight * tileStepHeight){
+            playerTile.hasPlayer = false;
+            newTile.hasPlayer = true;
+        } else {
+            messages.push({text:"Incline too steep",time:0});
+        }
     }
 }
 
