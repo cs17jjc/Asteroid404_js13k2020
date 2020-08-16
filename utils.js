@@ -34,10 +34,20 @@ function renderMap(context,tiles){
             scrY += 0.8660254037844387 * tileRadius * perspRatio;
         }
 
-        context.strokeStyle = t.colour.darkend(0.2).toHex();
+        if(t.highlighted){
+            context.strokeStyle = new Colour(255,255,0,255).toHex();
+        } else {
+            context.strokeStyle = t.colour.darkend(0.2).toHex();
+        }
         context.fillStyle = t.colour.toHex();
         context.lineWidth = 3;
         drawHexTile(context,scrX,scrY);
+        if(t.resource.type == "IRON"){
+            var size = t.resource.value;
+            context.strokeStyle = "#000000";
+            context.fillStyle = new Colour(170,86,71,255).toHex();
+            context.fillRect(scrX - size/2,scrY - size/2,size,size);
+        }
         if(t.hasPlayer){
             context.strokeStyle = "#000000";
             context.fillStyle = "#0000FF";
@@ -50,11 +60,14 @@ function updatePlayerPos(tiles,deltaX,deltaY){
     if(playerTile == null){
         playerTile = tiles.find(t => t.x == 20 && t.y == 0);
         playerTile.hasPlayer = true;
+        getSurroundingTiles(tiles,playerTile).forEach(t2 => t2.highlighted = true);
     } else {
         var newTile = tiles.find(t => t.x == playerTile.x + deltaX && t.y == playerTile.y + deltaY);
-        if(newTile.height - playerTile.height <= maxStepHeight * tileStepHeight){
+        if(Math.abs(newTile.height - playerTile.height) <= maxStepHeight * tileStepHeight){
             playerTile.hasPlayer = false;
+            getSurroundingTiles(tiles,playerTile).forEach(t2 => t2.highlighted = false);
             newTile.hasPlayer = true;
+            getSurroundingTiles(tiles,newTile).forEach(t2 => t2.highlighted = true);
         } else {
             messages.push({text:"Incline too steep",time:0});
         }
@@ -68,4 +81,12 @@ function componentToHex(c) {
   
   function rgbToHex(r, g, b, a) {
     return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b) + componentToHex(a);
+  }
+
+  function getSurroundingTiles(tiles,tile){
+      return tiles.filter(t => {
+        var yDelta = Math.abs(t.x - tile.x);
+        var xDelta = Math.abs(t.y - tile.y);
+        return yDelta <= 1 && xDelta <= 1;
+      });
   }

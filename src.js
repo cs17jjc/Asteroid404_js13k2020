@@ -21,13 +21,18 @@ var marsColourScheme = [{levels:[0,1,2],colour:new Colour(69,24,4,255)},{levels:
 
 for(var y = 0; y < 5;y++){
     for(var x = 0; x < 50;x++){
-        if(x < 25){
-            tiles.push(new Tile(x,y,marsColourScheme,0,0));
+        if(x < 15){
+            tiles.push(new Tile(x,y,marsColourScheme,{type:"NONE",value:0},1));
+        } else if (x < 35){
+            tiles.push(new Tile(x,y,marsColourScheme,{type:"NONE",value:0},0));
         } else {
-            tiles.push(new Tile(x,y,marsColourScheme,0,1));
+            tiles.push(new Tile(x,y,marsColourScheme,{type:"NONE",value:0},2));
         }
     }
 }
+//{type:"IRON",value:10}
+
+
 updatePlayerPos(tiles,0,0);
 function gameloop(){
     var frameSpeedFactor = new Date().getTime() - millisOnLastFrame;

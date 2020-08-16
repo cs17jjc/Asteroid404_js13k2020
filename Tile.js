@@ -26,5 +26,6 @@ class Tile {
         this.hasPlayer = false;
         this.resource = resource;
         this.building = null;
+        this.highlighted = false;
     }
 }
