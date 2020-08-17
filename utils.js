@@ -26,6 +26,7 @@ function drawHexTile(context, scrX, scrY){
 function renderMap(context,tiles){
     var tileWithPlayer = tiles.find(t => t.hasPlayer);
     var visableTiles = tiles.filter(t => Math.abs(t.x - tileWithPlayer.x) <= tileViewRadius).sort((a,b) => a.height - b.height);
+    var screenCoords = []
     visableTiles.forEach(t => {
         var scrX = t.x * tileRadius * 1.5 + canvas.width/2 - tileWithPlayer.x * tileRadius * 1.5;
         var scrY = t.y * tileRadius * 2 * 0.8660254037844387 * perspRatio + 0.5 * canvas.height - t.height;
@@ -34,11 +35,8 @@ function renderMap(context,tiles){
             scrY += 0.8660254037844387 * tileRadius * perspRatio;
         }
 
-        if(t.highlighted){
-            context.strokeStyle = new Colour(255,255,0,255).toHex();
-        } else {
-            context.strokeStyle = t.colour.darkend(0.2).toHex();
-        }
+        screenCoords.push({x:scrX,y:scrY});
+        context.strokeStyle = t.colour.darkend(0.2).toHex();
         context.fillStyle = t.colour.toHex();
         context.lineWidth = 3;
         drawHexTile(context,scrX,scrY);
@@ -48,12 +46,18 @@ function renderMap(context,tiles){
             context.fillStyle = new Colour(170,86,71,255).toHex();
             context.fillRect(scrX - size/2,scrY - size/2,size,size);
         }
-        if(t.hasPlayer){
-            context.strokeStyle = "#000000";
-            context.fillStyle = "#0000FF";
-            context.fillRect(scrX - 5,scrY - 10,10,10);
-        }
     });
+
+    visableTiles.filter(t => t.highlighted).forEach(t => {
+        context.fillStyle = t.colour.toHex();
+        context.strokeStyle = new Colour(255,255,0,255).toHex();
+        var scrPos = screenCoords[visableTiles.indexOf(t)];
+        drawHexTile(context,scrPos.x,scrPos.y);
+    });
+
+    var playerTile = visableTiles.find(t => t.hasPlayer);
+    var playerTileCoords = screenCoords[visableTiles.indexOf(playerTile)];
+    context.drawImage(roverImg,playerTileCoords.x - Math.trunc(roverImg.width/2),Math.trunc(playerTileCoords.y - (roverImg.height/2) - 10 + (Math.sin(new Date().getTime()/300) * 2.5)));
 }
 function updatePlayerPos(tiles,deltaX,deltaY){
     var playerTile = tiles.find(t => t.hasPlayer);
@@ -85,8 +89,23 @@ function componentToHex(c) {
 
   function getSurroundingTiles(tiles,tile){
       return tiles.filter(t => {
-        var yDelta = Math.abs(t.x - tile.x);
-        var xDelta = Math.abs(t.y - tile.y);
-        return yDelta <= 1 && xDelta <= 1;
+        var yDelta = t.y - tile.y;
+        var xDelta = t.x - tile.x;
+        if(Math.abs(yDelta) == 1 && xDelta == 0){
+            return true;
+        }
+        if(yDelta == 0 && Math.abs(xDelta) == 1){
+            return true;
+        }
+        if(tile.x % 2 == 0) {
+            if(yDelta == -1 && Math.abs(xDelta) == 1){
+                return true;
+            }
+        } else {
+            if(yDelta == 1 && Math.abs(xDelta) == 1){
+                return true;
+            }
+        }
+        return false;
       });
   }

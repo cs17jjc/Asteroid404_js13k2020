@@ -1,5 +1,8 @@
 var canvas = document.getElementById("canv");
 var ctx = canvas.getContext("2d");
+ctx.imageSmoothingEnabled = false;
+
+var roverImg = document.getElementById("rover");
 
 canvas.width = 1280;
 canvas.height = 720;
