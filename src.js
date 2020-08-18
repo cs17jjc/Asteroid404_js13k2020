@@ -123,49 +123,55 @@ function handleInput(){
 }
 
 document.addEventListener('keydown', (event) => {
-    if(event.keyCode == 87){
-        inputs.up = true;
-    }
-    if(event.keyCode == 83){
-        inputs.down = true;
-    }
-    if(event.keyCode == 68){
-        inputs.right = true;
-    }
-    if(event.keyCode == 65){
-        inputs.left = true;
-    }
-    if(event.keyCode == 69){
-        inputs.inter = true;
-    }
-    if(event.keyCode == 66){
-        inputs.build = true;
-    }
-    if(event.keyCode == 82){
-        inputs.remove = true;
+    switch(event.keyCode){
+        case 87:
+            inputs.up = true;
+            break;
+        case 83:
+            inputs.down = true;
+            break;
+        case 68:
+            inputs.right = true;
+            break;
+        case 65:
+            inputs.left = true;
+            break;
+        case 69:
+            inputs.inter = true;
+            break;
+        case 66:
+            inputs.build = true;
+            break;
+        case 82:
+            inputs.remove = true;
+            break;
+
     }
 });
 document.addEventListener('keyup', (event) => {
-    if(event.keyCode == 87){
-        inputs.up = false;
-    }
-    if(event.keyCode == 83){
-        inputs.down = false;
-    }
-    if(event.keyCode == 68){
-        inputs.right = false;
-    }
-    if(event.keyCode == 65){
-        inputs.left = false;
-    }
-    if(event.keyCode == 69){
-        inputs.inter = false;
-    }
-    if(event.keyCode == 66){
-        inputs.build = false;
-    }
-    if(event.keyCode == 82){
-        inputs.remove = false;
+    switch(event.keyCode){
+        case 87:
+            inputs.up = false;
+            break;
+        case 83:
+            inputs.down = false;
+            break;
+        case 68:
+            inputs.right = false;
+            break;
+        case 65:
+            inputs.left = false;
+            break;
+        case 69:
+            inputs.inter = false;
+            break;
+        case 66:
+            inputs.build = false;
+            break;
+        case 82:
+            inputs.remove = false;
+            break;
+
     }
 });
 
