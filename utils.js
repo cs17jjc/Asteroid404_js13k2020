@@ -5,6 +5,7 @@ let tileViewRadius = 11;
 let tileStepHeight = 5;
 var maxStepHeight = 1;
 let roverImgScale = 1;
+let radarRange = 5;
 
 
 function drawHexTile(context, scrX, scrY, tile){
@@ -86,7 +87,7 @@ function renderMap(context,tiles){
     tilesWithBuildings.forEach(t => {
         var scrPos = screenCoords[visableTiles.indexOf(t)];
         if(t.building.type == "RADAR"){
-            context.drawImage(towerImg,scrPos.x - Math.trunc(towerImg.width/2),scrPos.y - Math.trunc(towerImg.height*0.9));
+            context.drawImage(towerImg,Math.trunc(scrPos.x - towerImg.width/2),Math.trunc(scrPos.y - towerImg.height*0.9));
         }
     });
 
@@ -134,27 +135,32 @@ function placeBuilding(tile,building){
         tile.building = building;
         switch(building.type){
             case "RADAR":
-                tiles.filter(t => Math.abs(t.x - tile.x) < 5).forEach(t => t.isVisible = true);
+                tiles.filter(t => Math.abs(t.x - tile.x) < radarRange).forEach(t => t.isVisible = true);
                 break;
         }
     } else {
         messages.push({text:"Cannot place building",time:0});
     }
 }
-function removeBuilding(tile,building){
+function removeBuilding(tile){
     if(tile.building.type != "NONE"){
-        switch(building.type){
+        switch(tile.building.type){
             case "RADAR":
-                var tilesInRange = tiles.filter(t => Math.abs(t.x - tile.x) < 5);
-                var playerBuilding = playerBuildings.find(b => b.type == t.building.type);
-                if(tilesInRange.some(t => t.building.type == "RADAR" && t != tile)){
+                var playerTile = tiles.find(t => t.hasPlayer);
+                var tilesInPlayerRange = tiles.filter(t => Math.abs(t.x - playerTile.x) < radarRange);
+                var playerBuilding = playerBuildings.find(b => b.type == tile.building.type);
+                var radarsInPlayerRange = tilesInPlayerRange.filter(t => t.building.type == "RADAR" && t != tile);
+                if(radarsInPlayerRange.length >= 1){
                     if(playerBuilding != null){
                         playerBuilding.value += 1;
                     } else {
                         playerBuildings.push({type:b.type,value:1});
                     }
+                    tile.building = {type:"NONE"};
+                    tiles.filter(t => Math.abs(t.x - tile.x) < radarRange).forEach(t => t.isVisible = false);
+                    tiles.filter(t => radarsInPlayerRange.some(t2 => Math.abs(t.x - t2.x) < radarRange)).forEach(t => t.isVisible = true);
                 } else {
-                    messages.push({text:"Cannot remove active radar",time:0});
+                    messages.push({text:"No other radar in range",time:0});
                 }
                 break;
         }

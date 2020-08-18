@@ -10,14 +10,15 @@ canvas.height = 720;
 canvas.style.width = canvas.width + "px";
 canvas.style.height = canvas.height + "px";
 
-var prevInputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false};
-var inputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false};
+var prevInputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,place:-1};
+var inputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,place:-1};
 
 var tiles = [];
 var messages = [];
+var interactTiles = [];
 
 var playerResources = [];
-var playerBuildings = [];
+var playerBuildings = [{type:"RADAR",value:1}];
 var mineFactor = 1;
 
 var buildMode = false;
@@ -62,6 +63,8 @@ function gameloop(){
 
     ctx.fillText("Available resources:",10,25);
     playerResources.forEach(r => ctx.fillText(r.value + " units of " + r.type,10, 50 + playerResources.indexOf(r) * 25));
+    ctx.fillText("Available buildings:",canvas.width - 150,25);
+    playerBuildings.forEach(b => ctx.fillText(b.value + " units of " + b.type,canvas.width - 150, 50 + playerBuildings.indexOf(b) * 25));
 
     ctx.font = "30px Tahoma";
     ctx.textAlign = "center"; 
@@ -108,13 +111,29 @@ function handleInput(){
             messages.push({text:"No mineable resources on tile",time:0});
         }
     }
-    if(inputs.build == false && prevInputs.build == true && !removeMode){
-        buildMode = !buildMode;
-        getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type == "NONE").forEach(t => t.highlighted = !t.highlighted);
+    if(inputs.build == false && prevInputs.build == true && !removeMode && !buildMode){
+        buildMode = true;
+        interactTiles = getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type == "NONE");
+        interactTiles.forEach(t => t.highlighted = true);
+    } else if(inputs.build == false && prevInputs.build == true && !removeMode && buildMode){
+        buildMode = false;
+        interactTiles = [];
+        getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).forEach(t => t.highlighted = false);
     }
-    if(inputs.remove == false && prevInputs.remove == true && !buildMode){
-        removeMode = !removeMode;
-        getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type != "NONE").forEach(t => t.highlighted = !t.highlighted);
+    if(inputs.remove == false && prevInputs.remove == true && !buildMode && !removeMode){
+        removeMode = true;
+        interactTiles = getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type != "NONE");
+        interactTiles.forEach(t => t.highlighted = true);
+    } else if(inputs.remove == false && prevInputs.remove == true && !buildMode && removeMode){
+        removeMode = false;
+        interactTiles = [];
+        getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).forEach(t => t.highlighted = false);
+    }
+    if(buildMode && inputs.place != -1 && prevInputs.place == -1){
+        placeBuilding(interactTiles[inputs.place],{type:"RADAR"});
+    }
+    if(removeMode && inputs.place != -1 && prevInputs.place == -1){
+        removeBuilding(interactTiles[inputs.place]);
     }
 }
 
@@ -141,6 +160,14 @@ document.addEventListener('keydown', (event) => {
         case 82:
             inputs.remove = true;
             break;
+        case 49:
+        case 50:
+        case 51:
+        case 52:
+        case 53:
+        case 54:
+            inputs.place = event.keyCode - 49;
+            break;
     }
 });
 document.addEventListener('keyup', (event) => {
@@ -165,6 +192,14 @@ document.addEventListener('keyup', (event) => {
             break;
         case 82:
             inputs.remove = false;
+            break;
+        case 49:
+        case 50:
+        case 51:
+        case 52:
+        case 53:
+        case 54:
+            inputs.place = -1;
             break;
     }
 });
