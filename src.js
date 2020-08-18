@@ -19,10 +19,12 @@ var interactTiles = [];
 
 var playerResources = [];
 var playerBuildings = [{type:"RADAR",value:1}];
+var selectedBuilding = 0;
 var mineFactor = 1;
 
 var buildMode = false;
 var removeMode = false;
+var craftMode = false;
 
 noise.seed(Math.random());
 
@@ -64,8 +66,16 @@ function gameloop(){
     ctx.fillText("Available resources:",10,25);
     playerResources.forEach(r => ctx.fillText(r.value + " units of " + r.type,10, 50 + playerResources.indexOf(r) * 25));
     ctx.fillText("Available buildings:",canvas.width - 150,25);
-    playerBuildings.forEach(b => ctx.fillText(b.value + " units of " + b.type,canvas.width - 150, 50 + playerBuildings.indexOf(b) * 25));
+    playerBuildings.forEach(b => {
+        if(selectedBuilding == playerBuildings.indexOf(b) && buildMode){
+            ctx.fillStyle = "#FFFF00";
+        } else {
+            ctx.fillStyle = "#FFFFFF";
+        }
+        ctx.fillText(b.value + " units of " + b.type,canvas.width - 150, 50 + playerBuildings.indexOf(b) * 25);
+    });
 
+    ctx.fillStyle = "#FFFFFF";
     ctx.font = "30px Tahoma";
     ctx.textAlign = "center"; 
     ctx.textBaseline = "middle";
@@ -79,6 +89,8 @@ function gameloop(){
     if(Object.entries(prevInputs).toString() !== Object.entries(inputs).toString()){
         handleInput();
     }
+    playerResources = playerResources.filter(r => r.value > 0);
+    playerBuildings = playerBuildings.filter(b => b.value > 0);
     prevInputs = Object.assign({},inputs);
     millisOnLastFrame = new Date().getTime();
 }
@@ -89,6 +101,12 @@ function handleInput(){
     }
     if(inputs.down == false && prevInputs.down == true && !buildMode && !removeMode){
         updatePlayerPos(tiles,0,+1);
+    }
+    if(inputs.up == false && prevInputs.up == true && buildMode && !removeMode){
+        selectedBuilding = Math.max(0,selectedBuilding - 1);
+    }
+    if(inputs.down == false && prevInputs.down == true && buildMode && !removeMode){
+        selectedBuilding = Math.min(playerBuildings.length - 1,selectedBuilding + 1);
     }
     if(inputs.right == false && prevInputs.right == true && !buildMode && !removeMode){
         updatePlayerPos(tiles,+1,0);
@@ -111,7 +129,8 @@ function handleInput(){
             messages.push({text:"No mineable resources on tile",time:0});
         }
     }
-    if(inputs.build == false && prevInputs.build == true && !removeMode && !buildMode){
+    if(inputs.build == false && prevInputs.build == true && !removeMode && !buildMode && playerBuildings.length > 0){
+        selectedBuilding = 0;
         buildMode = true;
         interactTiles = getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type == "NONE");
         interactTiles.forEach(t => t.highlighted = true);
@@ -130,10 +149,21 @@ function handleInput(){
         getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).forEach(t => t.highlighted = false);
     }
     if(buildMode && inputs.place != -1 && prevInputs.place == -1){
-        placeBuilding(interactTiles[inputs.place],{type:"RADAR"});
+        selectedBuilding = 0;
+        placeBuilding(interactTiles[inputs.place],playerBuildings[selectedBuilding]);
+        if(playerBuildings.length == 1){
+            buildMode = false;
+            interactTiles = [];
+            getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).forEach(t => t.highlighted = false);
+        }
     }
     if(removeMode && inputs.place != -1 && prevInputs.place == -1){
         removeBuilding(interactTiles[inputs.place]);
+        if(!interactTiles.some(t => t.building.type != "NONE")){
+            removeMode = false;
+            interactTiles = [];
+            getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).forEach(t => t.highlighted = false);
+        }
     }
 }
 

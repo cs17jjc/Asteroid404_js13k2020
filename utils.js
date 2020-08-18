@@ -138,6 +138,7 @@ function placeBuilding(tile,building){
                 tiles.filter(t => Math.abs(t.x - tile.x) < radarRange).forEach(t => t.isVisible = true);
                 break;
         }
+        building.value -= 1;
     } else {
         messages.push({text:"Cannot place building",time:0});
     }
@@ -154,7 +155,7 @@ function removeBuilding(tile){
                     if(playerBuilding != null){
                         playerBuilding.value += 1;
                     } else {
-                        playerBuildings.push({type:b.type,value:1});
+                        playerBuildings.push({type:tile.building.type,value:1});
                     }
                     tile.building = {type:"NONE"};
                     tiles.filter(t => Math.abs(t.x - tile.x) < radarRange).forEach(t => t.isVisible = false);
