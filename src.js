@@ -10,7 +10,8 @@ canvas.height = 720;
 canvas.style.width = canvas.width + "px";
 canvas.style.height = canvas.height + "px";
 
-var inputs = {up:false,down:false,left:false,right:false,inter:false};
+var prevInputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false};
+var inputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false};
 
 var millisOnLastFrame = new Date().getTime();
 
@@ -76,7 +77,49 @@ function gameloop(){
         ctx.fillText("Remove Mode",canvas.width/2,30);
     }
 
+    if(Object.entries(prevInputs).toString() !== Object.entries(inputs).toString()){
+        handleInput();
+    }
+    prevInputs = Object.assign({},inputs);
     millisOnLastFrame = new Date().getTime();
+}
+
+function handleInput(){
+    if(inputs.up == false && prevInputs.up == true && !buildMode && !removeMode){
+        updatePlayerPos(tiles,0,-1);
+    }
+    if(inputs.down == false && prevInputs.down == true && !buildMode && !removeMode){
+        updatePlayerPos(tiles,0,+1);
+    }
+    if(inputs.right == false && prevInputs.right == true && !buildMode && !removeMode){
+        updatePlayerPos(tiles,+1,0);
+    }
+    if(inputs.left == false && prevInputs.left == true && !buildMode && !removeMode){
+        updatePlayerPos(tiles,-1,0);
+    }
+    if(inputs.inter == false && prevInputs.inter == true && !buildMode && !removeMode){
+        var minedRes = mineTile(tiles.find(t => t.hasPlayer));
+        if(minedRes.type != "NONE"){
+            var totalMined = minedRes.value * mineFactor;
+            messages.push({text:"Mined " + totalMined + " of " + minedRes.type,time:0});
+            var playerRes = playerResources.find(r => r.type == minedRes.type);
+            if(playerRes != null){
+                playerRes.value += totalMined;
+            } else {
+                playerResources.push({type:minedRes.type,value:totalMined});
+            }
+        } else {
+            messages.push({text:"No mineable resources on tile",time:0});
+        }
+    }
+    if(inputs.build == false && prevInputs.build == true && !removeMode){
+        buildMode = !buildMode;
+        getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type == "NONE").forEach(t => t.highlighted = !t.highlighted);
+    }
+    if(inputs.remove == false && prevInputs.remove == true && !buildMode){
+        removeMode = !removeMode;
+        getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type != "NONE").forEach(t => t.highlighted = !t.highlighted);
+    }
 }
 
 document.addEventListener('keydown', (event) => {
@@ -95,47 +138,34 @@ document.addEventListener('keydown', (event) => {
     if(event.keyCode == 69){
         inputs.inter = true;
     }
+    if(event.keyCode == 66){
+        inputs.build = true;
+    }
+    if(event.keyCode == 82){
+        inputs.remove = true;
+    }
 });
 document.addEventListener('keyup', (event) => {
-    if(event.keyCode == 87 && !buildMode && !removeMode){
+    if(event.keyCode == 87){
         inputs.up = false;
-        updatePlayerPos(tiles,0,-1);
     }
-    if(event.keyCode == 83 && !buildMode && !removeMode){
+    if(event.keyCode == 83){
         inputs.down = false;
-        updatePlayerPos(tiles,0,+1);
     }
-    if(event.keyCode == 68 && !buildMode && !removeMode){
+    if(event.keyCode == 68){
         inputs.right = false;
-        updatePlayerPos(tiles,+1,0);
     }
-    if(event.keyCode == 65 && !buildMode && !removeMode){
+    if(event.keyCode == 65){
         inputs.left = false;
-        updatePlayerPos(tiles,-1,0);
     }
-    if(event.keyCode == 69 && !buildMode && !removeMode){
+    if(event.keyCode == 69){
         inputs.inter = false;
-        var minedRes = mineTile(tiles.find(t => t.hasPlayer));
-        if(minedRes.type != "NONE"){
-            var totalMined = minedRes.value * mineFactor;
-            messages.push({text:"Mined " + totalMined + " of " + minedRes.type,time:0});
-            var playerRes = playerResources.find(r => r.type == minedRes.type);
-            if(playerRes != null){
-                playerRes.value += totalMined;
-            } else {
-                playerResources.push({type:minedRes.type,value:totalMined});
-            }
-        } else {
-            messages.push({text:"No mineable resources on tile",time:0});
-        }
     }
-    if(event.keyCode == 66 && !removeMode){
-        buildMode = !buildMode;
-        getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type == "NONE").forEach(t => t.highlighted = !t.highlighted);
+    if(event.keyCode == 66){
+        inputs.build = false;
     }
-    if(event.keyCode == 82 && !buildMode){
-        removeMode = !removeMode;
-        getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type != "NONE").forEach(t => t.highlighted = !t.highlighted);
+    if(event.keyCode == 82){
+        inputs.remove = false;
     }
 });
 
