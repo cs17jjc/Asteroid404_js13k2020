@@ -10,17 +10,15 @@ canvas.height = 720;
 canvas.style.width = canvas.width + "px";
 canvas.style.height = canvas.height + "px";
 
-var inputs = {up:false,down:false,left:false,right:false,inter:false};
-
-var millisOnLastFrame = new Date().getTime();
-
-var mousePosition = {x:0,y:0};
+var prevInputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,place:-1};
+var inputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,place:-1};
 
 var tiles = [];
 var messages = [];
+var interactTiles = [];
 
 var playerResources = [];
-var playerBuildings = [];
+var playerBuildings = [{type:"RADAR",value:1}];
 var mineFactor = 1;
 
 var buildMode = false;
@@ -28,25 +26,23 @@ var removeMode = false;
 
 noise.seed(Math.random());
 
-var marsColourScheme = [{levels:[0,1,2],colour:new Colour(69,24,4,255)},{levels:[3,4],colour:new Colour(193,68,14,255)},{levels:[5,6,7],colour:new Colour(231,125,17,255)},{levels:[8,9],colour:new Colour(253,166,0,255)}]
+var mapWidth = 50;
 
-for(var y = 0; y < 5;y++){
-    for(var x = 0; x < 50;x++){
-            tiles.push(new Tile(x,y,marsColourScheme,{type:"NONE",value:0},0));
+var marsColourScheme = [{levels:[0,1,2],colour:new Colour(69,24,4,255)},{levels:[3,4],colour:new Colour(193,68,14,255)},{levels:[5,6,7],colour:new Colour(231,125,17,255)},{levels:[8,9],colour:new Colour(253,166,0,255)}];
+var biomeSeq = Array.from(Array(mapWidth).keys()).map(i => {
+    if(i < 15){
+        return 2;
+    } else if (i < 35){
+        return 0;
+    } else {
+        return 3;
     }
-}
+});
 
-tiles.forEach(t => {
-    if(Math.random() * 100 > 95 && t.biome == 0){
-        var resourceAmmount = Math.random() * 10;
-        t.resource = {type:"IRON",value:Math.max(3,Math.trunc(resourceAmmount))};
-        getSurroundingTiles(tiles,t).filter(t => 0.5 > Math.random()).forEach(t => t.resource = {type:"IRON",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
-    }
-})
-
-
+tiles = generateMap(mapWidth,biomeSeq,marsColourScheme);
 updatePlayerPos(tiles,0,0);
 placeBuilding(tiles.find(t => t.x == 20 && t.y == 2),{type:"RADAR"});
+var millisOnLastFrame = new Date().getTime();
 function gameloop(){
     var frameSpeedFactor = new Date().getTime() - millisOnLastFrame;
     ctx.fillStyle = "#000000";
@@ -67,6 +63,8 @@ function gameloop(){
 
     ctx.fillText("Available resources:",10,25);
     playerResources.forEach(r => ctx.fillText(r.value + " units of " + r.type,10, 50 + playerResources.indexOf(r) * 25));
+    ctx.fillText("Available buildings:",canvas.width - 150,25);
+    playerBuildings.forEach(b => ctx.fillText(b.value + " units of " + b.type,canvas.width - 150, 50 + playerBuildings.indexOf(b) * 25));
 
     ctx.font = "30px Tahoma";
     ctx.textAlign = "center"; 
@@ -78,45 +76,27 @@ function gameloop(){
         ctx.fillText("Remove Mode",canvas.width/2,30);
     }
 
+    if(Object.entries(prevInputs).toString() !== Object.entries(inputs).toString()){
+        handleInput();
+    }
+    prevInputs = Object.assign({},inputs);
     millisOnLastFrame = new Date().getTime();
 }
 
-document.addEventListener('keydown', (event) => {
-    if(event.keyCode == 87){
-        inputs.up = true;
-    }
-    if(event.keyCode == 83){
-        inputs.down = true;
-    }
-    if(event.keyCode == 68){
-        inputs.right = true;
-    }
-    if(event.keyCode == 65){
-        inputs.left = true;
-    }
-    if(event.keyCode == 69){
-        inputs.inter = true;
-    }
-});
-document.addEventListener('keyup', (event) => {
-    if(event.keyCode == 87 && !buildMode && !removeMode){
-        inputs.up = false;
+function handleInput(){
+    if(inputs.up == false && prevInputs.up == true && !buildMode && !removeMode){
         updatePlayerPos(tiles,0,-1);
     }
-    if(event.keyCode == 83 && !buildMode && !removeMode){
-        inputs.down = false;
+    if(inputs.down == false && prevInputs.down == true && !buildMode && !removeMode){
         updatePlayerPos(tiles,0,+1);
     }
-    if(event.keyCode == 68 && !buildMode && !removeMode){
-        inputs.right = false;
+    if(inputs.right == false && prevInputs.right == true && !buildMode && !removeMode){
         updatePlayerPos(tiles,+1,0);
     }
-    if(event.keyCode == 65 && !buildMode && !removeMode){
-        inputs.left = false;
+    if(inputs.left == false && prevInputs.left == true && !buildMode && !removeMode){
         updatePlayerPos(tiles,-1,0);
     }
-    if(event.keyCode == 69 && !buildMode && !removeMode){
-        inputs.inter = false;
+    if(inputs.inter == false && prevInputs.inter == true && !buildMode && !removeMode){
         var minedRes = mineTile(tiles.find(t => t.hasPlayer));
         if(minedRes.type != "NONE"){
             var totalMined = minedRes.value * mineFactor;
@@ -131,13 +111,96 @@ document.addEventListener('keyup', (event) => {
             messages.push({text:"No mineable resources on tile",time:0});
         }
     }
-    if(event.keyCode == 66 && !removeMode){
-        buildMode = !buildMode;
-        getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type == "NONE").forEach(t => t.highlighted = !t.highlighted);
+    if(inputs.build == false && prevInputs.build == true && !removeMode && !buildMode){
+        buildMode = true;
+        interactTiles = getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type == "NONE");
+        interactTiles.forEach(t => t.highlighted = true);
+    } else if(inputs.build == false && prevInputs.build == true && !removeMode && buildMode){
+        buildMode = false;
+        interactTiles = [];
+        getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).forEach(t => t.highlighted = false);
     }
-    if(event.keyCode == 82 && !buildMode){
-        removeMode = !removeMode;
-        getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type != "NONE").forEach(t => t.highlighted = !t.highlighted);
+    if(inputs.remove == false && prevInputs.remove == true && !buildMode && !removeMode){
+        removeMode = true;
+        interactTiles = getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type != "NONE");
+        interactTiles.forEach(t => t.highlighted = true);
+    } else if(inputs.remove == false && prevInputs.remove == true && !buildMode && removeMode){
+        removeMode = false;
+        interactTiles = [];
+        getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).forEach(t => t.highlighted = false);
+    }
+    if(buildMode && inputs.place != -1 && prevInputs.place == -1){
+        placeBuilding(interactTiles[inputs.place],{type:"RADAR"});
+    }
+    if(removeMode && inputs.place != -1 && prevInputs.place == -1){
+        removeBuilding(interactTiles[inputs.place]);
+    }
+}
+
+document.addEventListener('keydown', (event) => {
+    switch(event.keyCode){
+        case 87:
+            inputs.up = true;
+            break;
+        case 83:
+            inputs.down = true;
+            break;
+        case 68:
+            inputs.right = true;
+            break;
+        case 65:
+            inputs.left = true;
+            break;
+        case 69:
+            inputs.inter = true;
+            break;
+        case 66:
+            inputs.build = true;
+            break;
+        case 82:
+            inputs.remove = true;
+            break;
+        case 49:
+        case 50:
+        case 51:
+        case 52:
+        case 53:
+        case 54:
+            inputs.place = event.keyCode - 49;
+            break;
+    }
+});
+document.addEventListener('keyup', (event) => {
+    switch(event.keyCode){
+        case 87:
+            inputs.up = false;
+            break;
+        case 83:
+            inputs.down = false;
+            break;
+        case 68:
+            inputs.right = false;
+            break;
+        case 65:
+            inputs.left = false;
+            break;
+        case 69:
+            inputs.inter = false;
+            break;
+        case 66:
+            inputs.build = false;
+            break;
+        case 82:
+            inputs.remove = false;
+            break;
+        case 49:
+        case 50:
+        case 51:
+        case 52:
+        case 53:
+        case 54:
+            inputs.place = -1;
+            break;
     }
 });
 

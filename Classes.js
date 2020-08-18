@@ -1,3 +1,18 @@
+
+class Tile {
+    constructor(x,y,biome){
+        this.x = x;
+        this.y = y;
+        this.biome = biome;
+        this.hasPlayer = false;
+        this.resource = {type:"NONE"};
+        this.building = {type:"NONE"};
+        this.highlighted = false;
+        this.isVisible = false;
+    }
+}
+
+
 class Colour{
     constructor(r,g,b,a){
         this.r = r;

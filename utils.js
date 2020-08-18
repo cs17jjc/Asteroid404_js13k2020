@@ -5,6 +5,7 @@ let tileViewRadius = 11;
 let tileStepHeight = 5;
 var maxStepHeight = 1;
 let roverImgScale = 1;
+let radarRange = 5;
 
 
 function drawHexTile(context, scrX, scrY, tile){
@@ -86,7 +87,7 @@ function renderMap(context,tiles){
     tilesWithBuildings.forEach(t => {
         var scrPos = screenCoords[visableTiles.indexOf(t)];
         if(t.building.type == "RADAR"){
-            context.drawImage(towerImg,scrPos.x - Math.trunc(towerImg.width/2),scrPos.y - Math.trunc(towerImg.height*0.9));
+            context.drawImage(towerImg,Math.trunc(scrPos.x - towerImg.width/2),Math.trunc(scrPos.y - towerImg.height*0.9));
         }
     });
 
@@ -132,26 +133,36 @@ function mineTile(tile){
 function placeBuilding(tile,building){
     if(tile.building.type == "NONE"){
         tile.building = building;
-        if(building.type == "RADAR"){
-            tiles.filter(t => Math.abs(t.x - tile.x) < 5).forEach(t => t.isVisible = true);
+        switch(building.type){
+            case "RADAR":
+                tiles.filter(t => Math.abs(t.x - tile.x) < radarRange).forEach(t => t.isVisible = true);
+                break;
         }
     } else {
         messages.push({text:"Cannot place building",time:0});
     }
 }
-function removeBuilding(tile,building){
+function removeBuilding(tile){
     if(tile.building.type != "NONE"){
-        if(building.type == "RADAR"){
-            var tilesInRange = tiles.filter(t => Math.abs(t.x - tile.x) < 5);
-            if(tilesInRange.some(t => t.building.type == "RADAR" && t != tile)){
-                if(playerBuildings.some(b => b.type == t.building.type)){
-                    playerBuildings.find(b => b.type == t.building.type).value += 1;
+        switch(tile.building.type){
+            case "RADAR":
+                var playerTile = tiles.find(t => t.hasPlayer);
+                var tilesInPlayerRange = tiles.filter(t => Math.abs(t.x - playerTile.x) < radarRange);
+                var playerBuilding = playerBuildings.find(b => b.type == tile.building.type);
+                var radarsInPlayerRange = tilesInPlayerRange.filter(t => t.building.type == "RADAR" && t != tile);
+                if(radarsInPlayerRange.length >= 1){
+                    if(playerBuilding != null){
+                        playerBuilding.value += 1;
+                    } else {
+                        playerBuildings.push({type:b.type,value:1});
+                    }
+                    tile.building = {type:"NONE"};
+                    tiles.filter(t => Math.abs(t.x - tile.x) < radarRange).forEach(t => t.isVisible = false);
+                    tiles.filter(t => radarsInPlayerRange.some(t2 => Math.abs(t.x - t2.x) < radarRange)).forEach(t => t.isVisible = true);
                 } else {
-                    playerBuildings.push({type:b.type,value:1});
+                    messages.push({text:"No other radar in range",time:0});
                 }
-            } else {
-                messages.push({text:"Cannot remove active radar",time:0});
-            }
+                break;
         }
     } else {
         messages.push({text:"Tile has no building",time:0});
@@ -188,4 +199,48 @@ function componentToHex(c) {
         }
         return false;
       });
+  }
+
+  function generateMap(width,biomeSeq,colours){
+
+    var tiles = [];
+    for(var y = 0; y < 5;y++){
+        for(var x = 0; x < width;x++){
+                tiles.push(new Tile(x,y,biomeSeq[x]));
+        }
+    }
+
+    tiles.forEach(t => {
+
+        var heightNumber = 0;
+        switch(t.biome){
+            case 0:
+                //Flatlands
+                heightNumber = Math.min(6,Math.max(4,Math.trunc(Math.abs((noise.perlin2(x/5, y/5)+1)/2 * 10))));
+                break;
+            case 1:
+                //Bumpy
+                heightNumber = Math.trunc(Math.abs((noise.perlin2(x/4, y/4)+1)/2 * 10));
+                break;
+            case 2:
+                //Lowlands
+                heightNumber = Math.min(5,Math.max(0,Math.trunc(Math.abs((noise.perlin2(x/5, y/5)+1)/2 * 10))) - 1);
+                break;
+            case 3:
+                //Moutains
+                heightNumber = Math.min(9,Math.trunc(Math.abs((noise.perlin2(x/3, y/3)+1)/2 * 10) + 2));
+                break;
+        }
+
+        t.height = tileStepHeight * heightNumber;
+        t.colour = colours.find(c => c.levels.includes(heightNumber)).colour;
+
+        if(Math.random() * 100 > 95 && t.biome == 0){
+            var resourceAmmount = Math.random() * 10;
+            t.resource = {type:"IRON",value:Math.max(3,Math.trunc(resourceAmmount))};
+            getSurroundingTiles(tiles,t).filter(t => 0.5 > Math.random()).forEach(t => t.resource = {type:"IRON",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
+        }
+    });
+
+    return tiles;
   }
