@@ -16,6 +16,7 @@ var inputs = {up:false,down:false,left:false,right:false,inter:false,build:false
 var tiles = [];
 var messages = [];
 var interactTiles = [];
+var selectedTile = 0;
 
 var playerResources = [];
 var playerBuildings = [{type:"RADAR",value:1}];
@@ -108,12 +109,20 @@ function handleInput(){
     if(inputs.down == false && prevInputs.down == true && buildMode && !removeMode){
         selectedBuilding = Math.min(playerBuildings.length - 1,selectedBuilding + 1);
     }
+
     if(inputs.right == false && prevInputs.right == true && !buildMode && !removeMode){
         updatePlayerPos(tiles,+1,0);
     }
     if(inputs.left == false && prevInputs.left == true && !buildMode && !removeMode){
         updatePlayerPos(tiles,-1,0);
     }
+    if(inputs.right == false && prevInputs.right == true && (buildMode || removeMode)){
+        selectedTile = Math.min(interactTiles.length - 1,selectedTile + 1);
+    }
+    if(inputs.left == false && prevInputs.left == true && (buildMode || removeMode)){
+        selectedTile = Math.max(0,selectedTile - 1);
+    }
+
     if(inputs.inter == false && prevInputs.inter == true && !buildMode && !removeMode){
         var minedRes = mineTile(tiles.find(t => t.hasPlayer));
         if(minedRes.type != "NONE"){
@@ -129,37 +138,49 @@ function handleInput(){
             messages.push({text:"No mineable resources on tile",time:0});
         }
     }
+
     if(inputs.build == false && prevInputs.build == true && !removeMode && !buildMode && playerBuildings.length > 0){
         selectedBuilding = 0;
         buildMode = true;
         interactTiles = getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type == "NONE");
         interactTiles.forEach(t => t.highlighted = true);
     } else if(inputs.build == false && prevInputs.build == true && !removeMode && buildMode){
+        selectedTile = 0;
         buildMode = false;
         interactTiles = [];
         getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).forEach(t => t.highlighted = false);
     }
+
     if(inputs.remove == false && prevInputs.remove == true && !buildMode && !removeMode){
         removeMode = true;
         interactTiles = getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type != "NONE");
         interactTiles.forEach(t => t.highlighted = true);
     } else if(inputs.remove == false && prevInputs.remove == true && !buildMode && removeMode){
+        selectedTile = 0;
         removeMode = false;
         interactTiles = [];
         getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).forEach(t => t.highlighted = false);
     }
-    if(buildMode && inputs.place != -1 && prevInputs.place == -1){
+
+    if(buildMode && inputs.inter == false && prevInputs.inter == true){
         selectedBuilding = 0;
-        placeBuilding(interactTiles[inputs.place],playerBuildings[selectedBuilding]);
+        placeBuilding(interactTiles[selectedTile],playerBuildings[selectedBuilding]);
+        interactTiles[selectedTile].highlighted = false;
+        interactTiles = interactTiles.filter(t => t != interactTiles[selectedTile]);
         if(playerBuildings.length == 1){
+            selectedTile = 0;
             buildMode = false;
             interactTiles = [];
             getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).forEach(t => t.highlighted = false);
         }
     }
-    if(removeMode && inputs.place != -1 && prevInputs.place == -1){
-        removeBuilding(interactTiles[inputs.place]);
+
+    if(removeMode && inputs.inter == false && prevInputs.inter == true){
+        removeBuilding(interactTiles[selectedTile]);
+        interactTiles[selectedTile].highlighted = false;
+        interactTiles = interactTiles.filter(t => t != interactTiles[selectedTile]);
         if(!interactTiles.some(t => t.building.type != "NONE")){
+            selectedTile = 0;
             removeMode = false;
             interactTiles = [];
             getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).forEach(t => t.highlighted = false);

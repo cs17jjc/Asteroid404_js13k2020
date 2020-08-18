@@ -73,10 +73,18 @@ function renderMap(context,tiles){
     visableTiles.filter(t => t.highlighted).forEach(t => {
         var scrPos = screenCoords[visableTiles.indexOf(t)];
         if(buildMode){
-            context.strokeStyle = "#FFFF00";
+            if(interactTiles.indexOf(t) == selectedTile){
+                context.strokeStyle = "#00FF00";
+            } else {
+                context.strokeStyle = "#FFFF00";
+            }
         }
         if(removeMode){
-            context.strokeStyle = "#FF0000";
+            if(interactTiles.indexOf(t) == selectedTile){
+                context.strokeStyle = "#00FF00";
+            } else {
+                context.strokeStyle = "#FF0000";
+            }
         }
         context.fillStyle = t.colour.toHex();
         drawHexTile(context,scrPos.x,scrPos.y,t);
