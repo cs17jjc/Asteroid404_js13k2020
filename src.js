@@ -28,15 +28,15 @@ var marsColourScheme = [{levels:[0,1,2],colour:new Colour(69,24,4,255)},{levels:
 
 for(var y = 0; y < 5;y++){
     for(var x = 0; x < 50;x++){
-            tiles.push(new Tile(x,y,marsColourScheme,{type:"NONE",value:0},3));
+            tiles.push(new Tile(x,y,marsColourScheme,{type:"NONE",value:0},0));
     }
 }
 
 tiles.forEach(t => {
     if(Math.random() * 100 > 95 && t.biome == 0){
-        var resourceAmmount = Math.random() * 5;
+        var resourceAmmount = Math.random() * 10;
         t.resource = {type:"IRON",value:Math.max(3,Math.trunc(resourceAmmount))};
-        getSurroundingTiles(tiles,t).filter(t => 0.5 - Math.random()).forEach(t => t.resource = {type:"IRON",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
+        getSurroundingTiles(tiles,t).filter(t => 0.5 > Math.random()).forEach(t => t.resource = {type:"IRON",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
     }
 })
 

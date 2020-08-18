@@ -23,11 +23,15 @@ function drawHexTile(context, scrX, scrY, tile){
     context.fill();
     context.stroke();
 
-    if(tile.resource.type == "IRON"){
-        var size = tile.resource.value;
-        context.strokeStyle = "#000000";
-        context.fillStyle = new Colour(170,86,71,255).toHex();
-        context.fillRect(scrX - size*5/2,scrY - size*5/2,size*5,size*5);
+    if(tile.isVisible){
+        switch(tile.resource.type){
+            case "IRON":
+                var size = tile.resource.value;
+                context.strokeStyle = "#000000";
+                context.fillStyle = new Colour(170,86,71,255).toHex();
+                context.fillRect(scrX - size*5/2,scrY - size*5/2,size*5,size*5);
+                break;
+        }
     }
 }
 
@@ -93,7 +97,7 @@ function updatePlayerPos(tiles,deltaX,deltaY){
                     messages.push({text:"Incline too steep",time:0});
                 }
             } else {
-                messages.push({text:"Cannot enter unknown tile",time:0});
+                messages.push({text:"Cannot enter unfound tile",time:0});
             }
         }
     }
