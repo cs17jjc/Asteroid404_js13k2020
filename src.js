@@ -13,10 +13,6 @@ canvas.style.height = canvas.height + "px";
 var prevInputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false};
 var inputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false};
 
-var millisOnLastFrame = new Date().getTime();
-
-var mousePosition = {x:0,y:0};
-
 var tiles = [];
 var messages = [];
 
@@ -43,9 +39,9 @@ var biomeSeq = Array.from(Array(mapWidth).keys()).map(i => {
 });
 
 tiles = generateMap(mapWidth,biomeSeq,marsColourScheme);
-
 updatePlayerPos(tiles,0,0);
 placeBuilding(tiles.find(t => t.x == 20 && t.y == 2),{type:"RADAR"});
+var millisOnLastFrame = new Date().getTime();
 function gameloop(){
     var frameSpeedFactor = new Date().getTime() - millisOnLastFrame;
     ctx.fillStyle = "#000000";

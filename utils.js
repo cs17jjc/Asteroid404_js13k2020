@@ -132,8 +132,10 @@ function mineTile(tile){
 function placeBuilding(tile,building){
     if(tile.building.type == "NONE"){
         tile.building = building;
-        if(building.type == "RADAR"){
-            tiles.filter(t => Math.abs(t.x - tile.x) < 5).forEach(t => t.isVisible = true);
+        switch(building.type){
+            case "RADAR":
+                tiles.filter(t => Math.abs(t.x - tile.x) < 5).forEach(t => t.isVisible = true);
+                break;
         }
     } else {
         messages.push({text:"Cannot place building",time:0});
@@ -141,17 +143,20 @@ function placeBuilding(tile,building){
 }
 function removeBuilding(tile,building){
     if(tile.building.type != "NONE"){
-        if(building.type == "RADAR"){
-            var tilesInRange = tiles.filter(t => Math.abs(t.x - tile.x) < 5);
-            if(tilesInRange.some(t => t.building.type == "RADAR" && t != tile)){
-                if(playerBuildings.some(b => b.type == t.building.type)){
-                    playerBuildings.find(b => b.type == t.building.type).value += 1;
+        switch(building.type){
+            case "RADAR":
+                var tilesInRange = tiles.filter(t => Math.abs(t.x - tile.x) < 5);
+                var playerBuilding = playerBuildings.find(b => b.type == t.building.type);
+                if(tilesInRange.some(t => t.building.type == "RADAR" && t != tile)){
+                    if(playerBuilding != null){
+                        playerBuilding.value += 1;
+                    } else {
+                        playerBuildings.push({type:b.type,value:1});
+                    }
                 } else {
-                    playerBuildings.push({type:b.type,value:1});
+                    messages.push({text:"Cannot remove active radar",time:0});
                 }
-            } else {
-                messages.push({text:"Cannot remove active radar",time:0});
-            }
+                break;
         }
     } else {
         messages.push({text:"Tile has no building",time:0});
