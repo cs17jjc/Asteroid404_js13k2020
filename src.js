@@ -28,22 +28,20 @@ var removeMode = false;
 
 noise.seed(Math.random());
 
-var marsColourScheme = [{levels:[0,1,2],colour:new Colour(69,24,4,255)},{levels:[3,4],colour:new Colour(193,68,14,255)},{levels:[5,6,7],colour:new Colour(231,125,17,255)},{levels:[8,9],colour:new Colour(253,166,0,255)}]
+var mapWidth = 50;
 
-for(var y = 0; y < 5;y++){
-    for(var x = 0; x < 50;x++){
-            tiles.push(new Tile(x,y,marsColourScheme,{type:"NONE",value:0},0));
+var marsColourScheme = [{levels:[0,1,2],colour:new Colour(69,24,4,255)},{levels:[3,4],colour:new Colour(193,68,14,255)},{levels:[5,6,7],colour:new Colour(231,125,17,255)},{levels:[8,9],colour:new Colour(253,166,0,255)}];
+var biomeSeq = Array.from(Array(mapWidth).keys()).map(i => {
+    if(i < 15){
+        return 2;
+    } else if (i < 35){
+        return 0;
+    } else {
+        return 3;
     }
-}
+});
 
-tiles.forEach(t => {
-    if(Math.random() * 100 > 95 && t.biome == 0){
-        var resourceAmmount = Math.random() * 10;
-        t.resource = {type:"IRON",value:Math.max(3,Math.trunc(resourceAmmount))};
-        getSurroundingTiles(tiles,t).filter(t => 0.5 > Math.random()).forEach(t => t.resource = {type:"IRON",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
-    }
-})
-
+tiles = generateMap(mapWidth,biomeSeq,marsColourScheme);
 
 updatePlayerPos(tiles,0,0);
 placeBuilding(tiles.find(t => t.x == 20 && t.y == 2),{type:"RADAR"});
