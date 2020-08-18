@@ -20,7 +20,11 @@ var tiles = [];
 var messages = [];
 
 var playerResources = [];
+var playerBuildings = [];
 var mineFactor = 1;
+
+var buildMode = false;
+var removeMode = false;
 
 noise.seed(Math.random());
 
@@ -61,6 +65,19 @@ function gameloop(){
     });
     messages = messages.slice(0,5).filter(m => m.time < 2000);
 
+    ctx.fillText("Available resources:",10,25);
+    playerResources.forEach(r => ctx.fillText(r.value + " units of " + r.type,10, 50 + playerResources.indexOf(r) * 25));
+
+    ctx.font = "30px Tahoma";
+    ctx.textAlign = "center"; 
+    ctx.textBaseline = "middle";
+    if(buildMode){
+        ctx.fillText("Build Mode",canvas.width/2,30);
+    }
+    if(removeMode){
+        ctx.fillText("Remove Mode",canvas.width/2,30);
+    }
+
     millisOnLastFrame = new Date().getTime();
 }
 
@@ -82,23 +99,23 @@ document.addEventListener('keydown', (event) => {
     }
 });
 document.addEventListener('keyup', (event) => {
-    if(event.keyCode == 87){
+    if(event.keyCode == 87 && !buildMode && !removeMode){
         inputs.up = false;
         updatePlayerPos(tiles,0,-1);
     }
-    if(event.keyCode == 83){
+    if(event.keyCode == 83 && !buildMode && !removeMode){
         inputs.down = false;
         updatePlayerPos(tiles,0,+1);
     }
-    if(event.keyCode == 68){
+    if(event.keyCode == 68 && !buildMode && !removeMode){
         inputs.right = false;
         updatePlayerPos(tiles,+1,0);
     }
-    if(event.keyCode == 65){
+    if(event.keyCode == 65 && !buildMode && !removeMode){
         inputs.left = false;
         updatePlayerPos(tiles,-1,0);
     }
-    if(event.keyCode == 69){
+    if(event.keyCode == 69 && !buildMode && !removeMode){
         inputs.inter = false;
         var minedRes = mineTile(tiles.find(t => t.hasPlayer));
         if(minedRes.type != "NONE"){
@@ -113,7 +130,14 @@ document.addEventListener('keyup', (event) => {
         } else {
             messages.push({text:"No mineable resources on tile",time:0});
         }
-        console.log(playerResources);
+    }
+    if(event.keyCode == 66 && !removeMode){
+        buildMode = !buildMode;
+        getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type == "NONE").forEach(t => t.highlighted = !t.highlighted);
+    }
+    if(event.keyCode == 82 && !buildMode){
+        removeMode = !removeMode;
+        getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type != "NONE").forEach(t => t.highlighted = !t.highlighted);
     }
 });
 

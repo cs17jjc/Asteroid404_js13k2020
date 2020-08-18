@@ -69,6 +69,19 @@ function renderMap(context,tiles){
         }
     });
 
+    visableTiles.filter(t => t.highlighted).forEach(t => {
+        var scrPos = screenCoords[visableTiles.indexOf(t)];
+        if(buildMode){
+            context.strokeStyle = "#FFFF00";
+        }
+        if(removeMode){
+            context.strokeStyle = "#FF0000";
+        }
+        context.fillStyle = t.colour.toHex();
+        drawHexTile(context,scrPos.x,scrPos.y,t);
+    });
+
+
     var tilesWithBuildings = visableTiles.filter(t => t.building.type != "NONE");
     tilesWithBuildings.forEach(t => {
         var scrPos = screenCoords[visableTiles.indexOf(t)];
@@ -124,6 +137,24 @@ function placeBuilding(tile,building){
         }
     } else {
         messages.push({text:"Cannot place building",time:0});
+    }
+}
+function removeBuilding(tile,building){
+    if(tile.building.type != "NONE"){
+        if(building.type == "RADAR"){
+            var tilesInRange = tiles.filter(t => Math.abs(t.x - tile.x) < 5);
+            if(tilesInRange.some(t => t.building.type == "RADAR" && t != tile)){
+                if(playerBuildings.some(b => b.type == t.building.type)){
+                    playerBuildings.find(b => b.type == t.building.type).value += 1;
+                } else {
+                    playerBuildings.push({type:b.type,value:1});
+                }
+            } else {
+                messages.push({text:"Cannot remove active radar",time:0});
+            }
+        }
+    } else {
+        messages.push({text:"Tile has no building",time:0});
     }
 }
 
