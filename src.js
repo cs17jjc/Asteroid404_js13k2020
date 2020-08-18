@@ -145,7 +145,6 @@ document.addEventListener('keydown', (event) => {
         case 82:
             inputs.remove = true;
             break;
-
     }
 });
 document.addEventListener('keyup', (event) => {
@@ -171,7 +170,6 @@ document.addEventListener('keyup', (event) => {
         case 82:
             inputs.remove = false;
             break;
-
     }
 });
 
