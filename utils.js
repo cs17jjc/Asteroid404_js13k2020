@@ -216,19 +216,19 @@ function componentToHex(c) {
         switch(t.biome){
             case 0:
                 //Flatlands
-                heightNumber = Math.min(6,Math.max(4,Math.trunc(Math.abs((noise.perlin2(x/5, y/5)+1)/2 * 10))));
+                heightNumber = Math.min(6,Math.max(4,Math.trunc(Math.abs((noise.perlin2(t.x/5, t.y/5)+1)/2 * 10))));
                 break;
             case 1:
                 //Bumpy
-                heightNumber = Math.trunc(Math.abs((noise.perlin2(x/4, y/4)+1)/2 * 10));
+                heightNumber = Math.trunc(Math.abs((noise.perlin2(t.x/4, t.y/4)+1)/2 * 10));
                 break;
             case 2:
                 //Lowlands
-                heightNumber = Math.min(5,Math.max(0,Math.trunc(Math.abs((noise.perlin2(x/5, y/5)+1)/2 * 10))) - 1);
+                heightNumber = Math.min(5,Math.max(0,Math.trunc(Math.abs((noise.perlin2(t.x/5, t.y/5)+1)/2 * 10))) - 1);
                 break;
             case 3:
                 //Moutains
-                heightNumber = Math.min(9,Math.trunc(Math.abs((noise.perlin2(x/3, y/3)+1)/2 * 10) + 2));
+                heightNumber = Math.min(9,Math.trunc(Math.abs((noise.perlin2(t.x/3, t.y/3)+1)/2 * 10) + 2));
                 break;
         }
 
