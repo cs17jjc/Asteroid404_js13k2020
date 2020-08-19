@@ -131,15 +131,12 @@ function handleInput(){
         var minedRes = mineTile(tiles.find(t => t.hasPlayer));
         if(minedRes.type != "NONE"){
             var totalMined = minedRes.value * mineFactor;
-            messages.unshift({text:"Mined " + totalMined + " of " + minedRes.type,time:0});
             var playerRes = playerResources.find(r => r.type == minedRes.type);
             if(playerRes != null){
                 playerRes.value += totalMined;
             } else {
                 playerResources.push({type:minedRes.type,value:totalMined});
             }
-        } else {
-            messages.unshift({text:"No mineable resources on tile",time:0});
         }
     }
 
