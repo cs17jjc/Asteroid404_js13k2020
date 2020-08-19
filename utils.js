@@ -94,8 +94,16 @@ function renderMap(context,tiles){
     var tilesWithBuildings = visableTiles.filter(t => t.building.type != "NONE");
     tilesWithBuildings.forEach(t => {
         var scrPos = screenCoords[visableTiles.indexOf(t)];
-        if(t.building.type == "RADAR"){
-            context.drawImage(towerImg,Math.trunc(scrPos.x - towerImg.width/2),Math.trunc(scrPos.y - towerImg.height*0.9));
+        switch(t.building.type){
+            case "RADAR":
+                context.drawImage(towerImg,Math.trunc(scrPos.x - towerImg.width/2),Math.trunc(scrPos.y - towerImg.height*0.9));
+                break;
+            case "CONSTRUCTOR":
+                context.drawImage(constructorImg,Math.trunc(scrPos.x - constructorImg.width/2),Math.trunc(scrPos.y - constructorImg.height*0.8));
+                break;
+            case "SOLAR":
+                context.drawImage(solarImg,Math.trunc(scrPos.x - solarImg.width/2),Math.trunc(scrPos.y - solarImg.height*0.5));
+                break;
         }
     });
 

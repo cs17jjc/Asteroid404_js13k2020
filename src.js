@@ -4,14 +4,17 @@ ctx.imageSmoothingEnabled = false;
 
 var roverImg = document.getElementById("rover");
 var towerImg = document.getElementById("tower");
+var constructorImg = document.getElementById("constructor");
+var solarImg = document.getElementById("solar");
+
 
 canvas.width = 1280;
 canvas.height = 720;
 canvas.style.width = canvas.width + "px";
 canvas.style.height = canvas.height + "px";
 
-var prevInputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,place:-1};
-var inputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,place:-1};
+var prevInputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false};
+var inputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false};
 
 var tiles = [];
 var messages = [];
@@ -19,7 +22,7 @@ var interactTiles = [];
 var selectedTile = 0;
 
 var playerResources = [];
-var playerBuildings = [{type:"RADAR",value:1}];
+var playerBuildings = [{type:"RADAR",value:1},{type:"SOLAR",value:1},{type:"CONSTRUCTOR",value:1}];
 var selectedBuilding = 0;
 var mineFactor = 1;
 
@@ -66,14 +69,14 @@ function gameloop(){
 
     ctx.fillText("Available resources:",10,25);
     playerResources.forEach(r => ctx.fillText(r.value + " units of " + r.type,10, 50 + playerResources.indexOf(r) * 25));
-    ctx.fillText("Available buildings:",canvas.width - 150,25);
+    ctx.fillText("Available buildings:",canvas.width - 200,25);
     playerBuildings.forEach(b => {
         if(selectedBuilding == playerBuildings.indexOf(b) && buildMode){
             ctx.fillStyle = "#FFFF00";
         } else {
             ctx.fillStyle = "#FFFFFF";
         }
-        ctx.fillText(b.value + " units of " + b.type,canvas.width - 150, 50 + playerBuildings.indexOf(b) * 25);
+        ctx.fillText(b.value + " units of " + b.type,canvas.width - 200, 50 + playerBuildings.indexOf(b) * 25);
     });
 
     ctx.fillStyle = "#FFFFFF";
@@ -163,10 +166,10 @@ function handleInput(){
     }
 
     if(buildMode && inputs.inter == false && prevInputs.inter == true){
-        selectedBuilding = 0;
         placeBuilding(interactTiles[selectedTile],playerBuildings[selectedBuilding]);
         interactTiles[selectedTile].highlighted = false;
         interactTiles = interactTiles.filter(t => t != interactTiles[selectedTile]);
+        selectedBuilding = 0;
         if(playerBuildings.length == 1){
             selectedTile = 0;
             buildMode = false;
@@ -211,14 +214,6 @@ document.addEventListener('keydown', (event) => {
         case 82:
             inputs.remove = true;
             break;
-        case 49:
-        case 50:
-        case 51:
-        case 52:
-        case 53:
-        case 54:
-            inputs.place = event.keyCode - 49;
-            break;
     }
 });
 document.addEventListener('keyup', (event) => {
@@ -243,14 +238,6 @@ document.addEventListener('keyup', (event) => {
             break;
         case 82:
             inputs.remove = false;
-            break;
-        case 49:
-        case 50:
-        case 51:
-        case 52:
-        case 53:
-        case 54:
-            inputs.place = -1;
             break;
     }
 });
