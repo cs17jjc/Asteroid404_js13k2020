@@ -61,11 +61,12 @@ function gameloop(){
     ctx.strokeStyle = "#000000";
     ctx.textAlign = "start"; 
     ctx.textBaseline = "alphabetic";
+    messages = messages.slice(0,5).filter(m => m.time < 2000);
     messages.forEach(message => {
-        ctx.fillText(message.text,10,canvas.height - 25 - messages.indexOf(message) * 25);
+        ctx.fillText(message.text,10,canvas.height - 25 - (messages.indexOf(message) * 25));
         message.time += frameSpeedFactor;
     });
-    messages = messages.slice(0,5).filter(m => m.time < 2000);
+    
 
     ctx.fillText("Available resources:",10,25);
     playerResources.forEach(r => ctx.fillText(r.value + " units of " + r.type,10, 50 + playerResources.indexOf(r) * 25));
@@ -130,7 +131,7 @@ function handleInput(){
         var minedRes = mineTile(tiles.find(t => t.hasPlayer));
         if(minedRes.type != "NONE"){
             var totalMined = minedRes.value * mineFactor;
-            messages.push({text:"Mined " + totalMined + " of " + minedRes.type,time:0});
+            messages.unshift({text:"Mined " + totalMined + " of " + minedRes.type,time:0});
             var playerRes = playerResources.find(r => r.type == minedRes.type);
             if(playerRes != null){
                 playerRes.value += totalMined;
@@ -138,7 +139,7 @@ function handleInput(){
                 playerResources.push({type:minedRes.type,value:totalMined});
             }
         } else {
-            messages.push({text:"No mineable resources on tile",time:0});
+            messages.unshift({text:"No mineable resources on tile",time:0});
         }
     }
 

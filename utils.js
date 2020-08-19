@@ -124,10 +124,10 @@ function updatePlayerPos(tiles,deltaX,deltaY){
                     playerTile.hasPlayer = false;
                     newTile.hasPlayer = true;
                 } else {
-                    messages.push({text:"Incline too steep",time:0});
+                    messages.unshift({text:"Incline too steep",time:0});
                 }
             } else {
-                messages.push({text:"Cannot enter unfound tile",time:0});
+                messages.unshift({text:"Cannot enter unfound tile",time:0});
             }
         }
     }
@@ -156,7 +156,7 @@ function placeBuilding(tile,building){
         }
         building.value -= 1;
     } else {
-        messages.push({text:"Cannot place building",time:0});
+        messages.unshift({text:"Cannot place building",time:0});
     }
 }
 function removeBuilding(tile){
@@ -171,18 +171,18 @@ function removeBuilding(tile){
                     if(playerBuilding != null){
                         playerBuilding.value += 1;
                     } else {
-                        playerBuildings.push({type:tile.building.type,value:1});
+                        playerBuildings.unshift({type:tile.building.type,value:1});
                     }
                     tile.building = {type:"NONE"};
                     tiles.filter(t => Math.abs(t.x - tile.x) < radarRange).forEach(t => t.isVisible = false);
                     tiles.filter(t => radarsInPlayerRange.some(t2 => Math.abs(t.x - t2.x) < radarRange)).forEach(t => t.isVisible = true);
                 } else {
-                    messages.push({text:"No other radar in range",time:0});
+                    messages.unshift({text:"No other radar in range",time:0});
                 }
                 break;
         }
     } else {
-        messages.push({text:"Tile has no building",time:0});
+        messages.unshift({text:"Tile has no building",time:0});
     }
 }
 
