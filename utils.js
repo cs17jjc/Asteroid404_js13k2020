@@ -38,7 +38,7 @@ function drawHexTile(context, scrX, scrY, tile){
 
 function renderMap(context,tiles){
     var tileWithPlayer = tiles.find(t => t.hasPlayer);
-    var visableTiles = tiles.filter(t => Math.abs(t.x - tileWithPlayer.x) <= tileViewRadius).sort((a,b) => a.height - b.height).sort((a,b) => a.isVisible - b.isVisible);
+    var visableTiles = tiles.filter(t => Math.abs(t.x - tileWithPlayer.x) <= tileViewRadius).sort((a,b) => a.height - b.height).sort((a,b) => a.y - b.y).sort((a,b) => a.isVisible - b.isVisible);
     var screenCoords = []
     visableTiles.forEach(t => {
         var scrX = t.x * tileRadius * 1.5 + canvas.width/2 - tileWithPlayer.x * tileRadius * 1.5;
@@ -53,8 +53,31 @@ function renderMap(context,tiles){
             screenCoords.push({x:scrX,y:scrY});
             context.strokeStyle = t.colour.darkend(0.2).toHex();
             context.fillStyle = t.colour.toHex();
+            if(interactTiles.includes(t)){
+                if(buildMode){
+                    context.strokeStyle = "#FFFF00";
+                } else if(removeMode){
+                    context.strokeStyle = "#FF0000";
+                }
+                if(interactTiles.indexOf(t) == selectedTile){
+                    context.strokeStyle = "#00FF00";
+                }
+            }
             context.lineWidth = 3;
             drawHexTile(context,scrX,scrY,t);
+            switch(t.building.type){
+                case "RADAR":
+                    context.drawImage(towerImg,Math.trunc(scrX - towerImg.width/2),Math.trunc(scrY - towerImg.height*0.9));
+                    break;
+                case "CONSTRUCTOR":
+                    context.drawImage(constructorImg,Math.trunc(scrX - constructorImg.width/2),Math.trunc(scrY - constructorImg.height*0.8));
+                    break;
+                case "SOLAR":
+                    context.drawImage(solarImg,Math.trunc(scrX - solarImg.width/2),Math.trunc(scrY - solarImg.height*0.5));
+                    break;
+                default:
+                    break;
+            }
         } else {
             screenCoords.push({x:scrX,y:scrY});
             context.strokeStyle = "#000000";
@@ -69,44 +92,6 @@ function renderMap(context,tiles){
             context.fillText("404",scrX ,scrY);
         }
     });
-
-    visableTiles.filter(t => t.highlighted).forEach(t => {
-        var scrPos = screenCoords[visableTiles.indexOf(t)];
-        if(buildMode){
-            if(interactTiles.indexOf(t) == selectedTile){
-                context.strokeStyle = "#00FF00";
-            } else {
-                context.strokeStyle = "#FFFF00";
-            }
-        }
-        if(removeMode){
-            if(interactTiles.indexOf(t) == selectedTile){
-                context.strokeStyle = "#00FF00";
-            } else {
-                context.strokeStyle = "#FF0000";
-            }
-        }
-        context.fillStyle = t.colour.toHex();
-        drawHexTile(context,scrPos.x,scrPos.y,t);
-    });
-
-
-    var tilesWithBuildings = visableTiles.filter(t => t.building.type != "NONE");
-    tilesWithBuildings.forEach(t => {
-        var scrPos = screenCoords[visableTiles.indexOf(t)];
-        switch(t.building.type){
-            case "RADAR":
-                context.drawImage(towerImg,Math.trunc(scrPos.x - towerImg.width/2),Math.trunc(scrPos.y - towerImg.height*0.9));
-                break;
-            case "CONSTRUCTOR":
-                context.drawImage(constructorImg,Math.trunc(scrPos.x - constructorImg.width/2),Math.trunc(scrPos.y - constructorImg.height*0.8));
-                break;
-            case "SOLAR":
-                context.drawImage(solarImg,Math.trunc(scrPos.x - solarImg.width/2),Math.trunc(scrPos.y - solarImg.height*0.5));
-                break;
-        }
-    });
-
     var playerTile = visableTiles.find(t => t.hasPlayer);
     var playerTileCoords = screenCoords[visableTiles.indexOf(playerTile)];
     context.drawImage(roverImg,playerTileCoords.x - Math.trunc(roverImg.width*roverImgScale/2),Math.trunc(playerTileCoords.y - (roverImg.height*roverImgScale/2) - 10 + (Math.sin(millisOnLastFrame/300) * 2.5)),Math.trunc(roverImg.width*roverImgScale),Math.trunc(roverImg.height*roverImgScale));

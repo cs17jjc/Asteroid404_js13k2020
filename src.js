@@ -7,6 +7,8 @@ var towerImg = document.getElementById("tower");
 var constructorImg = document.getElementById("constructor");
 var solarImg = document.getElementById("solar");
 
+var recipes = [{product:"CONSTRUCTOR",items:[{type:"IRON",value:5}],energy:2},{product:"RADAR",items:[{type:"IRON",value:7}],energy:4}];
+
 
 canvas.width = 1280;
 canvas.height = 720;
@@ -28,7 +30,7 @@ var mineFactor = 1;
 
 var buildMode = false;
 var removeMode = false;
-var craftMode = false;
+var settingRecipe = false;
 
 noise.seed(Math.random());
 
@@ -39,7 +41,7 @@ var biomeSeq = Array.from(Array(mapWidth).keys()).map(i => {
     if(i < 15){
         return 2;
     } else if (i < 35){
-        return 0;
+        return 3;
     } else {
         return 3;
     }
@@ -90,6 +92,19 @@ function gameloop(){
     if(removeMode){
         ctx.fillText("Remove Mode",canvas.width/2,30);
     }
+    if(settingRecipe){
+        ctx.fillText("Set Recipe:",canvas.width/2,30);
+        ctx.font = "20px Tahoma";
+        recipes.forEach(r => {
+            var index = recipes.indexOf(r);
+            if(selectedBuilding == index){
+                ctx.fillStyle = "#FFFF00";
+            } else {
+                ctx.fillStyle = "#FFFFFF";
+            }
+            ctx.fillText(r.product,canvas.width/2,60 + 25 * index);
+        })
+    }
 
     if(Object.entries(prevInputs).toString() !== Object.entries(inputs).toString()){
         handleInput();
@@ -101,23 +116,29 @@ function gameloop(){
 }
 
 function handleInput(){
-    if(inputs.up == false && prevInputs.up == true && !buildMode && !removeMode){
+    if(inputs.up == false && prevInputs.up == true && !buildMode && !removeMode && !settingRecipe){
         updatePlayerPos(tiles,0,-1);
     }
-    if(inputs.down == false && prevInputs.down == true && !buildMode && !removeMode){
+    if(inputs.down == false && prevInputs.down == true && !buildMode && !removeMode && !settingRecipe){
         updatePlayerPos(tiles,0,+1);
     }
-    if(inputs.up == false && prevInputs.up == true && buildMode && !removeMode){
+    if(inputs.up == false && prevInputs.up == true && buildMode){
         selectedBuilding = Math.max(0,selectedBuilding - 1);
     }
-    if(inputs.down == false && prevInputs.down == true && buildMode && !removeMode){
+    if(inputs.down == false && prevInputs.down == true && buildMode){
         selectedBuilding = Math.min(playerBuildings.length - 1,selectedBuilding + 1);
     }
+    if(inputs.up == false && prevInputs.up == true && settingRecipe){
+        selectedBuilding = Math.max(0,selectedBuilding - 1);
+    }
+    if(inputs.down == false && prevInputs.down == true && settingRecipe){
+        selectedBuilding = Math.min(recipes.length - 1,selectedBuilding + 1);
+    }
 
-    if(inputs.right == false && prevInputs.right == true && !buildMode && !removeMode){
+    if(inputs.right == false && prevInputs.right == true && !buildMode && !removeMode && !settingRecipe){
         updatePlayerPos(tiles,+1,0);
     }
-    if(inputs.left == false && prevInputs.left == true && !buildMode && !removeMode){
+    if(inputs.left == false && prevInputs.left == true && !buildMode && !removeMode && !settingRecipe){
         updatePlayerPos(tiles,-1,0);
     }
     if(inputs.right == false && prevInputs.right == true && (buildMode || removeMode)){
@@ -128,35 +149,50 @@ function handleInput(){
     }
 
     if(inputs.inter == false && prevInputs.inter == true && !buildMode && !removeMode){
-        var minedRes = mineTile(tiles.find(t => t.hasPlayer));
-        if(minedRes.type != "NONE"){
-            var totalMined = minedRes.value * mineFactor;
-            var playerRes = playerResources.find(r => r.type == minedRes.type);
-            if(playerRes != null){
-                playerRes.value += totalMined;
-            } else {
-                playerResources.push({type:minedRes.type,value:totalMined});
+        var playerTile = tiles.find(t => t.hasPlayer);
+        if(playerTile.building != "NONE"){
+            if(playerTile.building.type == "CONSTRUCTOR"){
+                if(settingRecipe){
+                    playerTile.building.recipe = recipes[selectedBuilding];
+                    selectedBuilding = 0;
+                    settingRecipe = false;
+                } else if(playerTile.building.recipe == null){
+                    settingRecipe = true;
+                } else {
+                    
+                }
+            }
+        } else {
+            var minedRes = mineTile(playerTile);
+            if(minedRes.type != "NONE"){
+                var totalMined = minedRes.value * mineFactor;
+                var playerRes = playerResources.find(r => r.type == minedRes.type);
+                if(playerRes != null){
+                    playerRes.value += totalMined;
+                } else {
+                    playerResources.push({type:minedRes.type,value:totalMined});
+                }
             }
         }
     }
 
-    if(inputs.build == false && prevInputs.build == true && !removeMode && !buildMode && playerBuildings.length > 0){
+    if(inputs.build == false && prevInputs.build == true && !removeMode && !buildMode && !settingRecipe && playerBuildings.length > 0){
         selectedBuilding = 0;
         buildMode = true;
         interactTiles = getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type == "NONE");
         interactTiles.forEach(t => t.highlighted = true);
-    } else if(inputs.build == false && prevInputs.build == true && !removeMode && buildMode){
+    } else if(inputs.build == false && prevInputs.build == true && buildMode){
         selectedTile = 0;
         buildMode = false;
         interactTiles = [];
         getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).forEach(t => t.highlighted = false);
     }
 
-    if(inputs.remove == false && prevInputs.remove == true && !buildMode && !removeMode){
+    if(inputs.remove == false && prevInputs.remove == true && !buildMode && !removeMode && !settingRecipe){
         removeMode = true;
         interactTiles = getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type != "NONE");
         interactTiles.forEach(t => t.highlighted = true);
-    } else if(inputs.remove == false && prevInputs.remove == true && !buildMode && removeMode){
+    } else if(inputs.remove == false && prevInputs.remove == true && removeMode){
         selectedTile = 0;
         removeMode = false;
         interactTiles = [];
