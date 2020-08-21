@@ -138,6 +138,13 @@ function placeBuilding(tile,building){
             case "RADAR":
                 tiles.filter(t => Math.abs(t.x - tile.x) < radarRange).forEach(t => t.isVisible = true);
                 break;
+            case "CONSTRUCTOR":
+                tile.building.storedItems = [];
+                tile.building.energy = 0;
+                tile.building.maxEnergy = 10;
+                tile.building.crafting = false;
+                tile.building.craftTimer = 0;
+                break;
         }
         building.value -= 1;
     } else {
@@ -150,14 +157,9 @@ function removeBuilding(tile){
             case "RADAR":
                 var playerTile = tiles.find(t => t.hasPlayer);
                 var tilesInPlayerRange = tiles.filter(t => Math.abs(t.x - playerTile.x) < radarRange);
-                var playerBuilding = playerBuildings.find(b => b.type == tile.building.type);
                 var radarsInPlayerRange = tilesInPlayerRange.filter(t => t.building.type == "RADAR" && t != tile);
                 if(radarsInPlayerRange.length >= 1){
-                    if(playerBuilding != null){
-                        playerBuilding.value += 1;
-                    } else {
-                        playerBuildings.unshift({type:tile.building.type,value:1});
-                    }
+                    addToPlayerBuildings(tile.building.type,1);
                     tile.building = {type:"NONE"};
                     tiles.filter(t => Math.abs(t.x - tile.x) < radarRange).forEach(t => t.isVisible = false);
                     tiles.filter(t => radarsInPlayerRange.some(t2 => Math.abs(t.x - t2.x) < radarRange)).forEach(t => t.isVisible = true);
@@ -165,9 +167,38 @@ function removeBuilding(tile){
                     messages.unshift({text:"No other radar in range",time:0});
                 }
                 break;
+            default:
+                addToPlayerBuildings(tile.building.type,1);
+                tile.building = {type:"NONE"};
+                break;
         }
     } else {
         messages.unshift({text:"Tile has no building",time:0});
+    }
+}
+
+function addToPlayerResources(type,ammount){
+    var playerRes = playerResources.find(r => r.type == type);
+    if(playerRes != null){
+        playerRes.value += ammount;
+    } else {
+        playerResources.push({type:type,value:ammount});
+    }
+}
+function addToPlayerBuildings(type,ammount){
+    var playerBuild = playerBuildings.find(r => r.type == type);
+    if(playerBuild != null){
+        playerBuild.value += ammount;
+    } else {
+        playerBuildings.push({type:type,value:ammount});
+    }
+}
+function addToBuildingStorage(buildingStorage,type,ammount){
+    var buildRes = buildingStorage.find(r => r.type == type);
+    if(buildRes != null){
+        buildRes.value += ammount;
+    } else {
+        buildingStorage.push({type:type,value:ammount});
     }
 }
 

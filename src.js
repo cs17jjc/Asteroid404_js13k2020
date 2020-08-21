@@ -23,7 +23,7 @@ var messages = [];
 var interactTiles = [];
 var selectedTile = 0;
 
-var playerResources = [];
+var playerResources = [{type:"IRON",value:10}];
 var playerBuildings = [{type:"RADAR",value:1},{type:"SOLAR",value:1},{type:"CONSTRUCTOR",value:1}];
 var selectedBuilding = 0;
 var mineFactor = 1;
@@ -31,6 +31,8 @@ var mineFactor = 1;
 var buildMode = false;
 var removeMode = false;
 var settingRecipe = false;
+
+var solarOutput = 1;
 
 noise.seed(Math.random());
 
@@ -41,7 +43,7 @@ var biomeSeq = Array.from(Array(mapWidth).keys()).map(i => {
     if(i < 15){
         return 2;
     } else if (i < 35){
-        return 3;
+        return 0;
     } else {
         return 3;
     }
@@ -55,6 +57,48 @@ function gameloop(){
     var frameSpeedFactor = new Date().getTime() - millisOnLastFrame;
     ctx.fillStyle = "#000000";
     ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight);
+
+    //Tile updates
+    tiles.filter(t => t.isVisible && t.building.type != "NONE").forEach(t => {
+
+        switch(t.building.type){
+            case "SOLAR":
+                var surrounding = getSurroundingTiles(tiles,t).filter(tt => tt.building.energy != null).filter(tt => tt.building.energy != tt.building.maxEnergy);
+                var induvidualEnergy = (solarOutput / surrounding.length) * (frameSpeedFactor/2000);
+                surrounding.forEach(tt => {
+                    if(tt.building.energy + induvidualEnergy >= tt.building.maxEnergy){
+                        tt.building.energy = tt.building.maxEnergy;
+                    } else {
+                        tt.building.energy += induvidualEnergy;
+                    }
+                });
+                break;
+            case "CONSTRUCTOR":
+                if(t.building.recipe != null){
+                    if(t.building.recipe.energy <= t.building.energy){
+                        var buildingItems = t.building.storedItems;
+                        var recipeItems = t.building.recipe.items;
+                        if(recipeItems.filter(i => buildingItems.some(ii => ii.type == i.type && ii.value >= i.value)).length == recipeItems.length && !t.building.crafting){
+                            buildingItems.forEach(i => i.value -= recipeItems.find(ii => ii.type == i.type).value);
+                            t.building.crafting = true;
+                            t.building.craftTimer = 0;
+                            t.building.energy -= t.building.recipe.energy;
+                        }
+                    }
+                    if(t.building.crafting){
+                        t.building.craftTimer += (frameSpeedFactor/2000);
+                        if(t.building.craftTimer >= 1){
+                            addToPlayerBuildings(t.building.recipe.product,1);
+                            t.building.crafting = false;
+                        }
+                        console.log(t.building);
+                    }
+                }
+                t.building.storedItems = t.building.storedItems.filter(i => i.value > 0);
+                break;
+        }
+
+    })
 
     renderMap(ctx,tiles);
     
@@ -150,7 +194,7 @@ function handleInput(){
 
     if(inputs.inter == false && prevInputs.inter == true && !buildMode && !removeMode){
         var playerTile = tiles.find(t => t.hasPlayer);
-        if(playerTile.building != "NONE"){
+        if(playerTile.building.type != "NONE"){
             if(playerTile.building.type == "CONSTRUCTOR"){
                 if(settingRecipe){
                     playerTile.building.recipe = recipes[selectedBuilding];
@@ -159,19 +203,23 @@ function handleInput(){
                 } else if(playerTile.building.recipe == null){
                     settingRecipe = true;
                 } else {
-                    
+                    var recipeItems = playerTile.building.recipe.items;
+                    if(recipeItems.filter(i => playerResources.some(ii => ii.type == i.type && ii.value >= i.value)).length == recipeItems.length){
+                        playerResources.forEach(i => {
+                            var recipeItem = recipeItems.find(ii => ii.type == i.type);
+                            if(recipeItem != null){
+                                i.value -= recipeItem.value;
+                                addToBuildingStorage(playerTile.building.storedItems,recipeItem.type,recipeItem.value);
+                            }
+                        });
+                    }
                 }
             }
         } else {
             var minedRes = mineTile(playerTile);
             if(minedRes.type != "NONE"){
                 var totalMined = minedRes.value * mineFactor;
-                var playerRes = playerResources.find(r => r.type == minedRes.type);
-                if(playerRes != null){
-                    playerRes.value += totalMined;
-                } else {
-                    playerResources.push({type:minedRes.type,value:totalMined});
-                }
+                addToPlayerResources(minedRes.type,totalMined);
             }
         }
     }
