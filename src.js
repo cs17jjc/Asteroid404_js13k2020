@@ -24,7 +24,7 @@ var interactTiles = [];
 var selectedTile = 0;
 
 var playerResources = [{type:"IRON",value:10}];
-var playerBuildings = [{type:"RADAR",value:1},{type:"SOLAR",value:1},{type:"CONSTRUCTOR",value:1}];
+var playerBuildings = [{type:"RADAR",value:1},{type:"SOLAR",value:1},{type:"CONSTRUCTOR",value:2}];
 var selectedBuilding = 0;
 var mineFactor = 1;
 
@@ -197,7 +197,7 @@ function handleInput(){
         if(playerTile.building.type != "NONE"){
             if(playerTile.building.type == "CONSTRUCTOR"){
                 if(settingRecipe){
-                    playerTile.building.recipe = recipes[selectedBuilding];
+                    playerTile.building.recipe = Object.assign({},recipes[selectedBuilding]);
                     selectedBuilding = 0;
                     settingRecipe = false;
                 } else if(playerTile.building.recipe == null){

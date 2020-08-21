@@ -133,7 +133,7 @@ function mineTile(tile){
 }
 function placeBuilding(tile,building){
     if(tile.building.type == "NONE"){
-        tile.building = building;
+        tile.building.type = building.type;
         switch(building.type){
             case "RADAR":
                 tiles.filter(t => Math.abs(t.x - tile.x) < radarRange).forEach(t => t.isVisible = true);
