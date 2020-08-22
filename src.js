@@ -36,7 +36,7 @@ var settingRecipe = false;
 var solarOutput = 1;
 var craftSpeed = 1;
 var minerFactor = 5;
-var mineSpeed = 1;
+var mineSpeed = 3;
 var minerTransmit = true;
 
 var time = 0;
@@ -63,8 +63,8 @@ var biomeSeq = Array.from(Array(mapWidth).keys()).map(i => {
 });
 
 tiles = generateMap(mapWidth,biomeSeq,marsColourScheme);
-updatePlayerPos(tiles,0,0);
 placeBuilding(tiles.find(t => t.x == 20 && t.y == 2),{type:"RADAR"});
+updatePlayerPos(tiles,0,0);
 var millisOnLastFrame = new Date().getTime();
 function gameloop(){
     var frameSpeedFactor = new Date().getTime() - millisOnLastFrame;
@@ -124,7 +124,7 @@ function gameloop(){
                 break;
             case "MINER":
                 if(!t.building.mining){
-                    if(t.building.energy >= minerFactor){
+                    if(t.building.energy >= minerFactor && t.resource.type != "NONE"){
                         t.building.energy -= minerFactor;
                         t.building.mining = true;
                     }
@@ -132,7 +132,7 @@ function gameloop(){
                     t.building.mineTimer += (frameSpeedFactor/50000) * mineSpeed;
                     if(t.building.mineTimer >= 1){
                         addToBuildingStorage(t.building.storedItems,t.resource.type,minerFactor);
-                        t.resource.value -= 1;
+                        mineTile(t);
                         t.building.mining = false;
                         t.building.mineTimer = 0;
                     }
@@ -153,6 +153,11 @@ function gameloop(){
                         ctx.fillText("Contains: ",canvas.width - 200,canvas.height - 40);
                         t.building.storedItems.forEach(i =>ctx.fillText(i.value + " units of " + i.type,canvas.width - 200,canvas.height - 20));
                     }
+                }
+                break;
+            case "RADAR":
+                if(t.hasPlayer){
+                    ctx.fillText("Total Coverage: " + Math.trunc(100 * tiles.filter(tt => tt.isVisible).length / tiles.length) + "%",canvas.width - 200,canvas.height - 80);
                 }
                 break;
         }
@@ -295,6 +300,7 @@ function handleInput(){
             var minedRes = mineTile(playerTile);
             if(minedRes.type != "NONE"){
                 var totalMined = minedRes.value * mineFactor;
+                zzfx(...[,,320,.01,,0,4,0,,,,,,,,.1,,0,.01]);
                 addToPlayerResources(minedRes.type,totalMined);
             }
         }

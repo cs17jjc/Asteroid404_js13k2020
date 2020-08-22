@@ -172,6 +172,7 @@ function placeBuilding(tile,building){
                 break;
         }
         building.value -= 1;
+        zzfx(...[,,191,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
     } else {
         messages.unshift({text:"Cannot place building",time:0});
     }
@@ -191,6 +192,7 @@ function removeBuilding(tile){
                     tile.building = {type:"NONE"};
                     tiles.filter(t => Math.abs(t.x - tile.x) < radarRange).forEach(t => t.isVisible = false);
                     tiles.filter(t => radarsInPlayerRange.some(t2 => Math.abs(t.x - t2.x) < radarRange)).forEach(t => t.isVisible = true);
+                    zzfx(...[,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
                 } else {
                     messages.unshift({text:"No other radar in range",time:0});
                 }
@@ -198,6 +200,7 @@ function removeBuilding(tile){
             default:
                 addToPlayerBuildings(tile.building.type,1);
                 tile.building = {type:"NONE"};
+                zzfx(...[,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
                 break;
         }
     } else {
@@ -297,7 +300,7 @@ function componentToHex(c) {
                 break;
         }
 
-        t.height = tileStepHeight * heightNumber;
+        t.height = tileStepHeight *  Math.max(0,heightNumber);
         t.colour = colours.find(c => c.levels.includes(heightNumber)).colour;
 
         if(Math.random() * 100 > 97 && (t.biome == 0 || t.biome == 2) && t.height >= 15){
