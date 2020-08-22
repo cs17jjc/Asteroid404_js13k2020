@@ -278,23 +278,23 @@ function componentToHex(c) {
 
         var heightNumber = 0;
         switch(t.biome){
-            case 0:
+            case 1:
                 //Flatlands
                 heightNumber = Math.min(6,Math.max(4,Math.trunc(Math.abs((noise.perlin2(t.x/5, t.y/5)+1)/2 * 10))));
                 break;
-            case 1:
+            case 3:
                 //Bumpy
                 heightNumber = Math.trunc(Math.abs((noise.perlin2(t.x/4, t.y/4)+1)/2 * 10));
                 break;
-            case 2:
+            case 0:
                 //Lowlands
                 heightNumber = Math.min(5,Math.max(0,Math.trunc(Math.abs((noise.perlin2(t.x/5, t.y/5)+1)/2 * 10))) - 1);
                 break;
-            case 3:
+            case 4:
                 //Moutains
                 heightNumber = Math.min(9,Math.trunc(Math.abs((noise.perlin2(t.x/3, t.y/3)+1)/2 * 10) + 2));
                 break;
-            case 4:
+            case 2:
                 //Ridge
                 heightNumber = Math.min(9,Math.trunc(Math.abs((noise.perlin2(t.x/3, t.y/3)+1)/2 * 15) + 2));
                 break;
@@ -303,7 +303,7 @@ function componentToHex(c) {
         t.height = tileStepHeight *  Math.max(0,heightNumber);
         t.colour = colours.find(c => c.levels.includes(heightNumber)).colour;
 
-        if(Math.random() * 100 > 97 && (t.biome == 0 || t.biome == 2) && t.height >= 15){
+        if(Math.random() * 100 > 97 && (t.biome == 1 || t.biome == 3) && t.height >= 15){
             var resourceAmmount = Math.random() * 10;
             t.resource = {type:"IRON",value:Math.max(3,Math.trunc(resourceAmmount))};
             getSurroundingTiles(tiles,t).filter(t => 0.5 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"IRON",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
@@ -311,15 +311,15 @@ function componentToHex(c) {
             var resourceAmmount = Math.random() * 10;
             t.resource = {type:"COPPER",value:Math.max(3,Math.trunc(resourceAmmount))};
             getSurroundingTiles(tiles,t).filter(t => 0.5 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"COPPER",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
-        } else if(Math.random() * 100 > 92 && t.biome == 2 && t.height <= 10) {
+        } else if(Math.random() * 100 > 92 && t.biome == 0 && t.height <= 10) {
             var resourceAmmount = Math.random() * 20;
             t.resource = {type:"CARBON",value:Math.max(5,Math.trunc(resourceAmmount))};
             getSurroundingTiles(tiles,t).filter(t => 0.8 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"CARBON",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
-        } else if(Math.random() * 100 > 96 && t.biome == 1) {
+        } else if(Math.random() * 100 > 96 && t.biome == 3) {
             var resourceAmmount = Math.random() * 15;
             t.resource = {type:"LITHIUM",value:Math.max(2,Math.trunc(resourceAmmount))};
             getSurroundingTiles(tiles,t).filter(t => 0.9 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"LITHIUM",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
-        } else if(Math.random() * 100 > 85 && t.biome == 3 && t.height >= 40) {
+        } else if(Math.random() * 100 > 85 && t.biome == 4 && t.height >= 40) {
             var resourceAmmount = Math.random() * 15;
             t.resource = {type:"SILICON",value:Math.max(2,Math.trunc(resourceAmmount))};
             getSurroundingTiles(tiles,t).filter(t => 0.7 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"SILICON",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});

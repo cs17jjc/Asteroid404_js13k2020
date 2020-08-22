@@ -28,6 +28,7 @@ var playerResources = [{type:"IRON",value:10}];
 var playerBuildings = [{type:"RADAR",value:1},{type:"SOLAR",value:1},{type:"CONSTRUCTOR",value:2},{type:"MINER",value:2}];
 var selectedBuilding = 0;
 var mineFactor = 1;
+var upgradePoints = 0;
 
 var buildMode = false;
 var removeMode = false;
@@ -48,17 +49,15 @@ var mapWidth = 500;
 var marsColourScheme = [{levels:[0,1,2],colour:new Colour(69,24,4,255)},{levels:[3,4],colour:new Colour(193,68,14,255)},{levels:[5,6,7],colour:new Colour(231,125,17,255)},{levels:[8,9],colour:new Colour(253,166,0,255)}];
 var biomeSeq = Array.from(Array(mapWidth).keys()).map(i => {
     if(i < 100){
-        return 2;
-    } else if (i < 200){
         return 0;
-    } else if (i < 205){
-        return 4;
-    } else if (i < 300){
+    } else if (i < 200){
         return 1;
+    } else if (i < 300){
+        return 2;
     } else if (i < 400){
         return 3;
-    } else {
-        return 1;
+    }else {
+        return 4;
     }
 });
 
