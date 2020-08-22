@@ -25,11 +25,31 @@ function drawHexTile(context, scrX, scrY, tile){
     context.stroke();
 
     if(tile.isVisible){
+        context.strokeStyle = "#000000";
         switch(tile.resource.type){
             case "IRON":
                 var size = tile.resource.value;
-                context.strokeStyle = "#000000";
                 context.fillStyle = new Colour(170,86,71,255).toHex();
+                context.fillRect(scrX - size*5/2,scrY - size*5/2,size*5,size*5);
+                break;
+            case "COPPER":
+                var size = tile.resource.value;
+                context.fillStyle = "#B87333";
+                context.fillRect(scrX - size*5/2,scrY - size*5/2,size*5,size*5);
+                break;
+            case "CARBON":
+                var size = tile.resource.value;
+                context.fillStyle = "#121212";
+                context.fillRect(scrX - size*5/2,scrY - size*5/2,size*5,size*5);
+                break;
+            case "LITHIUM":
+                var size = tile.resource.value;
+                context.fillStyle = "#A9A9A9";
+                context.fillRect(scrX - size*5/2,scrY - size*5/2,size*5,size*5);
+                break;
+            case "SILICON":
+                var size = tile.resource.value;
+                context.fillStyle = "#0099CC";
                 context.fillRect(scrX - size*5/2,scrY - size*5/2,size*5,size*5);
                 break;
         }
@@ -75,6 +95,9 @@ function renderMap(context,tiles){
                 case "SOLAR":
                     context.drawImage(solarImg,Math.trunc(scrX - solarImg.width/2),Math.trunc(scrY - solarImg.height*0.5));
                     break;
+                case "MINER":
+                    context.drawImage(minerImg,Math.trunc(scrX - minerImg.width/2),Math.trunc(scrY - minerImg.height*0.8));
+                    break;
                 default:
                     break;
             }
@@ -98,10 +121,6 @@ function renderMap(context,tiles){
 }
 function updatePlayerPos(tiles,deltaX,deltaY){
     var playerTile = tiles.find(t => t.hasPlayer);
-    if(playerTile == null){
-        playerTile = tiles.find(t => t.x == 20 && t.y == 0);
-        playerTile.hasPlayer = true;
-    } else {
         var newTile = tiles.find(t => t.x == playerTile.x + deltaX && t.y == playerTile.y + deltaY);
         if(newTile != null){
             if(newTile.isVisible){
@@ -115,7 +134,6 @@ function updatePlayerPos(tiles,deltaX,deltaY){
                 messages.unshift({text:"Cannot enter unfound tile",time:0});
             }
         }
-    }
 }
 function mineTile(tile){
     if(tile.resource.type != "NONE"){
@@ -144,6 +162,13 @@ function placeBuilding(tile,building){
                 tile.building.maxEnergy = 10;
                 tile.building.crafting = false;
                 tile.building.craftTimer = 0;
+                break;
+            case "MINER":
+                tile.building.storedItems = [];
+                tile.building.energy = 0;
+                tile.building.maxEnergy = 10;
+                tile.building.mining = false;
+                tile.building.mineTimer = 0;
                 break;
         }
         building.value -= 1;
@@ -266,17 +291,37 @@ function componentToHex(c) {
                 //Moutains
                 heightNumber = Math.min(9,Math.trunc(Math.abs((noise.perlin2(t.x/3, t.y/3)+1)/2 * 10) + 2));
                 break;
+            case 4:
+                //Ridge
+                heightNumber = Math.min(9,Math.trunc(Math.abs((noise.perlin2(t.x/3, t.y/3)+1)/2 * 15) + 2));
+                break;
         }
 
         t.height = tileStepHeight * heightNumber;
         t.colour = colours.find(c => c.levels.includes(heightNumber)).colour;
 
-        if(Math.random() * 100 > 95 && t.biome == 0){
+        if(Math.random() * 100 > 97 && (t.biome == 0 || t.biome == 2) && t.height >= 15){
             var resourceAmmount = Math.random() * 10;
             t.resource = {type:"IRON",value:Math.max(3,Math.trunc(resourceAmmount))};
-            getSurroundingTiles(tiles,t).filter(t => 0.5 > Math.random()).forEach(t => t.resource = {type:"IRON",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
+            getSurroundingTiles(tiles,t).filter(t => 0.5 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"IRON",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
+        } else if(Math.random() * 100 > 97 && (t.biome == 0 || t.biome == 1)) {
+            var resourceAmmount = Math.random() * 10;
+            t.resource = {type:"COPPER",value:Math.max(3,Math.trunc(resourceAmmount))};
+            getSurroundingTiles(tiles,t).filter(t => 0.5 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"COPPER",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
+        } else if(Math.random() * 100 > 92 && t.biome == 2 && t.height <= 10) {
+            var resourceAmmount = Math.random() * 20;
+            t.resource = {type:"CARBON",value:Math.max(5,Math.trunc(resourceAmmount))};
+            getSurroundingTiles(tiles,t).filter(t => 0.8 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"CARBON",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
+        } else if(Math.random() * 100 > 96 && t.biome == 1) {
+            var resourceAmmount = Math.random() * 15;
+            t.resource = {type:"LITHIUM",value:Math.max(2,Math.trunc(resourceAmmount))};
+            getSurroundingTiles(tiles,t).filter(t => 0.9 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"LITHIUM",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
+        } else if(Math.random() * 100 > 85 && t.biome == 3 && t.height >= 40) {
+            var resourceAmmount = Math.random() * 15;
+            t.resource = {type:"SILICON",value:Math.max(2,Math.trunc(resourceAmmount))};
+            getSurroundingTiles(tiles,t).filter(t => 0.7 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"SILICON",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
         }
     });
-
+    tiles.find(t => t.x == 20 && t.y == 0).hasPlayer = true;
     return tiles;
   }

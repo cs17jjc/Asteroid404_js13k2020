@@ -6,6 +6,7 @@ var roverImg = document.getElementById("rover");
 var towerImg = document.getElementById("tower");
 var constructorImg = document.getElementById("constructor");
 var solarImg = document.getElementById("solar");
+var minerImg = document.getElementById("miner");
 
 var recipes = [{product:"CONSTRUCTOR",items:[{type:"IRON",value:5}],energy:2},{product:"RADAR",items:[{type:"IRON",value:7}],energy:4}];
 
@@ -24,7 +25,7 @@ var interactTiles = [];
 var selectedTile = 0;
 
 var playerResources = [{type:"IRON",value:10}];
-var playerBuildings = [{type:"RADAR",value:1},{type:"SOLAR",value:1},{type:"CONSTRUCTOR",value:2}];
+var playerBuildings = [{type:"RADAR",value:1},{type:"SOLAR",value:1},{type:"CONSTRUCTOR",value:2},{type:"MINER",value:2}];
 var selectedBuilding = 0;
 var mineFactor = 1;
 
@@ -34,21 +35,30 @@ var settingRecipe = false;
 
 var solarOutput = 1;
 var craftSpeed = 1;
+var minerFactor = 5;
+var mineSpeed = 1;
+var minerTransmit = true;
 
 var time = 0;
 
 noise.seed(Math.random());
 
-var mapWidth = 50;
+var mapWidth = 500;
 
 var marsColourScheme = [{levels:[0,1,2],colour:new Colour(69,24,4,255)},{levels:[3,4],colour:new Colour(193,68,14,255)},{levels:[5,6,7],colour:new Colour(231,125,17,255)},{levels:[8,9],colour:new Colour(253,166,0,255)}];
 var biomeSeq = Array.from(Array(mapWidth).keys()).map(i => {
-    if(i < 15){
+    if(i < 100){
         return 2;
-    } else if (i < 35){
+    } else if (i < 200){
         return 0;
-    } else {
+    } else if (i < 205){
+        return 4;
+    } else if (i < 300){
+        return 1;
+    } else if (i < 400){
         return 3;
+    } else {
+        return 1;
     }
 });
 
@@ -107,10 +117,43 @@ function gameloop(){
                     if(t.hasPlayer){
                         ctx.fillText("Recipe: " + t.building.recipe.product,canvas.width - 200,canvas.height - 100);
                         ctx.fillText("Energy: " + Math.trunc(t.building.energy),canvas.width - 200,canvas.height - 80);
-                        ctx.fillText("Crafting Percentage: " + Math.trunc(t.building.craftTimer * 100) + "%",canvas.width - 200,canvas.height - 60);
+                        ctx.fillText("Progress: " + Math.trunc(t.building.craftTimer * 100) + "%",canvas.width - 200,canvas.height - 60);
                     }
                 }
                 t.building.storedItems = t.building.storedItems.filter(i => i.value > 0);
+                break;
+            case "MINER":
+                if(!t.building.mining){
+                    if(t.building.energy >= minerFactor){
+                        t.building.energy -= minerFactor;
+                        t.building.mining = true;
+                    }
+                } else{
+                    t.building.mineTimer += (frameSpeedFactor/50000) * mineSpeed;
+                    if(t.building.mineTimer >= 1){
+                        addToBuildingStorage(t.building.storedItems,t.resource.type,minerFactor);
+                        t.resource.value -= 1;
+                        t.building.mining = false;
+                        t.building.mineTimer = 0;
+                    }
+                }
+                if(minerTransmit){
+                    t.building.storedItems.forEach(i => {
+                        addToPlayerResources(i.type,i.value);
+                        i.value = 0;
+                    });
+                    t.building.storedItems = [];
+                }
+                if(t.hasPlayer){
+                    ctx.fillText("Energy: " + Math.trunc(t.building.energy),canvas.width - 200,canvas.height - 80);
+                    ctx.fillText("Progress: " + Math.trunc(t.building.mineTimer * 100) + "%",canvas.width - 200,canvas.height - 60);
+                    if(minerTransmit){
+                        ctx.fillText("Transmiting resources",canvas.width - 200,canvas.height - 40);
+                    } else {
+                        ctx.fillText("Contains: ",canvas.width - 200,canvas.height - 40);
+                        t.building.storedItems.forEach(i =>ctx.fillText(i.value + " units of " + i.type,canvas.width - 200,canvas.height - 20));
+                    }
+                }
                 break;
         }
 
@@ -213,27 +256,40 @@ function handleInput(){
     if(inputs.inter == false && prevInputs.inter == true && !buildMode && !removeMode){
         var playerTile = tiles.find(t => t.hasPlayer);
         if(playerTile.building.type != "NONE"){
-            if(playerTile.building.type == "CONSTRUCTOR"){
-                if(settingRecipe){
-                    playerTile.building.recipe = Object.assign({},recipes[selectedBuilding]);
-                    selectedBuilding = 0;
-                    settingRecipe = false;
-                } else if(playerTile.building.recipe == null){
-                    settingRecipe = true;
-                } else {
-                    var recipeItems = playerTile.building.recipe.items;
-                    if(recipeItems.filter(i => playerResources.some(ii => ii.type == i.type && ii.value >= i.value)).length == recipeItems.length){
-                        playerResources.forEach(i => {
-                            var recipeItem = recipeItems.find(ii => ii.type == i.type);
-                            if(recipeItem != null){
-                                i.value -= recipeItem.value;
-                                addToBuildingStorage(playerTile.building.storedItems,recipeItem.type,recipeItem.value);
-                            }
-                        });
+
+            switch(playerTile.building.type){
+                case "CONSTRUCTOR":
+                    if(settingRecipe){
+                        playerTile.building.recipe = Object.assign({},recipes[selectedBuilding]);
+                        selectedBuilding = 0;
+                        settingRecipe = false;
+                    } else if(playerTile.building.recipe == null){
+                        settingRecipe = true;
                     } else {
-                        messages.unshift({text:"Not enough resources",time:0});
+                        var recipeItems = playerTile.building.recipe.items;
+                        if(recipeItems.filter(i => playerResources.some(ii => ii.type == i.type && ii.value >= i.value)).length == recipeItems.length){
+                            playerResources.forEach(i => {
+                                var recipeItem = recipeItems.find(ii => ii.type == i.type);
+                                if(recipeItem != null){
+                                    i.value -= recipeItem.value;
+                                    addToBuildingStorage(playerTile.building.storedItems,recipeItem.type,recipeItem.value);
+                                }
+                            });
+                        } else {
+                            messages.unshift({text:"Not enough resources",time:0});
+                        }
                     }
-                }
+                    break;
+                case "MINER":
+                    if(!minerTransmit){
+                        playerTile.building.storedItems.forEach(i => {
+                            addToPlayerResources(i.type,i.value);
+                            i.value = 0;
+                        });
+                        playerTile.building.storedItems = [];
+                    }
+                    break;
+
             }
         } else {
             var minedRes = mineTile(playerTile);
