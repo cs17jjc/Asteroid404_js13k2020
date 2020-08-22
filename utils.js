@@ -153,6 +153,9 @@ function placeBuilding(tile,building){
 }
 function removeBuilding(tile){
     if(tile.building.type != "NONE"){
+        if(tile.building.storedItems != null){
+            tile.building.storedItems.forEach(i => addToPlayerResources(i.type,i.value));
+        }
         switch(tile.building.type){
             case "RADAR":
                 var playerTile = tiles.find(t => t.hasPlayer);

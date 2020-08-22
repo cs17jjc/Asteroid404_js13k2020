@@ -33,6 +33,9 @@ var removeMode = false;
 var settingRecipe = false;
 
 var solarOutput = 1;
+var craftSpeed = 1;
+
+var time = 0;
 
 noise.seed(Math.random());
 
@@ -58,13 +61,19 @@ function gameloop(){
     ctx.fillStyle = "#000000";
     ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight);
 
+    ctx.font = "15px Arial";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.strokeStyle = "#000000";
+    ctx.textAlign = "start"; 
+    ctx.textBaseline = "alphabetic";
     //Tile updates
     tiles.filter(t => t.isVisible && t.building.type != "NONE").forEach(t => {
 
         switch(t.building.type){
             case "SOLAR":
                 var surrounding = getSurroundingTiles(tiles,t).filter(tt => tt.building.energy != null).filter(tt => tt.building.energy != tt.building.maxEnergy);
-                var induvidualEnergy = (solarOutput / surrounding.length) * (frameSpeedFactor/2000);
+                var totalEnergy = solarOutput * Math.max(0.1,Math.sin(time * Math.PI/180));
+                var induvidualEnergy = (totalEnergy / surrounding.length) * (frameSpeedFactor/1000);
                 surrounding.forEach(tt => {
                     if(tt.building.energy + induvidualEnergy >= tt.building.maxEnergy){
                         tt.building.energy = tt.building.maxEnergy;
@@ -72,6 +81,9 @@ function gameloop(){
                         tt.building.energy += induvidualEnergy;
                     }
                 });
+                if(t.hasPlayer){
+                    ctx.fillText("Energy Output: " + totalEnergy.toFixed(2),canvas.width - 200,canvas.height - 100);
+                }
                 break;
             case "CONSTRUCTOR":
                 if(t.building.recipe != null){
@@ -81,17 +93,21 @@ function gameloop(){
                         if(recipeItems.filter(i => buildingItems.some(ii => ii.type == i.type && ii.value >= i.value)).length == recipeItems.length && !t.building.crafting){
                             buildingItems.forEach(i => i.value -= recipeItems.find(ii => ii.type == i.type).value);
                             t.building.crafting = true;
-                            t.building.craftTimer = 0;
                             t.building.energy -= t.building.recipe.energy;
                         }
                     }
                     if(t.building.crafting){
-                        t.building.craftTimer += (frameSpeedFactor/2000);
+                        t.building.craftTimer += (frameSpeedFactor/10000) * craftSpeed;
                         if(t.building.craftTimer >= 1){
                             addToPlayerBuildings(t.building.recipe.product,1);
                             t.building.crafting = false;
+                            t.building.craftTimer = 0;
                         }
-                        console.log(t.building);
+                    }
+                    if(t.hasPlayer){
+                        ctx.fillText("Recipe: " + t.building.recipe.product,canvas.width - 200,canvas.height - 100);
+                        ctx.fillText("Energy: " + Math.trunc(t.building.energy),canvas.width - 200,canvas.height - 80);
+                        ctx.fillText("Crafting Percentage: " + Math.trunc(t.building.craftTimer * 100) + "%",canvas.width - 200,canvas.height - 60);
                     }
                 }
                 t.building.storedItems = t.building.storedItems.filter(i => i.value > 0);
@@ -156,6 +172,8 @@ function gameloop(){
     playerResources = playerResources.filter(r => r.value > 0);
     playerBuildings = playerBuildings.filter(b => b.value > 0);
     prevInputs = Object.assign({},inputs);
+    time += (frameSpeedFactor/1000);
+    time = time >= 360 ? 0 : time;
     millisOnLastFrame = new Date().getTime();
 }
 
@@ -212,6 +230,8 @@ function handleInput(){
                                 addToBuildingStorage(playerTile.building.storedItems,recipeItem.type,recipeItem.value);
                             }
                         });
+                    } else {
+                        messages.unshift({text:"Not enough resources",time:0});
                     }
                 }
             }
