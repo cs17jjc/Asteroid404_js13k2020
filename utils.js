@@ -24,35 +24,38 @@ function drawHexTile(context, scrX, scrY, tile){
     context.fill();
     context.stroke();
 
-    if(tile.isVisible){
-        context.strokeStyle = "#000000";
+    if(tile.isVisible && tile.resource.type != "NONE"){
+        var resourceColour = null;
         switch(tile.resource.type){
             case "IRON":
-                var size = tile.resource.value;
-                context.fillStyle = new Colour(170,86,71,255).toHex();
-                context.fillRect(scrX - size*5/2,scrY - size*5/2,size*5,size*5);
+                resourceColour = new Colour(170,86,71,255);
                 break;
             case "COPPER":
-                var size = tile.resource.value;
-                context.fillStyle = "#B87333";
-                context.fillRect(scrX - size*5/2,scrY - size*5/2,size*5,size*5);
+                resourceColour = new Colour(184,115,52,255);
                 break;
             case "CARBON":
-                var size = tile.resource.value;
-                context.fillStyle = "#121212";
-                context.fillRect(scrX - size*5/2,scrY - size*5/2,size*5,size*5);
+                resourceColour = new Colour(18,18,18,255);
                 break;
             case "LITHIUM":
-                var size = tile.resource.value;
-                context.fillStyle = "#A9A9A9";
-                context.fillRect(scrX - size*5/2,scrY - size*5/2,size*5,size*5);
+                resourceColour = new Colour(169,169,169,255);
                 break;
             case "SILICON":
-                var size = tile.resource.value;
-                context.fillStyle = "#0099CC";
-                context.fillRect(scrX - size*5/2,scrY - size*5/2,size*5,size*5);
+                resourceColour = new Colour(0,153,204,255);
                 break;
         }
+        context.lineWidth = 3;
+        context.fillStyle = resourceColour.toHex();
+        context.strokeStyle = resourceColour.darkend(0.4).toHex();
+        tile.resource.lines.forEach(l => {
+            context.beginPath();
+            context.moveTo(l[0].x + scrX,l[0].y + scrY);
+            for(var ll = 1; ll < l.length;ll++){
+                context.lineTo(l[ll].x + scrX,l[ll].y + scrY);
+            }
+            context.closePath();
+            context.fill();
+            context.stroke();
+        });
     }
 }
 
@@ -149,6 +152,7 @@ function mineTile(tile){
         } 
         else {
             tile.resource.value -= 1;
+            tile.resource.lines = generateResourcePoints(tile.resource.value/20);
         }
         return {type:type,value:1};
     } else {
@@ -283,6 +287,21 @@ function componentToHex(c) {
       });
   }
 
+  function generateResourcePoints(size){
+      var lines = [];
+      var angles = [];
+      var points = 7;
+      for(var i = 0; i < points;i++){
+          angles.unshift(i * ((Math.PI*2)/points));
+      }
+      angles.forEach(a => {
+          var x = Math.cos(a) * size * tileRadius + Math.random() * 5;
+          var y = Math.sin(a) * size * tileRadius * perspRatio + Math.random() * 5;
+          lines.unshift({x:x,y:y});
+      });
+      return [lines];
+  }
+
   function generateMap(width,biomeSeq,colours){
 
     var tiles = [];
@@ -356,6 +375,7 @@ function componentToHex(c) {
             getSurroundingTiles(tiles,t).filter(t => 0.2 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"COPPER",value:Math.max(4,Math.trunc(resourceAmmount * Math.random()))});
         }
     });
+    tiles.filter(t => t.resource.type != "NONE").forEach(t => t.resource.lines = generateResourcePoints(t.resource.value/20));
 
     return tiles;
   }
