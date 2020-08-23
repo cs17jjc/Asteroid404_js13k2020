@@ -174,7 +174,7 @@ function gameloop(){
                 break;
             case "BATTERY":
                 var surrounding = getSurroundingTiles(tiles,t).filter(tt => tt.building.energy != null).filter(tt => tt.building.energy != tt.building.maxEnergy);
-                var surroundingBatteries = surrounding.filter(tt => tt.building.type == "BATTERY").filter(tt => tt.building.energy < t.building.energy);
+                var surroundingBatteries = surrounding.filter(tt => tt.building.type == "BATTERY").filter(tt => tt.building.energy + 1 < t.building.energy);
                 var surroundingOther = surrounding.filter(tt => tt.building.type != "BATTERY");
                 if(t.building.discharging){
                     t.building.dischargeTimer += (frameSpeedFactor/10000) * batteryDischarge;
