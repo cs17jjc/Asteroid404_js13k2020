@@ -75,7 +75,7 @@ var biomeSeq = Array.from(Array(mapWidth).keys()).map(i => {
 });
 
 tiles = generateMap(mapWidth,biomeSeq,marsColourScheme);
-placeBuilding(tiles.find(t => t.x == 550 && t.y == 2),{type:"RADAR"});
+placeBuilding(tiles.find(t => t.x == 550 && t.y == 2),{type:"RADAR",value:1});
 updatePlayerPos(tiles,0,0);
 var millisOnLastFrame = new Date().getTime();
 function gameloop(){

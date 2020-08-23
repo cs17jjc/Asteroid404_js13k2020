@@ -296,7 +296,7 @@ function componentToHex(c) {
                 break;
             case 3:
                 //Bumpy
-                heightNumber = Math.trunc(Math.abs((noise.perlin2(t.x/4, t.y/4)+1)/2 * 10));
+                heightNumber = Math.min(9,Math.trunc(Math.abs((noise.perlin2(t.x/4, t.y/4)+1)/2 * 10)));
                 break;
             case 0:
                 //Lowlands
@@ -311,8 +311,9 @@ function componentToHex(c) {
                 heightNumber = Math.min(9,Math.trunc(Math.abs((noise.perlin2(t.x/3, t.y/3)+1)/2 * 15) + 2));
                 break;
         }
-
-        t.height = tileStepHeight *  Math.max(0,heightNumber);
+        heightNumber = Math.max(0,heightNumber);
+        console.log(heightNumber);
+        t.height = tileStepHeight * heightNumber;
         t.colour = colours.find(c => c.levels.includes(heightNumber)).colour;
 
         if(Math.random() * 100 > 97 && (t.biome == 1 || t.biome == 3) && t.height >= 15){
@@ -338,5 +339,18 @@ function componentToHex(c) {
         }
     });
     tiles.find(t => t.x == 550 && t.y == 0).hasPlayer = true;
+    //Generate start area resources
+    tiles.filter(t => Math.abs(550 - t.x) < 5).forEach(t => {
+        if(Math.random() * 100 > 80 && t.resource.type == "NONE"){
+            var resourceAmmount = Math.random() * 15;
+            t.resource = {type:"IRON",value:Math.max(5,Math.trunc(resourceAmmount))};
+            getSurroundingTiles(tiles,t).filter(t => 0.3 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"IRON",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
+        } else if(Math.random() * 100 > 95 && t.resource.type == "NONE") {
+            var resourceAmmount = Math.random() * 10;
+            t.resource = {type:"COPPER",value:Math.max(5,Math.trunc(resourceAmmount))};
+            getSurroundingTiles(tiles,t).filter(t => 0.3 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"COPPER",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
+        }
+    });
+
     return tiles;
   }
