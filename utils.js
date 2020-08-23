@@ -204,7 +204,7 @@ function removeBuilding(tile){
                     tile.building = {type:"NONE"};
                     tiles.filter(t => Math.abs(t.x - tile.x) < radarRange).forEach(t => t.isVisible = false);
                     tiles.filter(t => radarsInPlayerRange.some(t2 => Math.abs(t.x - t2.x) < radarRange)).forEach(t => t.isVisible = true);
-                    zzfx(...[,,219,.01,.01,.03,1,.7,-0.1,-0.1,,,-0.02,,.1,.1,.02,.9]);
+                    zzfx(...[,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
                 } else {
                     messages.unshift({text:"No other radar in range",time:0});
                 }

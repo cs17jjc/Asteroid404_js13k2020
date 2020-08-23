@@ -258,11 +258,12 @@ function gameloop(){
         })
     }
 
+    playerResources = playerResources.filter(r => r.value > 0);
+    playerBuildings = playerBuildings.filter(b => b.value > 0);
+    selectedBuilding = Math.min(playerBuildings.length - 1, selectedBuilding);
     if(Object.entries(prevInputs).toString() !== Object.entries(inputs).toString()){
         handleInput();
     }
-    playerResources = playerResources.filter(r => r.value > 0);
-    playerBuildings = playerBuildings.filter(b => b.value > 0);
     prevInputs = Object.assign({},inputs);
     time += (frameSpeedFactor/1000);
     time = time >= 360 ? 0 : time;
@@ -350,6 +351,7 @@ function handleInput(){
         }
     }
 
+    //If B is pressed and not in any modes and player has buildings
     if(inputs.build == false && prevInputs.build == true && !removeMode && !buildMode && !settingRecipe && playerBuildings.length > 0){
         selectedBuilding = 0;
         buildMode = true;
@@ -359,9 +361,9 @@ function handleInput(){
         selectedTile = 0;
         buildMode = false;
         interactTiles = [];
-        getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).forEach(t => t.highlighted = false);
     }
 
+    //If R is pressed and not in any modes and player has buildings
     if(inputs.remove == false && prevInputs.remove == true && !buildMode && !removeMode && !settingRecipe){
         removeMode = true;
         interactTiles = getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type != "NONE");
@@ -370,31 +372,30 @@ function handleInput(){
         selectedTile = 0;
         removeMode = false;
         interactTiles = [];
-        getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).forEach(t => t.highlighted = false);
     }
 
-    if(buildMode && inputs.inter == false && prevInputs.inter == true){
+    //If E is pressed and in build mode and empty spaces
+    if(buildMode && inputs.inter == false && prevInputs.inter == true && interactTiles.some(t => t.building.type == "NONE")){
         placeBuilding(interactTiles[selectedTile],playerBuildings[selectedBuilding]);
         interactTiles[selectedTile].highlighted = false;
         interactTiles = interactTiles.filter(t => t != interactTiles[selectedTile]);
-        selectedBuilding = 0;
-        if(playerBuildings.length == 1){
+        selectedTile = Math.min(interactTiles.length - 1, selectedTile);
+        if(playerBuildings.length == 1 || !interactTiles.some(t => t.building.type == "NONE")){
             selectedTile = 0;
             buildMode = false;
             interactTiles = [];
-            getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).forEach(t => t.highlighted = false);
         }
     }
-
-    if(removeMode && inputs.inter == false && prevInputs.inter == true){
+    //If E is pressed and in remove mode and buildings
+    if(removeMode && inputs.inter == false && prevInputs.inter == true && interactTiles.some(t => t.building.type != "NONE")){
         removeBuilding(interactTiles[selectedTile]);
         interactTiles[selectedTile].highlighted = false;
         interactTiles = interactTiles.filter(t => t != interactTiles[selectedTile]);
+        selectedTile = Math.min(interactTiles.length - 1, selectedTile);
         if(!interactTiles.some(t => t.building.type != "NONE")){
             selectedTile = 0;
             removeMode = false;
             interactTiles = [];
-            getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).forEach(t => t.highlighted = false);
         }
     }
 }
