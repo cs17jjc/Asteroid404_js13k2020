@@ -46,6 +46,7 @@ var minerFactor = 5;
 var mineSpeed = 3;
 var minerTransmit = true;
 var batteryDischarge = 1;
+var upgradeSpeed = 1;
 
 var time = 0;
 
@@ -86,6 +87,18 @@ function gameloop(){
     var frameSpeedFactor = new Date().getTime() - millisOnLastFrame;
     ctx.fillStyle = "#000000";
     ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight);
+
+    if(currentUpgrade != null){
+        if(upgradeProgress >= currentUpgrade.value){
+            upgradeProgress = 0;
+            switch(currentUpgrade.unlock){
+                case "RADAR_RECIPE":
+                    recipes.unshift({product:"RADAR",items:[{type:"IRON",value:10},{type:"COPPER",value:5}],energy:5});
+                    break;
+            }
+            currentUpgrade = null;
+        }
+    }
 
     ctx.font = "15px Arial";
     ctx.fillStyle = "#FFFFFF";
@@ -213,6 +226,21 @@ function gameloop(){
                 }
                 break;
             case "LAB":
+                if(t.building.upgrading){
+                    t.building.upgradeTimer += (frameSpeedFactor/10000) * upgradeSpeed;
+                    if(t.building.upgradeTimer >= 1){
+                        upgradeProgress += 1;
+                        t.building.upgrading = false;
+                        t.building.upgradeTimer = 0;
+                    } else if(currentUpgrade == null){
+                        t.building.upgrading = false;
+                        t.building.upgradeTimer = 0;
+                    }
+                }
+                if(t.building.energy >= 1 && !t.building.upgrading){
+                    t.building.energy -= 1;
+                    t.building.upgrading = true;
+                }
                 if(t.hasPlayer){
                     if(currentUpgrade != null){
                         ctx.fillText("Upgrade: " + currentUpgrade.unlock,canvas.width - 200,canvas.height - 100);

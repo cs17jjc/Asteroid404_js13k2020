@@ -345,7 +345,7 @@ function componentToHex(c) {
     });
     tiles.find(t => t.x == 550 && t.y == 0).hasPlayer = true;
     //Generate start area resources
-    tiles.filter(t => Math.abs(550 - t.x) < 5).forEach(t => {
+    tiles.filter(t => Math.abs(550 - t.x) < 20).forEach(t => {
         if(Math.random() * 100 > 80 && t.resource.type == "NONE"){
             var resourceAmmount = Math.random() * 15;
             t.resource = {type:"IRON",value:Math.max(5,Math.trunc(resourceAmmount))};
