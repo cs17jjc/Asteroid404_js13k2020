@@ -98,6 +98,12 @@ function renderMap(context,tiles){
                 case "MINER":
                     context.drawImage(minerImg,Math.trunc(scrX - minerImg.width/2),Math.trunc(scrY - minerImg.height*0.8));
                     break;
+                case "LAB":
+                    context.drawImage(labImg,Math.trunc(scrX - labImg.width/2),Math.trunc(scrY - labImg.height*0.45));
+                    break;
+                case "BATTERY":
+                    context.drawImage(batteryImg,Math.trunc(scrX - batteryImg.width/2),Math.trunc(scrY - batteryImg.height*0.5));
+                    break;
                 default:
                     break;
             }
@@ -170,6 +176,12 @@ function placeBuilding(tile,building){
                 tile.building.mining = false;
                 tile.building.mineTimer = 0;
                 break;
+            case "BATTERY":
+                tile.building.energy = 0;
+                tile.building.maxEnergy = 20;
+                tile.building.dischargeTimer = 0;
+                tile.building.discharging = false;
+                break;
         }
         building.value -= 1;
         zzfx(...[,,191,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
@@ -192,7 +204,7 @@ function removeBuilding(tile){
                     tile.building = {type:"NONE"};
                     tiles.filter(t => Math.abs(t.x - tile.x) < radarRange).forEach(t => t.isVisible = false);
                     tiles.filter(t => radarsInPlayerRange.some(t2 => Math.abs(t.x - t2.x) < radarRange)).forEach(t => t.isVisible = true);
-                    zzfx(...[,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
+                    zzfx(...[,,219,.01,.01,.03,1,.7,-0.1,-0.1,,,-0.02,,.1,.1,.02,.9]);
                 } else {
                     messages.unshift({text:"No other radar in range",time:0});
                 }
@@ -325,6 +337,6 @@ function componentToHex(c) {
             getSurroundingTiles(tiles,t).filter(t => 0.7 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"SILICON",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
         }
     });
-    tiles.find(t => t.x == 20 && t.y == 0).hasPlayer = true;
+    tiles.find(t => t.x == 550 && t.y == 0).hasPlayer = true;
     return tiles;
   }

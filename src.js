@@ -7,6 +7,8 @@ var towerImg = document.getElementById("tower");
 var constructorImg = document.getElementById("constructor");
 var solarImg = document.getElementById("solar");
 var minerImg = document.getElementById("miner");
+var batteryImg = document.getElementById("battery");
+var labImg = document.getElementById("lab");
 
 var recipes = [{product:"CONSTRUCTOR",items:[{type:"IRON",value:5}],energy:2},{product:"RADAR",items:[{type:"IRON",value:7}],energy:4}];
 
@@ -25,7 +27,7 @@ var interactTiles = [];
 var selectedTile = 0;
 
 var playerResources = [{type:"IRON",value:10}];
-var playerBuildings = [{type:"RADAR",value:1},{type:"SOLAR",value:1},{type:"CONSTRUCTOR",value:2},{type:"MINER",value:2}];
+var playerBuildings = [{type:"RADAR",value:1},{type:"SOLAR",value:1},{type:"CONSTRUCTOR",value:2},{type:"MINER",value:2},{type:"LAB",value:2},{type:"BATTERY",value:2}];
 var selectedBuilding = 0;
 var mineFactor = 1;
 var upgradePoints = 0;
@@ -39,30 +41,41 @@ var craftSpeed = 1;
 var minerFactor = 5;
 var mineSpeed = 3;
 var minerTransmit = true;
+var batteryDischarge = 1;
 
 var time = 0;
 
 noise.seed(Math.random());
 
-var mapWidth = 500;
+var mapWidth = 1000;
 
 var marsColourScheme = [{levels:[0,1,2],colour:new Colour(69,24,4,255)},{levels:[3,4],colour:new Colour(193,68,14,255)},{levels:[5,6,7],colour:new Colour(231,125,17,255)},{levels:[8,9],colour:new Colour(253,166,0,255)}];
 var biomeSeq = Array.from(Array(mapWidth).keys()).map(i => {
     if(i < 100){
-        return 0;
+        return 4;
     } else if (i < 200){
-        return 1;
+        return 3;
     } else if (i < 300){
         return 2;
     } else if (i < 400){
+        return 1;
+    }else if (i < 500){
+        return 0;
+    }else if (i < 600){
+        return 1;
+    }else if (i < 700){
+        return 2;
+    }else if (i < 800){
         return 3;
-    }else {
+    }else if (i < 900){
+        return 4;
+    } else {
         return 4;
     }
 });
 
 tiles = generateMap(mapWidth,biomeSeq,marsColourScheme);
-placeBuilding(tiles.find(t => t.x == 20 && t.y == 2),{type:"RADAR"});
+placeBuilding(tiles.find(t => t.x == 550 && t.y == 2),{type:"RADAR"});
 updatePlayerPos(tiles,0,0);
 var millisOnLastFrame = new Date().getTime();
 function gameloop(){
@@ -156,7 +169,39 @@ function gameloop(){
                 break;
             case "RADAR":
                 if(t.hasPlayer){
-                    ctx.fillText("Total Coverage: " + Math.trunc(100 * tiles.filter(tt => tt.isVisible).length / tiles.length) + "%",canvas.width - 200,canvas.height - 80);
+                    ctx.fillText("Total Coverage: " + (100 * tiles.filter(tt => tt.isVisible).length / tiles.length).toFixed(2) + "%",canvas.width - 200,canvas.height - 80);
+                }
+                break;
+            case "BATTERY":
+                var surrounding = getSurroundingTiles(tiles,t).filter(tt => tt.building.energy != null).filter(tt => tt.building.energy != tt.building.maxEnergy);
+                var surroundingBatteries = surrounding.filter(tt => tt.building.type == "BATTERY").filter(tt => tt.building.energy < t.building.energy);
+                var surroundingOther = surrounding.filter(tt => tt.building.type != "BATTERY");
+                if(t.building.discharging){
+                    t.building.dischargeTimer += (frameSpeedFactor/10000) * batteryDischarge;
+                    if(surrounding.length == 0){
+                        t.building.dischargeTimer = 0;
+                        t.building.discharging = false;
+                        t.building.energy = Math.min(t.building.energy + 1,t.building.maxEnergy);
+                    }
+                    if(t.building.dischargeTimer >= 1){
+                        t.building.dischargeTimer = 0;
+                        t.building.discharging = false;
+
+                        if(surroundingOther.length > 0){
+                            surroundingOther.forEach(tt => tt.building.energy += 1/surroundingOther.length);
+                        } else if(surroundingBatteries.length > 0){
+                            surroundingBatteries.forEach(tt => tt.building.energy += 1/surroundingBatteries.length);
+                        }
+                    }
+                } else {
+                    if(t.building.energy >= 1 && (surroundingOther.length > 0 || surroundingBatteries.length > 0 )){
+                        t.building.energy -= 1;
+                        t.building.discharging = true;
+                    }
+                }
+                if(t.hasPlayer){
+                    ctx.fillText("Energy: " + Math.trunc(t.building.energy),canvas.width - 200,canvas.height - 80);
+                    ctx.fillText("Progress: " + Math.trunc(t.building.dischargeTimer * 100) + "%",canvas.width - 200,canvas.height - 60);
                 }
                 break;
         }
