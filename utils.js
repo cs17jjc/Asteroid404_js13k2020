@@ -182,6 +182,12 @@ function placeBuilding(tile,building){
                 tile.building.dischargeTimer = 0;
                 tile.building.discharging = false;
                 break;
+            case "LAB":
+                tile.building.energy = 0;
+                tile.building.maxEnergy = 10;
+                tile.building.upgradeTimer = 0;
+                tile.building.upgrading = false;
+                break;
         }
         building.value -= 1;
         zzfx(...[,,191,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
@@ -312,7 +318,6 @@ function componentToHex(c) {
                 break;
         }
         heightNumber = Math.max(0,heightNumber);
-        console.log(heightNumber);
         t.height = tileStepHeight * heightNumber;
         t.colour = colours.find(c => c.levels.includes(heightNumber)).colour;
 
@@ -344,11 +349,11 @@ function componentToHex(c) {
         if(Math.random() * 100 > 80 && t.resource.type == "NONE"){
             var resourceAmmount = Math.random() * 15;
             t.resource = {type:"IRON",value:Math.max(5,Math.trunc(resourceAmmount))};
-            getSurroundingTiles(tiles,t).filter(t => 0.3 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"IRON",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
-        } else if(Math.random() * 100 > 95 && t.resource.type == "NONE") {
+            getSurroundingTiles(tiles,t).filter(t => 0.2 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"IRON",value:Math.max(4,Math.trunc(resourceAmmount * Math.random()))});
+        } else if(Math.random() * 100 > 85 && t.resource.type == "NONE") {
             var resourceAmmount = Math.random() * 10;
             t.resource = {type:"COPPER",value:Math.max(5,Math.trunc(resourceAmmount))};
-            getSurroundingTiles(tiles,t).filter(t => 0.3 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"COPPER",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
+            getSurroundingTiles(tiles,t).filter(t => 0.2 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"COPPER",value:Math.max(4,Math.trunc(resourceAmmount * Math.random()))});
         }
     });
 

@@ -10,7 +10,8 @@ var minerImg = document.getElementById("miner");
 var batteryImg = document.getElementById("battery");
 var labImg = document.getElementById("lab");
 
-var recipes = [{product:"CONSTRUCTOR",items:[{type:"IRON",value:5}],energy:2},{product:"RADAR",items:[{type:"IRON",value:7}],energy:4}];
+var recipes = [{product:"UPGRADE_POINTS",items:[{type:"IRON",value:5},{type:"COPPER",value:5}],energy:4}];
+var research = [{unlock:"RADAR_RECIPE",points:5,value:60}]
 
 
 canvas.width = 1280;
@@ -31,10 +32,13 @@ var playerBuildings = [{type:"RADAR",value:1},{type:"SOLAR",value:1},{type:"CONS
 var selectedBuilding = 0;
 var mineFactor = 1;
 var upgradePoints = 0;
+var currentUpgrade = null;
+var upgradeProgress = 0;
 
 var buildMode = false;
 var removeMode = false;
 var settingRecipe = false;
+var settingResearch = false;
 
 var solarOutput = 1;
 var craftSpeed = 1;
@@ -121,7 +125,11 @@ function gameloop(){
                     if(t.building.crafting){
                         t.building.craftTimer += (frameSpeedFactor/10000) * craftSpeed;
                         if(t.building.craftTimer >= 1){
-                            addToPlayerBuildings(t.building.recipe.product,1);
+                            if(t.building.recipe.product == "UPGRADE_POINTS"){
+                                upgradePoints += 1;
+                            } else {
+                                addToPlayerBuildings(t.building.recipe.product,1);
+                            }
                             t.building.crafting = false;
                             t.building.craftTimer = 0;
                         }
@@ -204,6 +212,17 @@ function gameloop(){
                     ctx.fillText("Progress: " + Math.trunc(t.building.dischargeTimer * 100) + "%",canvas.width - 200,canvas.height - 60);
                 }
                 break;
+            case "LAB":
+                if(t.hasPlayer){
+                    if(currentUpgrade != null){
+                        ctx.fillText("Upgrade: " + currentUpgrade.unlock,canvas.width - 200,canvas.height - 100);
+                        ctx.fillText("Progress: " + Math.trunc((upgradeProgress/currentUpgrade.value) * 100) + "%",canvas.width - 200,canvas.height - 60);
+                    } else {
+                        ctx.fillText("Select Upgrade",canvas.width - 200,canvas.height - 100);
+                    }
+                    ctx.fillText("Energy: " + Math.trunc(t.building.energy),canvas.width - 200,canvas.height - 80);
+                }
+                break;
         }
 
     })
@@ -235,9 +254,12 @@ function gameloop(){
     });
 
     ctx.fillStyle = "#FFFFFF";
-    ctx.font = "30px Tahoma";
+    
     ctx.textAlign = "center"; 
     ctx.textBaseline = "middle";
+    ctx.font = "20px Tahoma";
+    ctx.fillText("Upgrade Points:" + upgradePoints,canvas.width/2, canvas.height * 0.97);
+    ctx.font = "30px Tahoma";
     if(buildMode){
         ctx.fillText("Build Mode",canvas.width/2,30);
     }
@@ -255,7 +277,20 @@ function gameloop(){
                 ctx.fillStyle = "#FFFFFF";
             }
             ctx.fillText(r.product,canvas.width/2,60 + 25 * index);
-        })
+        });
+    }
+    if(settingResearch){
+        ctx.fillText("Set Research:",canvas.width/2,30);
+        ctx.font = "20px Tahoma";
+        research.forEach(r => {
+            var index = research.indexOf(r);
+            if(selectedBuilding == index){
+                ctx.fillStyle = "#FFFF00";
+            } else {
+                ctx.fillStyle = "#FFFFFF";
+            }
+            ctx.fillText(r.unlock,canvas.width/2,60 + 25 * index);
+        });
     }
 
     playerResources = playerResources.filter(r => r.value > 0);
@@ -271,10 +306,10 @@ function gameloop(){
 }
 
 function handleInput(){
-    if(inputs.up == false && prevInputs.up == true && !buildMode && !removeMode && !settingRecipe){
+    if(inputs.up == false && prevInputs.up == true && !buildMode && !removeMode && !settingRecipe && !settingResearch){
         updatePlayerPos(tiles,0,-1);
     }
-    if(inputs.down == false && prevInputs.down == true && !buildMode && !removeMode && !settingRecipe){
+    if(inputs.down == false && prevInputs.down == true && !buildMode && !removeMode && !settingRecipe && !settingResearch){
         updatePlayerPos(tiles,0,+1);
     }
     if(inputs.up == false && prevInputs.up == true && buildMode){
@@ -289,11 +324,17 @@ function handleInput(){
     if(inputs.down == false && prevInputs.down == true && settingRecipe){
         selectedBuilding = Math.min(recipes.length - 1,selectedBuilding + 1);
     }
+    if(inputs.up == false && prevInputs.up == true && settingResearch){
+        selectedBuilding = Math.max(0,selectedBuilding - 1);
+    }
+    if(inputs.down == false && prevInputs.down == true && settingResearch){
+        selectedBuilding = Math.min(research.length - 1,selectedBuilding + 1);
+    }
 
-    if(inputs.right == false && prevInputs.right == true && !buildMode && !removeMode && !settingRecipe){
+    if(inputs.right == false && prevInputs.right == true && !buildMode && !removeMode && !settingRecipe && !settingResearch){
         updatePlayerPos(tiles,+1,0);
     }
-    if(inputs.left == false && prevInputs.left == true && !buildMode && !removeMode && !settingRecipe){
+    if(inputs.left == false && prevInputs.left == true && !buildMode && !removeMode && !settingRecipe && !settingResearch){
         updatePlayerPos(tiles,-1,0);
     }
     if(inputs.right == false && prevInputs.right == true && (buildMode || removeMode)){
@@ -330,6 +371,24 @@ function handleInput(){
                         }
                     }
                     break;
+                case "LAB":
+                    if(settingResearch){
+                        var selectedUpgrade = Object.assign({},research[selectedBuilding]);
+                        console.log(selectedUpgrade);
+                        if(selectedUpgrade.points <= upgradePoints){
+                            currentUpgrade = selectedUpgrade;
+                            selectedBuilding = 0;
+                            settingResearch = false;
+                        } else {
+                            selectedBuilding = 0;
+                            settingResearch = false;
+                            messages.unshift({text:"Need " + (selectedUpgrade.points - upgradePoints) + " more upgrade points",time:0});
+                        }
+                    } else if(currentUpgrade == null){
+                        settingResearch = true;
+                        selectedBuilding = 0;
+                    }
+                    break;
                 case "MINER":
                     if(!minerTransmit){
                         playerTile.building.storedItems.forEach(i => {
@@ -352,7 +411,7 @@ function handleInput(){
     }
 
     //If B is pressed and not in any modes and player has buildings
-    if(inputs.build == false && prevInputs.build == true && !removeMode && !buildMode && !settingRecipe && playerBuildings.length > 0){
+    if(inputs.build == false && prevInputs.build == true && !removeMode && !buildMode && !settingRecipe && !settingResearch && playerBuildings.length > 0){
         selectedBuilding = 0;
         buildMode = true;
         interactTiles = getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type == "NONE");
@@ -364,7 +423,7 @@ function handleInput(){
     }
 
     //If R is pressed and not in any modes and player has buildings
-    if(inputs.remove == false && prevInputs.remove == true && !buildMode && !removeMode && !settingRecipe){
+    if(inputs.remove == false && prevInputs.remove == true && !buildMode && !removeMode && !settingRecipe && !settingResearch){
         removeMode = true;
         interactTiles = getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type != "NONE");
         interactTiles.forEach(t => t.highlighted = true);
