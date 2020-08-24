@@ -296,8 +296,8 @@ function componentToHex(c) {
       var size = value/20;
     var lines = [];
     for(var n = 0; n < number;n++){
-        var xOffset = (Math.random() - 0.5) * (tileRadius*0.2);
-        var yOffset = (Math.random() - 0.5) * (tileRadius*perspRatio*0.2);
+        var xOffset = (Math.random() - 0.5) * (tileRadius*0.2) * size;
+        var yOffset = (Math.random() - 0.5) * (tileRadius*0.2) * size;
         lines.unshift(generateBlob(points,size,yOffset,xOffset));
     }
       return lines;

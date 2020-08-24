@@ -12,7 +12,7 @@ var labImg = document.getElementById("lab");
 var rtgImg = document.getElementById("rtg");
 
 var recipes = [{product:"LAB",items:[{type:"IRON",value:10},{type:"COPPER",value:5}],energy:4}];
-var research = [{unlock:"RADAR_RECIPE",points:5,value:30}];
+var research = [{unlock:"RADAR_RECIPE",points:2,value:10}];
 
 
 canvas.width = 1280;
@@ -29,7 +29,7 @@ var interactTiles = [];
 var selectedTile = 0;
 
 var playerResources = [{type:"IRON",value:10}];
-var playerBuildings = [{type:"RTG",value:1},{type:"CONSTRUCTOR",value:2}];
+var playerBuildings = [{type:"RTG",value:1},{type:"CONSTRUCTOR",value:1}];
 var selectedBuilding = 0;
 var mineFactor = 1;
 var upgradePoints = 0;
@@ -145,9 +145,10 @@ function gameloop(){
                             if(t.building.recipe.product == "UPGRADE_POINTS"){
                                 upgradePoints += 1;
                             } else if (t.building.recipe.product == "LAB" && !upgradePointUnlock){
-                                messages.unshift({text:"Upgrade Points Unlocked"});
+                                messages.unshift({text:"Upgrade Points Unlocked",time:0});
                                 upgradePointUnlock = true;
                                 recipes.unshift({product:"UPGRADE_POINTS",items:[{type:"IRON",value:5},{type:"COPPER",value:5}],energy:5});
+                                addToPlayerBuildings(t.building.recipe.product,1);
                             } else {
                                 addToPlayerBuildings(t.building.recipe.product,1);
                             }
@@ -351,7 +352,7 @@ function gameloop(){
 
     playerResources = playerResources.filter(r => r.value > 0);
     playerBuildings = playerBuildings.filter(b => b.value > 0);
-    selectedBuilding = Math.min(playerBuildings.length - 1, selectedBuilding);
+    selectedBuilding = Math.max(0,Math.min(playerBuildings.length - 1, selectedBuilding));
     if(Object.entries(prevInputs).toString() !== Object.entries(inputs).toString()){
         handleInput();
     }
@@ -372,19 +373,19 @@ function handleInput(){
         selectedBuilding = Math.max(0,selectedBuilding - 1);
     }
     if(inputs.down == false && prevInputs.down == true && buildMode){
-        selectedBuilding = Math.min(playerBuildings.length - 1,selectedBuilding + 1);
+        selectedBuilding = Math.max(0,Math.min(playerBuildings.length - 1,selectedBuilding + 1));
     }
     if(inputs.up == false && prevInputs.up == true && settingRecipe){
         selectedBuilding = Math.max(0,selectedBuilding - 1);
     }
     if(inputs.down == false && prevInputs.down == true && settingRecipe){
-        selectedBuilding = Math.min(recipes.length - 1,selectedBuilding + 1);
+        selectedBuilding = Math.max(0,Math.min(recipes.length - 1,selectedBuilding + 1));
     }
     if(inputs.up == false && prevInputs.up == true && settingResearch){
         selectedBuilding = Math.max(0,selectedBuilding - 1);
     }
     if(inputs.down == false && prevInputs.down == true && settingResearch){
-        selectedBuilding = Math.min(research.length - 1,selectedBuilding + 1);
+        selectedBuilding = Math.max(0,Math.min(research.length - 1,selectedBuilding + 1));
     }
 
     if(inputs.right == false && prevInputs.right == true && !buildMode && !removeMode && !settingRecipe && !settingResearch){
@@ -408,7 +409,6 @@ function handleInput(){
                 case "CONSTRUCTOR":
                     if(settingRecipe){
                         playerTile.building.recipe = Object.assign({},recipes[selectedBuilding]);
-                        selectedBuilding = 0;
                         settingRecipe = false;
                     } else if(playerTile.building.recipe == null){
                         settingRecipe = true;
