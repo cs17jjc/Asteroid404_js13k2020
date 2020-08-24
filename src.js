@@ -9,9 +9,10 @@ var solarImg = document.getElementById("solar");
 var minerImg = document.getElementById("miner");
 var batteryImg = document.getElementById("battery");
 var labImg = document.getElementById("lab");
+var rtgImg = document.getElementById("rtg");
 
-var recipes = [{product:"UPGRADE_POINTS",items:[{type:"IRON",value:5},{type:"COPPER",value:5}],energy:4}];
-var research = [{unlock:"RADAR_RECIPE",points:5,value:60}]
+var recipes = [{product:"LAB",items:[{type:"IRON",value:10},{type:"COPPER",value:5}],energy:4}];
+var research = [{unlock:"RADAR_RECIPE",points:5,value:30}];
 
 
 canvas.width = 1280;
@@ -28,7 +29,7 @@ var interactTiles = [];
 var selectedTile = 0;
 
 var playerResources = [{type:"IRON",value:10}];
-var playerBuildings = [{type:"RADAR",value:1},{type:"SOLAR",value:1},{type:"CONSTRUCTOR",value:2},{type:"MINER",value:2},{type:"LAB",value:2},{type:"BATTERY",value:2}];
+var playerBuildings = [{type:"RTG",value:1},{type:"CONSTRUCTOR",value:2}];
 var selectedBuilding = 0;
 var mineFactor = 1;
 var upgradePoints = 0;
@@ -44,9 +45,11 @@ var solarOutput = 1;
 var craftSpeed = 1;
 var minerFactor = 5;
 var mineSpeed = 3;
-var minerTransmit = true;
+var minerTransmit = false;
 var batteryDischarge = 1;
 var upgradeSpeed = 1;
+var RTGOutput = 5;
+var upgradePointUnlock = false;
 
 var time = 0;
 
@@ -91,6 +94,7 @@ function gameloop(){
     if(currentUpgrade != null){
         if(upgradeProgress >= currentUpgrade.value){
             upgradeProgress = 0;
+            messages.unshift({text:"Upgrade " + currentUpgrade.unlock + " completed",time:0});
             switch(currentUpgrade.unlock){
                 case "RADAR_RECIPE":
                     recipes.unshift({product:"RADAR",items:[{type:"IRON",value:10},{type:"COPPER",value:5}],energy:5});
@@ -140,6 +144,10 @@ function gameloop(){
                         if(t.building.craftTimer >= 1){
                             if(t.building.recipe.product == "UPGRADE_POINTS"){
                                 upgradePoints += 1;
+                            } else if (t.building.recipe.product == "LAB" && !upgradePointUnlock){
+                                messages.unshift({text:"Upgrade Points Unlocked"});
+                                upgradePointUnlock = true;
+                                recipes.unshift({product:"UPGRADE_POINTS",items:[{type:"IRON",value:5},{type:"COPPER",value:5}],energy:5});
                             } else {
                                 addToPlayerBuildings(t.building.recipe.product,1);
                             }
@@ -251,6 +259,24 @@ function gameloop(){
                     ctx.fillText("Energy: " + Math.trunc(t.building.energy),canvas.width - 200,canvas.height - 80);
                 }
                 break;
+            case "RTG":
+                var surrounding = getSurroundingTiles(tiles,t).filter(tt => tt.building.energy != null).filter(tt => tt.building.energy != tt.building.maxEnergy);
+                var induvidualEnergy = (RTGOutput / surrounding.length) * (frameSpeedFactor/1000);
+                surrounding.forEach(tt => {
+                    if(tt.building.energy + induvidualEnergy >= tt.building.maxEnergy){
+                        tt.building.energy = tt.building.maxEnergy;
+                    } else {
+                        tt.building.energy += induvidualEnergy;
+                    }
+                });
+                if(t.hasPlayer){
+                    if(surrounding.length > 0){
+                        ctx.fillText("Energy Output Per Tile: " + induvidualEnergy.toFixed(2),canvas.width - 200,canvas.height - 100);
+                    } else {
+                        ctx.fillText("No tiles need power",canvas.width - 200,canvas.height - 100);
+                    }
+                }
+                break;
         }
 
     })
@@ -285,8 +311,10 @@ function gameloop(){
     
     ctx.textAlign = "center"; 
     ctx.textBaseline = "middle";
-    ctx.font = "20px Tahoma";
-    ctx.fillText("Upgrade Points:" + upgradePoints,canvas.width/2, canvas.height * 0.97);
+    if(upgradePointUnlock){
+        ctx.font = "20px Tahoma";
+        ctx.fillText("Upgrade Points:" + upgradePoints,canvas.width/2, canvas.height * 0.97);
+    }
     ctx.font = "30px Tahoma";
     if(buildMode){
         ctx.fillText("Build Mode",canvas.width/2,30);
@@ -384,6 +412,7 @@ function handleInput(){
                         settingRecipe = false;
                     } else if(playerTile.building.recipe == null){
                         settingRecipe = true;
+                        selectedBuilding = 0;
                     } else {
                         var recipeItems = playerTile.building.recipe.items;
                         if(recipeItems.filter(i => playerResources.some(ii => ii.type == i.type && ii.value >= i.value)).length == recipeItems.length){

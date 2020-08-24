@@ -28,10 +28,10 @@ function drawHexTile(context, scrX, scrY, tile){
         var resourceColour = null;
         switch(tile.resource.type){
             case "IRON":
-                resourceColour = new Colour(170,86,71,255);
+                resourceColour = new Colour(165,42,42,255);
                 break;
             case "COPPER":
-                resourceColour = new Colour(184,115,52,255);
+                resourceColour = new Colour(184,115,51,255);
                 break;
             case "CARBON":
                 resourceColour = new Colour(18,18,18,255);
@@ -105,8 +105,11 @@ function renderMap(context,tiles){
                     context.drawImage(labImg,Math.trunc(scrX - labImg.width/2),Math.trunc(scrY - labImg.height*0.45));
                     break;
                 case "BATTERY":
-                    context.drawImage(batteryImg,Math.trunc(scrX - batteryImg.width/2),Math.trunc(scrY - batteryImg.height*0.5));
+                    context.drawImage(batteryImg,Math.trunc(scrX - batteryImg.width/2),Math.trunc(scrY - batteryImg.height*0.6));
                     break;
+                case "RTG":
+                        context.drawImage(rtgImg,Math.trunc(scrX - rtgImg.width/2),Math.trunc(scrY - rtgImg.height*0.6));
+                        break;
                 default:
                     break;
             }
@@ -152,7 +155,7 @@ function mineTile(tile){
         } 
         else {
             tile.resource.value -= 1;
-            tile.resource.lines = generateResourcePoints(tile.resource.value/20);
+            tile.resource.lines = generateResourcePoints(tile.resource.value,tile.resource.type);
         }
         return {type:type,value:1};
     } else {
@@ -287,20 +290,37 @@ function componentToHex(c) {
       });
   }
 
-  function generateResourcePoints(size){
-      var lines = [];
-      var angles = [];
+  function generateResourcePoints(value,type){
       var points = 7;
-      for(var i = 0; i < points;i++){
-          angles.unshift(i * ((Math.PI*2)/points));
-      }
-      angles.forEach(a => {
-          var x = Math.cos(a) * size * tileRadius + Math.random() * 5;
-          var y = Math.sin(a) * size * tileRadius * perspRatio + Math.random() * 5;
-          lines.unshift({x:x,y:y});
-      });
-      return [lines];
+      var number = 1;
+      var size = value/20;
+    var lines = [];
+    for(var n = 0; n < number;n++){
+        var xOffset = (Math.random() - 0.5) * (tileRadius*0.2);
+        var yOffset = (Math.random() - 0.5) * (tileRadius*perspRatio*0.2);
+        lines.unshift(generateBlob(points,size,yOffset,xOffset));
+    }
+      return lines;
   }
+
+  function generateBlob(points,size,xOffset,yOffset){
+    var curLines = []
+    var angles = [];
+    for(var i = 0; i < points;i++){
+        angles.unshift(i * ((Math.PI*2)/points));
+    }
+    angles.forEach(a => {
+        var x = xOffset + (Math.cos(a) * size * tileRadius + (Math.random() * 15 * size));
+        var y = yOffset + (Math.sin(a) * size * (tileRadius*perspRatio) + (Math.random() * 15 * size));
+        x = Math.min(tileRadius * 0.6 - 5,x);
+        x = Math.max(-tileRadius * 0.6 + 5,x);
+        y = Math.min(tileRadius * perspRatio - 5,y);
+        y = Math.max(-tileRadius * perspRatio + 5,y);
+        curLines.unshift({x:x,y:y});
+    });
+    return curLines;
+  }
+
 
   function generateMap(width,biomeSeq,colours){
 
@@ -370,12 +390,12 @@ function componentToHex(c) {
             t.resource = {type:"IRON",value:Math.max(5,Math.trunc(resourceAmmount))};
             getSurroundingTiles(tiles,t).filter(t => 0.2 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"IRON",value:Math.max(4,Math.trunc(resourceAmmount * Math.random()))});
         } else if(Math.random() * 100 > 85 && t.resource.type == "NONE") {
-            var resourceAmmount = Math.random() * 10;
+            var resourceAmmount = Math.random() * 15;
             t.resource = {type:"COPPER",value:Math.max(5,Math.trunc(resourceAmmount))};
             getSurroundingTiles(tiles,t).filter(t => 0.2 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"COPPER",value:Math.max(4,Math.trunc(resourceAmmount * Math.random()))});
         }
     });
-    tiles.filter(t => t.resource.type != "NONE").forEach(t => t.resource.lines = generateResourcePoints(t.resource.value/20));
+    tiles.filter(t => t.resource.type != "NONE").forEach(t => t.resource.lines = generateResourcePoints(t.resource.value,t.resource.type));
 
     return tiles;
   }
