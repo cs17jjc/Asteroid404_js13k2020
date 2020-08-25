@@ -10,19 +10,7 @@ let radarRange = 5;
 
 function drawHexTile(context, scrX, scrY, tile){
 
-    var screenPoints = []
-    for(var offset = 0; offset < offsets.length;offset++){
-        screenPoints.unshift({x:scrX + tileRadius * offsets[offset].x,y:scrY + tileRadius * offsets[offset].y * perspRatio});
-    }
-
-    context.beginPath();
-    context.moveTo(screenPoints[0].x,screenPoints[0].y);
-    for(var points = 1; points < screenPoints.length;points++){
-            context.lineTo(screenPoints[points].x,screenPoints[points].y);
-    }
-    context.closePath();
-    context.fill();
-    context.stroke();
+    drawHexagon(context,scrX,scrY);
 
     if(tile.isVisible && tile.resource.type != "NONE"){
         var resourceColour = null;
@@ -175,6 +163,7 @@ function placeBuilding(tile,building){
                 tile.building.maxEnergy = 10;
                 tile.building.crafting = false;
                 tile.building.craftTimer = 0;
+                tile.building.storedProduct = 0;
                 break;
             case "MINER":
                 tile.building.storedItems = [];
@@ -206,6 +195,9 @@ function removeBuilding(tile){
     if(tile.building.type != "NONE"){
         if(tile.building.storedItems != null){
             tile.building.storedItems.forEach(i => addToPlayerResources(i.type,i.value));
+        }
+        if(tile.building.storedProduct != null && tile.building.storedProduct > 0){
+            addToPlayerBuildings(tile.building.recipe.product,tile.building.storedProduct);
         }
         switch(tile.building.type){
             case "RADAR":
@@ -256,6 +248,22 @@ function addToBuildingStorage(buildingStorage,type,ammount){
     } else {
         buildingStorage.push({type:type,value:ammount});
     }
+}
+
+function drawHexagon(context,scrX,scrY){
+    var screenPoints = []
+    for(var offset = 0; offset < offsets.length;offset++){
+        screenPoints.unshift({x:scrX + tileRadius * offsets[offset].x,y:scrY + tileRadius * offsets[offset].y * perspRatio});
+    }
+
+    context.beginPath();
+    context.moveTo(screenPoints[0].x,screenPoints[0].y);
+    for(var points = 1; points < screenPoints.length;points++){
+            context.lineTo(screenPoints[points].x,screenPoints[points].y);
+    }
+    context.closePath();
+    context.fill();
+    context.stroke();
 }
 
 function componentToHex(c) {

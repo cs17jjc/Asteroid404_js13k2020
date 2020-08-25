@@ -28,7 +28,7 @@ var messages = [];
 var interactTiles = [];
 var selectedTile = 0;
 
-var playerResources = [{type:"IRON",value:10}];
+var playerResources = [];
 var playerBuildings = [{type:"RTG",value:1},{type:"CONSTRUCTOR",value:1}];
 var selectedBuilding = 0;
 var mineFactor = 1;
@@ -46,12 +46,17 @@ var craftSpeed = 1;
 var minerFactor = 5;
 var mineSpeed = 3;
 var minerTransmit = false;
+var constructorTransmit = false;
 var batteryDischarge = 1;
 var upgradeSpeed = 1;
 var RTGOutput = 5;
 var upgradePointUnlock = false;
 
 var time = 0;
+var sols = 0;
+
+var stars = Array.from(Array(500).keys()).map(i => {return {x:(Math.random() * 2 * canvas.width) - canvas.width,y:(Math.random() * 2 * canvas.height) - canvas.height,r:Math.random() * 3}});
+var starSpeed = 35;
 
 noise.seed(Math.random());
 
@@ -86,10 +91,21 @@ tiles = generateMap(mapWidth,biomeSeq,marsColourScheme);
 placeBuilding(tiles.find(t => t.x == 550 && t.y == 2),{type:"RADAR",value:1});
 updatePlayerPos(tiles,0,0);
 var millisOnLastFrame = new Date().getTime();
+var frameSpeedFactor = 0;
 function gameloop(){
-    var frameSpeedFactor = new Date().getTime() - millisOnLastFrame;
+    frameSpeedFactor = new Date().getTime() - millisOnLastFrame;
     ctx.fillStyle = "#000000";
     ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight);
+    ctx.fillStyle = "#FFFFF0";
+    ctx.save();
+    ctx.translate(canvas.width/2,canvas.height/2);
+    ctx.rotate((Math.PI/180) * ((sols * 360) + time));
+    stars.forEach(s => {
+        ctx.beginPath();
+        ctx.arc(s.x,s.y,s.r,0, 2 * Math.PI);
+        ctx.fill();
+    });
+    ctx.restore();
 
     if(currentUpgrade != null){
         if(upgradeProgress >= currentUpgrade.value){
@@ -98,6 +114,27 @@ function gameloop(){
             switch(currentUpgrade.unlock){
                 case "RADAR_RECIPE":
                     recipes.unshift({product:"RADAR",items:[{type:"IRON",value:10},{type:"COPPER",value:5}],energy:5});
+                    research = research.filter(r => r.unlock == "RADAR_RECIPE");
+                    research.unshift({unlock:"CONSTRUCTOR_RECIPE",points:4,value:8});
+                    break;
+                case "CONSTRUCTOR_RECIPE":
+                    recipes.unshift({product:"CONSTRUCTOR",items:[{type:"IRON",value:15},{type:"COPPER",value:15}],energy:5});
+                    research = research.filter(r => r.unlock == "CONSTRUCTOR_RECIPE");
+                    research.unshift({unlock:"MINE_EFFICIENCY",points:8,value:15});
+                    break;
+                case "MINE_EFFICIENCY1":
+                    mineFactor += 0.5;
+                    research = research.find(r => r.unlock == "MINE_EFFICIENCY1");
+                    research.unshift({unlock:"MINE_EFFICIENCY2",points:16,value:30});
+                    break;
+                case "MINE_EFFICIENCY2":
+                    mineFactor += 0.5;
+                    research = research.find(r => r.unlock == "MINE_EFFICIENCY2");
+                    research.unshift({unlock:"MINER_RECIPE",points:25,value:30});
+                    break;
+                case "MINER_RECIPE":
+                    recipes.unshift({product:"MINER",items:[{type:"IRON",value:20},{type:"COPPER",value:15},{type:"CARBON",value:15}],energy:10});
+                    research = research.find(r => r.unlock == "MINER_RECIPE");
                     break;
             }
             currentUpgrade = null;
@@ -110,177 +147,7 @@ function gameloop(){
     ctx.textAlign = "start"; 
     ctx.textBaseline = "alphabetic";
     //Tile updates
-    tiles.filter(t => t.isVisible && t.building.type != "NONE").forEach(t => {
-
-        switch(t.building.type){
-            case "SOLAR":
-                var surrounding = getSurroundingTiles(tiles,t).filter(tt => tt.building.energy != null).filter(tt => tt.building.energy != tt.building.maxEnergy);
-                var totalEnergy = solarOutput * Math.max(0.1,Math.sin(time * Math.PI/180));
-                var induvidualEnergy = (totalEnergy / surrounding.length) * (frameSpeedFactor/1000);
-                surrounding.forEach(tt => {
-                    if(tt.building.energy + induvidualEnergy >= tt.building.maxEnergy){
-                        tt.building.energy = tt.building.maxEnergy;
-                    } else {
-                        tt.building.energy += induvidualEnergy;
-                    }
-                });
-                if(t.hasPlayer){
-                    ctx.fillText("Energy Output: " + totalEnergy.toFixed(2),canvas.width - 200,canvas.height - 100);
-                }
-                break;
-            case "CONSTRUCTOR":
-                if(t.building.recipe != null){
-                    if(t.building.recipe.energy <= t.building.energy){
-                        var buildingItems = t.building.storedItems;
-                        var recipeItems = t.building.recipe.items;
-                        if(recipeItems.filter(i => buildingItems.some(ii => ii.type == i.type && ii.value >= i.value)).length == recipeItems.length && !t.building.crafting){
-                            buildingItems.forEach(i => i.value -= recipeItems.find(ii => ii.type == i.type).value);
-                            t.building.crafting = true;
-                            t.building.energy -= t.building.recipe.energy;
-                        }
-                    }
-                    if(t.building.crafting){
-                        t.building.craftTimer += (frameSpeedFactor/10000) * craftSpeed;
-                        if(t.building.craftTimer >= 1){
-                            if(t.building.recipe.product == "UPGRADE_POINTS"){
-                                upgradePoints += 1;
-                            } else if (t.building.recipe.product == "LAB" && !upgradePointUnlock){
-                                messages.unshift({text:"Upgrade Points Unlocked",time:0});
-                                upgradePointUnlock = true;
-                                recipes.unshift({product:"UPGRADE_POINTS",items:[{type:"IRON",value:5},{type:"COPPER",value:5}],energy:5});
-                                addToPlayerBuildings(t.building.recipe.product,1);
-                            } else {
-                                addToPlayerBuildings(t.building.recipe.product,1);
-                            }
-                            t.building.crafting = false;
-                            t.building.craftTimer = 0;
-                        }
-                    }
-                    if(t.hasPlayer){
-                        ctx.fillText("Recipe: " + t.building.recipe.product,canvas.width - 200,canvas.height - 100);
-                        ctx.fillText("Energy: " + Math.trunc(t.building.energy),canvas.width - 200,canvas.height - 80);
-                        ctx.fillText("Progress: " + Math.trunc(t.building.craftTimer * 100) + "%",canvas.width - 200,canvas.height - 60);
-                    }
-                }
-                t.building.storedItems = t.building.storedItems.filter(i => i.value > 0);
-                break;
-            case "MINER":
-                if(!t.building.mining){
-                    if(t.building.energy >= minerFactor && t.resource.type != "NONE"){
-                        t.building.energy -= minerFactor;
-                        t.building.mining = true;
-                    }
-                } else{
-                    t.building.mineTimer += (frameSpeedFactor/50000) * mineSpeed;
-                    if(t.building.mineTimer >= 1){
-                        addToBuildingStorage(t.building.storedItems,t.resource.type,minerFactor);
-                        mineTile(t);
-                        t.building.mining = false;
-                        t.building.mineTimer = 0;
-                    }
-                }
-                if(minerTransmit){
-                    t.building.storedItems.forEach(i => {
-                        addToPlayerResources(i.type,i.value);
-                        i.value = 0;
-                    });
-                    t.building.storedItems = [];
-                }
-                if(t.hasPlayer){
-                    ctx.fillText("Energy: " + Math.trunc(t.building.energy),canvas.width - 200,canvas.height - 80);
-                    ctx.fillText("Progress: " + Math.trunc(t.building.mineTimer * 100) + "%",canvas.width - 200,canvas.height - 60);
-                    if(minerTransmit){
-                        ctx.fillText("Transmiting resources",canvas.width - 200,canvas.height - 40);
-                    } else {
-                        ctx.fillText("Contains: ",canvas.width - 200,canvas.height - 40);
-                        t.building.storedItems.forEach(i =>ctx.fillText(i.value + " units of " + i.type,canvas.width - 200,canvas.height - 20));
-                    }
-                }
-                break;
-            case "RADAR":
-                if(t.hasPlayer){
-                    ctx.fillText("Total Coverage: " + (100 * tiles.filter(tt => tt.isVisible).length / tiles.length).toFixed(2) + "%",canvas.width - 200,canvas.height - 80);
-                }
-                break;
-            case "BATTERY":
-                var surrounding = getSurroundingTiles(tiles,t).filter(tt => tt.building.energy != null).filter(tt => tt.building.energy != tt.building.maxEnergy);
-                var surroundingBatteries = surrounding.filter(tt => tt.building.type == "BATTERY").filter(tt => tt.building.energy + 1 < t.building.energy);
-                var surroundingOther = surrounding.filter(tt => tt.building.type != "BATTERY");
-                if(t.building.discharging){
-                    t.building.dischargeTimer += (frameSpeedFactor/10000) * batteryDischarge;
-                    if(surrounding.length == 0){
-                        t.building.dischargeTimer = 0;
-                        t.building.discharging = false;
-                        t.building.energy = Math.min(t.building.energy + 1,t.building.maxEnergy);
-                    }
-                    if(t.building.dischargeTimer >= 1){
-                        t.building.dischargeTimer = 0;
-                        t.building.discharging = false;
-
-                        if(surroundingOther.length > 0){
-                            surroundingOther.forEach(tt => tt.building.energy += 1/surroundingOther.length);
-                        } else if(surroundingBatteries.length > 0){
-                            surroundingBatteries.forEach(tt => tt.building.energy += 1/surroundingBatteries.length);
-                        }
-                    }
-                } else {
-                    if(t.building.energy >= 1 && (surroundingOther.length > 0 || surroundingBatteries.length > 0 )){
-                        t.building.energy -= 1;
-                        t.building.discharging = true;
-                    }
-                }
-                if(t.hasPlayer){
-                    ctx.fillText("Energy: " + Math.trunc(t.building.energy),canvas.width - 200,canvas.height - 80);
-                    ctx.fillText("Progress: " + Math.trunc(t.building.dischargeTimer * 100) + "%",canvas.width - 200,canvas.height - 60);
-                }
-                break;
-            case "LAB":
-                if(t.building.upgrading){
-                    t.building.upgradeTimer += (frameSpeedFactor/10000) * upgradeSpeed;
-                    if(t.building.upgradeTimer >= 1){
-                        upgradeProgress += 1;
-                        t.building.upgrading = false;
-                        t.building.upgradeTimer = 0;
-                    } else if(currentUpgrade == null){
-                        t.building.upgrading = false;
-                        t.building.upgradeTimer = 0;
-                    }
-                }
-                if(t.building.energy >= 1 && !t.building.upgrading){
-                    t.building.energy -= 1;
-                    t.building.upgrading = true;
-                }
-                if(t.hasPlayer){
-                    if(currentUpgrade != null){
-                        ctx.fillText("Upgrade: " + currentUpgrade.unlock,canvas.width - 200,canvas.height - 100);
-                        ctx.fillText("Progress: " + Math.trunc((upgradeProgress/currentUpgrade.value) * 100) + "%",canvas.width - 200,canvas.height - 60);
-                    } else {
-                        ctx.fillText("Select Upgrade",canvas.width - 200,canvas.height - 100);
-                    }
-                    ctx.fillText("Energy: " + Math.trunc(t.building.energy),canvas.width - 200,canvas.height - 80);
-                }
-                break;
-            case "RTG":
-                var surrounding = getSurroundingTiles(tiles,t).filter(tt => tt.building.energy != null).filter(tt => tt.building.energy != tt.building.maxEnergy);
-                var induvidualEnergy = (RTGOutput / surrounding.length) * (frameSpeedFactor/1000);
-                surrounding.forEach(tt => {
-                    if(tt.building.energy + induvidualEnergy >= tt.building.maxEnergy){
-                        tt.building.energy = tt.building.maxEnergy;
-                    } else {
-                        tt.building.energy += induvidualEnergy;
-                    }
-                });
-                if(t.hasPlayer){
-                    if(surrounding.length > 0){
-                        ctx.fillText("Energy Output Per Tile: " + induvidualEnergy.toFixed(2),canvas.width - 200,canvas.height - 100);
-                    } else {
-                        ctx.fillText("No tiles need power",canvas.width - 200,canvas.height - 100);
-                    }
-                }
-                break;
-        }
-
-    })
+    tiles.filter(t => t.isVisible && t.building.type != "NONE").forEach(t => handleTileUpdates(t));
 
     renderMap(ctx,tiles);
     
@@ -352,12 +219,27 @@ function gameloop(){
 
     playerResources = playerResources.filter(r => r.value > 0);
     playerBuildings = playerBuildings.filter(b => b.value > 0);
-    selectedBuilding = Math.max(0,Math.min(playerBuildings.length - 1, selectedBuilding));
+
+    //Reset modes
+    if(buildMode && (playerBuildings.length == 0 || !interactTiles.some(t => t.building.type == "NONE"))){
+        selectedTile = 0;
+        buildMode = false;
+        interactTiles = [];
+    }
+    if(removeMode && !interactTiles.some(t => t.building.type != "NONE")){
+        selectedTile = 0;
+        removeMode = false;
+        interactTiles = [];
+    }
+
     if(Object.entries(prevInputs).toString() !== Object.entries(inputs).toString()){
         handleInput();
     }
     prevInputs = Object.assign({},inputs);
     time += (frameSpeedFactor/1000);
+    if(time >= 360){
+        sols += 1;
+    }
     time = time >= 360 ? 0 : time;
     millisOnLastFrame = new Date().getTime();
 }
@@ -385,7 +267,7 @@ function handleInput(){
         selectedBuilding = Math.max(0,selectedBuilding - 1);
     }
     if(inputs.down == false && prevInputs.down == true && settingResearch){
-        selectedBuilding = Math.max(0,Math.min(research.length - 1,selectedBuilding + 1));
+        selectedBuilding = Math.min(research.length - 1,selectedBuilding + 1);
     }
 
     if(inputs.right == false && prevInputs.right == true && !buildMode && !removeMode && !settingRecipe && !settingResearch){
@@ -414,6 +296,7 @@ function handleInput(){
                         settingRecipe = true;
                         selectedBuilding = 0;
                     } else {
+                        if(playerTile.building.storedProduct == 0) {
                         var recipeItems = playerTile.building.recipe.items;
                         if(recipeItems.filter(i => playerResources.some(ii => ii.type == i.type && ii.value >= i.value)).length == recipeItems.length){
                             playerResources.forEach(i => {
@@ -426,6 +309,10 @@ function handleInput(){
                         } else {
                             messages.unshift({text:"Not enough resources",time:0});
                         }
+                    } else {
+                        addToPlayerBuildings(playerTile.building.recipe.product,playerTile.building.storedProduct);
+                        playerTile.building.storedProduct = 0;
+                    }
                     }
                     break;
                 case "LAB":
@@ -496,11 +383,6 @@ function handleInput(){
         interactTiles[selectedTile].highlighted = false;
         interactTiles = interactTiles.filter(t => t != interactTiles[selectedTile]);
         selectedTile = Math.min(interactTiles.length - 1, selectedTile);
-        if(playerBuildings.length == 1 || !interactTiles.some(t => t.building.type == "NONE")){
-            selectedTile = 0;
-            buildMode = false;
-            interactTiles = [];
-        }
     }
     //If E is pressed and in remove mode and buildings
     if(removeMode && inputs.inter == false && prevInputs.inter == true && interactTiles.some(t => t.building.type != "NONE")){
@@ -508,11 +390,182 @@ function handleInput(){
         interactTiles[selectedTile].highlighted = false;
         interactTiles = interactTiles.filter(t => t != interactTiles[selectedTile]);
         selectedTile = Math.min(interactTiles.length - 1, selectedTile);
-        if(!interactTiles.some(t => t.building.type != "NONE")){
-            selectedTile = 0;
-            removeMode = false;
-            interactTiles = [];
-        }
+    }
+}
+
+function handleTileUpdates(t){
+    switch(t.building.type){
+        case "SOLAR":
+            var surrounding = getSurroundingTiles(tiles,t).filter(tt => tt.building.energy != null).filter(tt => tt.building.energy != tt.building.maxEnergy);
+            var totalEnergy = solarOutput * Math.max(0.1,Math.sin(time * Math.PI/180));
+            var induvidualEnergy = (totalEnergy / surrounding.length) * (frameSpeedFactor/1000);
+            surrounding.forEach(tt => {
+                if(tt.building.energy + induvidualEnergy >= tt.building.maxEnergy){
+                    tt.building.energy = tt.building.maxEnergy;
+                } else {
+                    tt.building.energy += induvidualEnergy;
+                }
+            });
+            if(t.hasPlayer){
+                ctx.fillText("Energy Output: " + totalEnergy.toFixed(2),canvas.width - 200,canvas.height - 100);
+            }
+            break;
+        case "CONSTRUCTOR":
+            if(t.building.recipe != null){
+                if(t.building.recipe.energy <= t.building.energy){
+                    var buildingItems = t.building.storedItems;
+                    var recipeItems = t.building.recipe.items;
+                    if(recipeItems.filter(i => buildingItems.some(ii => ii.type == i.type && ii.value >= i.value)).length == recipeItems.length && !t.building.crafting){
+                        buildingItems.forEach(i => i.value -= recipeItems.find(ii => ii.type == i.type).value);
+                        t.building.crafting = true;
+                        t.building.energy -= t.building.recipe.energy;
+                    }
+                }
+                if(t.building.crafting){
+                    t.building.craftTimer += (frameSpeedFactor/10000) * craftSpeed;
+                    if(t.building.craftTimer >= 1){
+                        if(t.building.recipe.product == "UPGRADE_POINTS"){
+                            upgradePoints += 1;
+                        } else if (t.building.recipe.product == "LAB" && !upgradePointUnlock){
+                            messages.unshift({text:"Upgrade Points Unlocked",time:0});
+                            upgradePointUnlock = true;
+                            recipes.unshift({product:"UPGRADE_POINTS",items:[{type:"IRON",value:5},{type:"COPPER",value:5}],energy:5});
+                            t.building.storedProduct += 1;
+                        } else {
+                            if(constructorTransmit){
+                                addToPlayerBuildings(t.building.recipe.product,t.building.recipe.storedProduct);
+                                t.building.storedProduct = 0;
+                            } else {
+                                t.building.storedProduct += 1;
+                            }
+                        }
+                        t.building.crafting = false;
+                        t.building.craftTimer = 0;
+                    }
+                }
+                if(t.hasPlayer){
+                    ctx.fillText("Recipe: " + t.building.recipe.product,canvas.width - 200,canvas.height - 100);
+                    ctx.fillText("Energy: " + Math.trunc(t.building.energy),canvas.width - 200,canvas.height - 80);
+                    ctx.fillText("Progress: " + Math.trunc(t.building.craftTimer * 100) + "%",canvas.width - 200,canvas.height - 60);
+                    ctx.fillText("Stored: " + t.building.storedProduct,canvas.width - 200,canvas.height - 40);
+                }
+            }
+            t.building.storedItems = t.building.storedItems.filter(i => i.value > 0);
+            break;
+        case "MINER":
+            if(!t.building.mining){
+                if(t.building.energy >= minerFactor && t.resource.type != "NONE"){
+                    t.building.energy -= minerFactor;
+                    t.building.mining = true;
+                }
+            } else{
+                t.building.mineTimer += (frameSpeedFactor/50000) * mineSpeed;
+                if(t.building.mineTimer >= 1){
+                    addToBuildingStorage(t.building.storedItems,t.resource.type,minerFactor);
+                    mineTile(t);
+                    t.building.mining = false;
+                    t.building.mineTimer = 0;
+                }
+            }
+            if(minerTransmit){
+                t.building.storedItems.forEach(i => {
+                    addToPlayerResources(i.type,i.value);
+                    i.value = 0;
+                });
+                t.building.storedItems = [];
+            }
+            if(t.hasPlayer){
+                ctx.fillText("Energy: " + Math.trunc(t.building.energy),canvas.width - 200,canvas.height - 80);
+                ctx.fillText("Progress: " + Math.trunc(t.building.mineTimer * 100) + "%",canvas.width - 200,canvas.height - 60);
+                if(minerTransmit){
+                    ctx.fillText("Transmiting resources",canvas.width - 200,canvas.height - 40);
+                } else {
+                    ctx.fillText("Contains: ",canvas.width - 200,canvas.height - 40);
+                    t.building.storedItems.forEach(i =>ctx.fillText(i.value + " units of " + i.type,canvas.width - 200,canvas.height - 20));
+                }
+            }
+            break;
+        case "RADAR":
+            if(t.hasPlayer){
+                ctx.fillText("Total Coverage: " + (100 * tiles.filter(tt => tt.isVisible).length / tiles.length).toFixed(2) + "%",canvas.width - 200,canvas.height - 80);
+            }
+            break;
+        case "BATTERY":
+            var surrounding = getSurroundingTiles(tiles,t).filter(tt => tt.building.energy != null).filter(tt => tt.building.energy != tt.building.maxEnergy);
+            var surroundingBatteries = surrounding.filter(tt => tt.building.type == "BATTERY").filter(tt => tt.building.energy + 1 < t.building.energy);
+            var surroundingOther = surrounding.filter(tt => tt.building.type != "BATTERY");
+            if(t.building.discharging){
+                t.building.dischargeTimer += (frameSpeedFactor/10000) * batteryDischarge;
+                if(surrounding.length == 0){
+                    t.building.dischargeTimer = 0;
+                    t.building.discharging = false;
+                    t.building.energy = Math.min(t.building.energy + 1,t.building.maxEnergy);
+                }
+                if(t.building.dischargeTimer >= 1){
+                    t.building.dischargeTimer = 0;
+                    t.building.discharging = false;
+
+                    if(surroundingOther.length > 0){
+                        surroundingOther.forEach(tt => tt.building.energy += 1/surroundingOther.length);
+                    } else if(surroundingBatteries.length > 0){
+                        surroundingBatteries.forEach(tt => tt.building.energy += 1/surroundingBatteries.length);
+                    }
+                }
+            } else {
+                if(t.building.energy >= 1 && (surroundingOther.length > 0 || surroundingBatteries.length > 0 )){
+                    t.building.energy -= 1;
+                    t.building.discharging = true;
+                }
+            }
+            if(t.hasPlayer){
+                ctx.fillText("Energy: " + Math.trunc(t.building.energy),canvas.width - 200,canvas.height - 80);
+                ctx.fillText("Progress: " + Math.trunc(t.building.dischargeTimer * 100) + "%",canvas.width - 200,canvas.height - 60);
+            }
+            break;
+        case "LAB":
+            if(t.building.upgrading){
+                t.building.upgradeTimer += (frameSpeedFactor/10000) * upgradeSpeed;
+                if(t.building.upgradeTimer >= 1){
+                    upgradeProgress += 1;
+                    t.building.upgrading = false;
+                    t.building.upgradeTimer = 0;
+                } else if(currentUpgrade == null){
+                    t.building.upgrading = false;
+                    t.building.upgradeTimer = 0;
+                }
+            }
+            if(t.building.energy >= 1 && !t.building.upgrading && currentUpgrade != null){
+                t.building.energy -= 1;
+                t.building.upgrading = true;
+            }
+            if(t.hasPlayer){
+                if(currentUpgrade != null){
+                    ctx.fillText("Upgrade: " + currentUpgrade.unlock,canvas.width - 200,canvas.height - 100);
+                    ctx.fillText("Progress: " + Math.trunc((upgradeProgress/currentUpgrade.value) * 100) + "% " + ".".repeat(t.building.upgradeTimer * 5),canvas.width - 200,canvas.height - 60);
+                } else {
+                    ctx.fillText("Select Upgrade",canvas.width - 200,canvas.height - 100);
+                }
+                ctx.fillText("Energy: " + Math.trunc(t.building.energy),canvas.width - 200,canvas.height - 80);
+            }
+            break;
+        case "RTG":
+            var surrounding = getSurroundingTiles(tiles,t).filter(tt => tt.building.energy != null).filter(tt => tt.building.energy != tt.building.maxEnergy);
+            var induvidualEnergy = (RTGOutput / surrounding.length) * (frameSpeedFactor/1000);
+            surrounding.forEach(tt => {
+                if(tt.building.energy + induvidualEnergy >= tt.building.maxEnergy){
+                    tt.building.energy = tt.building.maxEnergy;
+                } else {
+                    tt.building.energy += induvidualEnergy;
+                }
+            });
+            if(t.hasPlayer){
+                if(surrounding.length > 0){
+                    ctx.fillText("Energy Output Per Tile: " + induvidualEnergy.toFixed(2),canvas.width - 200,canvas.height - 100);
+                } else {
+                    ctx.fillText("No tiles need power",canvas.width - 200,canvas.height - 100);
+                }
+            }
+            break;
     }
 }
 
@@ -570,3 +623,17 @@ document.addEventListener('keyup', (event) => {
 setInterval(gameloop,50);
 document.onmousemove = (e) => mousePosition = {x:e.clientX - canvas.getBoundingClientRect().left,y:e.clientY - canvas.getBoundingClientRect().top};
 
+//TODO
+
+/*
+Display constructor recipe
+
+Objectives
+Building animations when not idle
+Refine overall terrain generation
+Loading/Saving
+Title screen
+Esc menu screen
+Mute/Unmute sound fx
+Refine HUD
+*/
