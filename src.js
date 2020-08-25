@@ -56,7 +56,6 @@ var time = 0;
 var sols = 0;
 
 var stars = Array.from(Array(500).keys()).map(i => {return {x:(Math.random() * 2 * canvas.width) - canvas.width,y:(Math.random() * 2 * canvas.height) - canvas.height,r:Math.random() * 3}});
-var starSpeed = 35;
 
 noise.seed(Math.random());
 

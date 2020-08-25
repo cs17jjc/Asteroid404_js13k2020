@@ -90,7 +90,7 @@ function renderMap(context,tiles){
                     context.drawImage(minerImg,Math.trunc(scrX - minerImg.width/2),Math.trunc(scrY - minerImg.height*0.8));
                     break;
                 case "LAB":
-                    context.drawImage(labImg,Math.trunc(scrX - labImg.width/2),Math.trunc(scrY - labImg.height*0.45));
+                    context.drawImage(labImg,Math.trunc(scrX - labImg.width/2),Math.trunc(scrY - labImg.height*0.6));
                     break;
                 case "BATTERY":
                     context.drawImage(batteryImg,Math.trunc(scrX - batteryImg.width/2),Math.trunc(scrY - batteryImg.height*0.6));
