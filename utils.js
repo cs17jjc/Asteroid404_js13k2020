@@ -117,7 +117,7 @@ function renderMap(context,tiles){
     });
     var playerTile = visableTiles.find(t => t.hasPlayer);
     var playerTileCoords = screenCoords[visableTiles.indexOf(playerTile)];
-    context.drawImage(roverImg,playerTileCoords.x - Math.trunc(roverImg.width*roverImgScale/2),Math.trunc(playerTileCoords.y - (roverImg.height*roverImgScale/2) - 10 + (Math.sin(millisOnLastFrame/300) * 2.5)),Math.trunc(roverImg.width*roverImgScale),Math.trunc(roverImg.height*roverImgScale));
+    context.drawImage(roverImg,playerTileCoords.x - Math.trunc(roverImg.width*roverImgScale/2),Math.trunc(playerTileCoords.y - (roverImg.height*roverImgScale/2) - 10 + Math.sin(180 * time * (Math.PI/180)) * 4),Math.trunc(roverImg.width*roverImgScale),Math.trunc(roverImg.height*roverImgScale));
 }
 function updatePlayerPos(tiles,deltaX,deltaY){
     var playerTile = tiles.find(t => t.hasPlayer);
