@@ -11,6 +11,11 @@ var batteryImg = document.getElementById("battery");
 var labImg = document.getElementById("lab");
 var rtgImg = document.getElementById("rtg");
 
+var menuItems = ["Mute Music","Mute Sound FX"];
+var selectedMenuItem = 0;
+
+var soundFxVolume = 1;
+
 var recipes = [{product:"LAB",items:[{type:"IRON",value:10},{type:"COPPER",value:5}],energy:4}];
 var research = [{unlock:"RADAR_RECIPE",points:2,value:10}];
 
@@ -55,6 +60,12 @@ var upgradePointUnlock = false;
 
 var time = 0;
 var sols = 0;
+
+
+let mySongData = zzfxM(...song);
+let myAudioNode = zzfxP(...mySongData);
+myAudioNode.loop = true;
+myAudioNode.start();
 
 var stars = Array.from(Array(500).keys()).map(i => {return {x:(Math.random() * 2 * canvas.width) - canvas.width,y:(Math.random() * 2 * canvas.height) - canvas.height,r:Math.random() * 3}});
 
@@ -140,22 +151,31 @@ function gameloop(){
     }
 
     if(!escMenu){
-        ctx.font = "15px Arial";
-        ctx.fillStyle = "#FFFFFF";
-        ctx.strokeStyle = "#000000";
-        ctx.textAlign = "start"; 
-        ctx.textBaseline = "alphabetic";
-        messages = messages.slice(0,5).filter(m => m.time < 2000);
-        messages.forEach(message => {
-            ctx.fillText(message.text,10,canvas.height - 25 - (messages.indexOf(message) * 25));
-            message.time += frameSpeedFactor;
-        });
-
         handleHUD();
+    } else {
+        ctx.fillStyle = "#FFFFFF";
+        ctx.textAlign = "center"; 
+        ctx.textBaseline = "middle";
+        ctx.font = "30px Tahoma";
+        ctx.fillText("Paused",canvas.width/2,30);
+        ctx.font = "25px Tahoma";
+        menuItems.forEach(s => {
+            var index = menuItems.indexOf(s);
+            if(index == selectedMenuItem){
+                ctx.fillStyle = "#FFFF00";
+            } else {
+                ctx.fillStyle = "#FFFFFF";
+            }
+            ctx.fillText(s,canvas.width/2,60 + 25 * index);
+        });
     }
 
     if(Object.entries(prevInputs).toString() !== Object.entries(inputs).toString()){
-        handleInput();
+        if(escMenu){
+            handleMenuInput();
+        } else {
+            handleInput();  
+        }
     }
     prevInputs = Object.assign({},inputs);
     time += (frameSpeedFactor/1000);
@@ -213,7 +233,7 @@ function handleInput(){
             var minedRes = mineTile(playerTile);
             if(minedRes.type != "NONE"){
                 var totalMined = minedRes.value * mineFactor;
-                zzfx(...[,,320,.01,,0,4,0,,,,,,,,.1,,0,.01]);
+                zzfx(...[soundFxVolume,,320,.01,,0,4,0,,,,,,,,.1,,0,.01]).start();
                 addToPlayerResources(minedRes.type,totalMined);
             }
         }
@@ -255,6 +275,35 @@ function handleInput(){
         interactTiles[selectedTile].highlighted = false;
         interactTiles = interactTiles.filter(t => t != interactTiles[selectedTile]);
         selectedTile = Math.min(interactTiles.length - 1, selectedTile);
+    }
+}
+
+function handleMenuInput(){
+    if(inputs.up == false && prevInputs.up == true){
+        selectedMenuItem = Math.max(0,selectedMenuItem - 1);
+    }
+    if(inputs.down == false && prevInputs.down == true){
+        selectedMenuItem = Math.min(menuItems.length - 1, selectedMenuItem + 1);
+    }
+    if(inputs.inter == false && prevInputs.inter == true){
+        switch(menuItems[selectedMenuItem]){
+            case "Mute Music":
+                myAudioNode.disconnect();
+                menuItems[selectedMenuItem] = "Unmute Music";
+                break;
+            case "Mute Sound FX":
+                soundFxVolume = 0;
+                menuItems[selectedMenuItem] = "Unmute Sound FX";
+                break;
+            case "Unmute Music":
+                myAudioNode.connect(zzfxX.destination);
+                menuItems[selectedMenuItem] = "Mute Music";
+                break;
+            case "Unmute Sound FX":
+                soundFxVolume = 1;
+                menuItems[selectedMenuItem] = "Mute Sound FX";
+                break;
+        }
     }
 }
 
@@ -319,6 +368,17 @@ function handleBuildingInteraction(playerTile){
 }
 
 function handleHUD(){
+    ctx.font = "15px Arial";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.strokeStyle = "#000000";
+    ctx.textAlign = "start"; 
+    ctx.textBaseline = "alphabetic";
+    messages = messages.slice(0,5).filter(m => m.time < 2000);
+    messages.forEach(message => {
+        ctx.fillText(message.text,10,canvas.height - 25 - (messages.indexOf(message) * 25));
+        message.time += frameSpeedFactor;
+    });
+
     ctx.fillText("Available resources:",10,25);
     playerResources.forEach(r => ctx.fillText(r.value + " units of " + r.type,10, 50 + playerResources.indexOf(r) * 25));
     ctx.fillText("Available buildings:",canvas.width - 200,25);
