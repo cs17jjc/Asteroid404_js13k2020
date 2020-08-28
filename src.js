@@ -76,35 +76,46 @@ var stars = Array.from(Array(500).keys()).map(i => {return {x:(Math.random() * 2
 
 noise.seed(Math.random());
 
-var mapWidth = 1000;
+var mapWidth = 500;
 
 var marsColourScheme = [{levels:[0,1,2],colour:new Colour(69,24,4,255)},{levels:[3,4],colour:new Colour(193,68,14,255)},{levels:[5,6,7],colour:new Colour(231,125,17,255)},{levels:[8,9],colour:new Colour(253,166,0,255)}];
+var lastBiome = 0;
+var lastBiomeLength = 0;
 var biomeSeq = Array.from(Array(mapWidth).keys()).map(i => {
-    if(i < 100){
+    if(i >= 0 && i < 50){
         return 4;
-    } else if (i < 200){
-        return 3;
-    } else if (i < 300){
-        return 2;
-    } else if (i < 400){
-        return 1;
-    }else if (i < 500){
+    }
+    if(i >= 50 && i < 100){
         return 0;
-    }else if (i < 600){
+    }
+    if(i >= 100 && i < 150){
         return 1;
-    }else if (i < 700){
+    }
+    if(i >= 150 && i < 200){
+        return 0;
+    }
+    if(i >= 200 && i < 250){
+        return 1;
+    }
+    if(i >= 250 && i < 254){
         return 2;
-    }else if (i < 800){
+    }
+    if(i >= 254 && i < 300){
         return 3;
-    }else if (i < 900){
+    }
+    if(i >= 300 && i < 350){
         return 4;
-    } else {
+    }
+    if(i >= 350 && i < 450){
+        return 3;
+    }
+    if(i >= 450 && i <= 500){
         return 4;
     }
 });
 
 tiles = generateMap(mapWidth,biomeSeq,marsColourScheme);
-placeBuilding(tiles.find(t => t.x == 550 && t.y == 2),{type:"RADAR",value:1});
+placeBuilding(tiles.find(t => t.x == tiles.find(t => t.hasPlayer).x && t.y == 2),{type:"RADAR",value:1});
 updatePlayerPos(tiles,0,0);
 var millisOnLastFrame = new Date().getTime();
 var frameSpeedFactor = 0;
@@ -445,12 +456,12 @@ function handleHUD(){
     ctx.textAlign = "center"; 
     ctx.textBaseline = "middle";
     ctx.fillStyle = hudColourScheme.text;
-    ctx.fillText("Sol: " + sols + " Planet Rotation: " + time.toFixed(2) + "°" + " GPS X:" + playerPos.x + " Y:" + playerPos.y,canvas.width/2,15);
-    ctx.fillStyle = "#FFFFFF";
     if(upgradePointUnlock){
-        ctx.font = "20px Tahoma";
-        ctx.fillText("Upgrade Points:" + upgradePoints,canvas.width/2, canvas.height * 0.97);
+        ctx.fillText("Sol: " + sols + " Planet Rotation: " + time.toFixed(2) + "°" + " GPS X:" + playerPos.x + " Y:" + playerPos.y + " Upgrade Points: " + upgradePoints,canvas.width/2,15);
+    } else {
+        ctx.fillText("Sol: " + sols + " Planet Rotation: " + time.toFixed(2) + "°" + " GPS X:" + playerPos.x + " Y:" + playerPos.y,canvas.width/2,15);
     }
+    ctx.fillStyle = "#FFFFFF";
     ctx.font = "30px Tahoma";
     if(buildMode){
         ctx.fillText("Build Mode",canvas.width/2,modeHeight);
@@ -468,7 +479,13 @@ function handleHUD(){
             } else {
                 ctx.fillStyle = "#FFFFFF";
             }
-            ctx.fillText(r.product,canvas.width/2,modeHeight + selectionHeight + (25 * index));
+            if(r.product == "EXIT"){
+                ctx.fillText(r.product,canvas.width/2,modeHeight + selectionHeight + (25 * index));
+            } else {
+                var itemStr = "";
+                r.items.forEach(i => itemStr = itemStr + " " + i.value + " " + i.type);
+                ctx.fillText(r.product + " :" + itemStr,canvas.width/2,modeHeight + selectionHeight + (25 * index));
+            }
         });
     }
     if(settingResearch){
@@ -482,7 +499,7 @@ function handleHUD(){
                 ctx.fillStyle = "#FFFFFF";
             }
             if(r.unlock != "EXIT"){
-                ctx.fillText(r.unlock + " Points: " + r.points,canvas.width/2,modeHeight + selectionHeight + (25 * index));
+                ctx.fillText(r.unlock + " : " + r.points + "",canvas.width/2,modeHeight + selectionHeight + (25 * index));
             } else {
                 ctx.fillText(r.unlock,canvas.width/2,modeHeight + selectionHeight + (25 * index));
             }
@@ -506,14 +523,14 @@ function handleUpgrades(){
                 research.unshift({unlock:"MINE_EFFICIENCY1",points:8,value:15});
                 break;
             case "MINE_EFFICIENCY1":
-                mineFactor += 0.5;
+                mineFactor += 1;
                 research = research.filter(r => r.unlock != "MINE_EFFICIENCY1");
                 research.unshift({unlock:"MINE_EFFICIENCY2",points:16,value:30});
+                research.unshift({unlock:"MINER_RECIPE",points:25,value:30});
                 break;
             case "MINE_EFFICIENCY2":
-                mineFactor += 0.5;
+                mineFactor += 4;
                 research = research.filter(r => r.unlock != "MINE_EFFICIENCY2");
-                research.unshift({unlock:"MINER_RECIPE",points:25,value:30});
                 break;
             case "MINER_RECIPE":
                 recipes.unshift({product:"MINER",items:[{type:"IRON",value:20},{type:"COPPER",value:15},{type:"CARBON",value:15}],energy:10});

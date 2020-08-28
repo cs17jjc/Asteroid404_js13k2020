@@ -127,6 +127,7 @@ function updatePlayerPos(tiles,deltaX,deltaY){
                 if(Math.abs(newTile.height - playerTile.height) <= maxStepHeight * tileStepHeight){
                     playerTile.hasPlayer = false;
                     newTile.hasPlayer = true;
+                    console.log(newTile.biome);
                     playerPos = {x:newTile.x,y:newTile.y};
                 } else {
                     messages.unshift({text:"Incline too steep",time:0});
@@ -196,8 +197,9 @@ function placeBuilding(tile,building){
 function removeBuilding(tile){
     if(tile.building.type != "NONE"){
         if(tile.building.storedItems != null){
-            tile.building.storedItems.forEach(i => addToPlayerResources(i.type,i.value,true));
-            messages.push({text:"Discarded overflow items",time:0});
+            if(tile.building.storedItems.map(i => addToPlayerResources(i.type,i.value,true)).some(b => !b)){
+                messages.push({text:"Discarded overflow items",time:0});
+            }
         }
         if(tile.building.storedProduct != null && tile.building.storedProduct > 0){
             addToPlayerBuildings(tile.building.recipe.product,tile.building.storedProduct);
@@ -444,9 +446,10 @@ function componentToHex(c) {
             getSurroundingTiles(tiles,t).filter(t => 0.7 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"SILICON",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
         }
     });
-    tiles.find(t => t.x == 550 && t.y == 0).hasPlayer = true;
+    var startX = 224;
+    tiles.find(t => t.x == startX).hasPlayer = true;
     //Generate start area resources
-    tiles.filter(t => Math.abs(550 - t.x) < 20).forEach(t => {
+    tiles.filter(t => Math.abs(startX - t.x) < 20).forEach(t => {
         if(Math.random() * 100 > 80){
             var resourceAmmount = Math.random() * 15;
             t.resource = {type:"IRON",value:Math.max(5,Math.trunc(resourceAmmount))};
@@ -458,6 +461,6 @@ function componentToHex(c) {
         }
     });
     tiles.filter(t => t.resource.type != "NONE").forEach(t => t.resource.lines = generateResourcePoints(t.resource.value,t.resource.type));
-
+    
     return tiles;
   }
