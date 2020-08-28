@@ -5,7 +5,7 @@ let tileViewRadius = 11;
 let tileStepHeight = 5;
 var maxStepHeight = 1;
 let roverImgScale = 1;
-let radarRange = 5;
+let radarRange = 8;
 
 
 function drawHexTile(context, scrX, scrY, tile){
@@ -127,6 +127,7 @@ function updatePlayerPos(tiles,deltaX,deltaY){
                 if(Math.abs(newTile.height - playerTile.height) <= maxStepHeight * tileStepHeight){
                     playerTile.hasPlayer = false;
                     newTile.hasPlayer = true;
+                    playerPos = {x:newTile.x,y:newTile.y};
                 } else {
                     messages.unshift({text:"Incline too steep",time:0});
                 }
@@ -164,6 +165,7 @@ function placeBuilding(tile,building){
                 tile.building.crafting = false;
                 tile.building.craftTimer = 0;
                 tile.building.storedProduct = 0;
+                tile.building.queued = 0;
                 break;
             case "MINER":
                 tile.building.storedItems = [];
@@ -194,7 +196,8 @@ function placeBuilding(tile,building){
 function removeBuilding(tile){
     if(tile.building.type != "NONE"){
         if(tile.building.storedItems != null){
-            tile.building.storedItems.forEach(i => addToPlayerResources(i.type,i.value));
+            tile.building.storedItems.forEach(i => addToPlayerResources(i.type,i.value,true));
+            messages.push({text:"Discarded overflow items",time:0});
         }
         if(tile.building.storedProduct != null && tile.building.storedProduct > 0){
             addToPlayerBuildings(tile.building.recipe.product,tile.building.storedProduct);
@@ -225,12 +228,26 @@ function removeBuilding(tile){
     }
 }
 
-function addToPlayerResources(type,ammount){
+function addToPlayerResources(type,ammount,message){
     var playerRes = playerResources.find(r => r.type == type);
     if(playerRes != null){
+        if(playerRes.value + ammount > maxStorage){
+            if(message){
+                messages.push({text:"Not enough space for " + ammount + " units of " + type,time:0});
+            }
+            return false;
+        }
         playerRes.value += ammount;
+        return true;
     } else {
+        if(ammount > maxStorage){
+            if(message){
+                messages.push({text:"Not enough space for " + ammount + " units of " + type,time:0});
+            }
+            return false;
+        }
         playerResources.push({type:type,value:ammount});
+        return true;
     }
 }
 function addToPlayerBuildings(type,ammount){
@@ -266,6 +283,25 @@ function drawHexagon(context,scrX,scrY){
     context.stroke();
 }
 
+function drawHexHeight(context,scrX,scrY,height){
+    var screenPoints = []
+    for(var offset = 0; offset < offsets.length-2;offset++){
+        screenPoints.unshift({x:scrX + tileRadius * offsets[offset].x,y:scrY + tileRadius * offsets[offset].y * perspRatio});
+    }
+    for(var offset = offsets.length-3; offset >= 0;offset--){
+        screenPoints.unshift({x:scrX + tileRadius * offsets[offset].x,y:(scrY + height) + tileRadius * offsets[offset].y * perspRatio});
+    }
+
+    context.beginPath();
+    context.moveTo(screenPoints[0].x,screenPoints[0].y);
+    for(var points = 1; points < screenPoints.length;points++){
+            context.lineTo(screenPoints[points].x,screenPoints[points].y);
+    }
+    context.closePath();
+    context.fill();
+    context.stroke();
+}
+
 function componentToHex(c) {
     var hex = c.toString(16);
     return hex.length == 1 ? "0" + hex : hex;
@@ -273,6 +309,24 @@ function componentToHex(c) {
   
   function rgbToHex(r, g, b, a) {
     return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b) + componentToHex(a);
+  }
+
+  function generateHudOverlay(){
+    var bottomY = (canvas.height / 2) - 100;
+    var points = [];
+    points.unshift({x:0,y:bottomY});
+    points.unshift({x:canvas.width * 0.1,y:bottomY});
+    points.unshift({x:canvas.width * 0.2,y:bottomY - canvas.height * 0.1});
+    points.unshift({x:canvas.width * 0.2,y:canvas.height * 0.04});
+
+    points.unshift({x:canvas.width * 0.8,y:canvas.height * 0.04});
+    points.unshift({x:canvas.width * 0.8,y:bottomY - canvas.height * 0.1});
+    points.unshift({x:canvas.width * 0.9,y:bottomY});
+
+    points.unshift({x:canvas.width,y:bottomY});
+    points.unshift({x:canvas.width,y:0});
+    points.unshift({x:0,y:0});
+    return points;
   }
 
   function getSurroundingTiles(tiles,tile){
@@ -393,14 +447,14 @@ function componentToHex(c) {
     tiles.find(t => t.x == 550 && t.y == 0).hasPlayer = true;
     //Generate start area resources
     tiles.filter(t => Math.abs(550 - t.x) < 20).forEach(t => {
-        if(Math.random() * 100 > 80 && t.resource.type == "NONE"){
+        if(Math.random() * 100 > 80){
             var resourceAmmount = Math.random() * 15;
             t.resource = {type:"IRON",value:Math.max(5,Math.trunc(resourceAmmount))};
-            getSurroundingTiles(tiles,t).filter(t => 0.2 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"IRON",value:Math.max(4,Math.trunc(resourceAmmount * Math.random()))});
-        } else if(Math.random() * 100 > 85 && t.resource.type == "NONE") {
+            getSurroundingTiles(tiles,t).filter(t => 0.2 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"IRON",value:Math.max(10,Math.trunc(resourceAmmount * Math.random()))});
+        } else if(Math.random() * 100 > 85) {
             var resourceAmmount = Math.random() * 15;
             t.resource = {type:"COPPER",value:Math.max(5,Math.trunc(resourceAmmount))};
-            getSurroundingTiles(tiles,t).filter(t => 0.2 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"COPPER",value:Math.max(4,Math.trunc(resourceAmmount * Math.random()))});
+            getSurroundingTiles(tiles,t).filter(t => 0.2 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"COPPER",value:Math.max(10,Math.trunc(resourceAmmount * Math.random()))});
         }
     });
     tiles.filter(t => t.resource.type != "NONE").forEach(t => t.resource.lines = generateResourcePoints(t.resource.value,t.resource.type));

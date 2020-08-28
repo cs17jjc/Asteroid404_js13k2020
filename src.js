@@ -14,11 +14,12 @@ var rtgImg = document.getElementById("rtg");
 var menuItems = ["Mute Music","Mute Sound FX"];
 var selectedMenuItem = 0;
 
-var soundFxVolume = 1;
+var soundFxVolume = 0.1;
 
-var recipes = [{product:"LAB",items:[{type:"IRON",value:10},{type:"COPPER",value:5}],energy:4}];
-var research = [{unlock:"RADAR_RECIPE",points:2,value:10}];
+var recipes = [{product:"LAB",items:[{type:"IRON",value:10},{type:"COPPER",value:5}],energy:4},{product:"EXIT",items:[],energy:0}];
+var research = [{unlock:"RADAR_RECIPE",points:2,value:10},{unlock:"EXIT",points:0,value:0}];
 
+var playerPos = {x:0,y:0};
 
 canvas.width = 1280;
 canvas.height = 720;
@@ -34,12 +35,13 @@ var interactTiles = [];
 var selectedTile = 0;
 
 var playerResources = [];
-var playerBuildings = [{type:"RTG",value:1},{type:"CONSTRUCTOR",value:1}];
+var playerBuildings = [{type:"RTG",value:3},{type:"CONSTRUCTOR",value:2},{type:"LAB",value:3}];
 var selectedBuilding = 0;
 var mineFactor = 1;
 var upgradePoints = 0;
 var currentUpgrade = null;
 var upgradeProgress = 0;
+var maxStorage = 50;
 
 var buildMode = false;
 var removeMode = false;
@@ -49,6 +51,7 @@ var escMenu = false;
 
 var solarOutput = 1;
 var craftSpeed = 1;
+var craftMaxQueued = 2;
 var minerFactor = 5;
 var mineSpeed = 3;
 var minerTransmit = false;
@@ -61,11 +64,13 @@ var upgradePointUnlock = false;
 var time = 0;
 var sols = 0;
 
+var hudColourScheme = {outline:"#00FF00",infill:"#000000AA",text:"#00FF00",staticText:"#00AA00",dynamicText:"#00FF00"};
+
 
 let mySongData = zzfxM(...song);
 let myAudioNode = zzfxP(...mySongData);
 myAudioNode.loop = true;
-myAudioNode.start();
+//myAudioNode.start();
 
 var stars = Array.from(Array(500).keys()).map(i => {return {x:(Math.random() * 2 * canvas.width) - canvas.width,y:(Math.random() * 2 * canvas.height) - canvas.height,r:Math.random() * 3}});
 
@@ -132,9 +137,6 @@ function gameloop(){
 
     renderMap(ctx,tiles);
     
-
-
-
     playerResources = playerResources.filter(r => r.value > 0);
     playerBuildings = playerBuildings.filter(b => b.value > 0);
 
@@ -230,11 +232,12 @@ function handleInput(){
         if(playerTile.building.type != "NONE"){
             handleBuildingInteraction(playerTile);
         } else {
-            var minedRes = mineTile(playerTile);
-            if(minedRes.type != "NONE"){
-                var totalMined = minedRes.value * mineFactor;
-                zzfx(...[soundFxVolume,,320,.01,,0,4,0,,,,,,,,.1,,0,.01]).start();
-                addToPlayerResources(minedRes.type,totalMined);
+            if(playerTile.resource.type != "NONE"){
+                var totalMined = Math.round(mineFactor);
+                if(addToPlayerResources(playerTile.resource.type,totalMined,true)){
+                    mineTile(playerTile);
+                    zzfx(...[soundFxVolume,,320,.01,,0,4,0,,,,,,,,.1,,0,.01]).start();
+                }
             }
         }
     }
@@ -265,9 +268,11 @@ function handleInput(){
     //If E is pressed and in build mode and empty spaces
     if(buildMode && inputs.inter == false && prevInputs.inter == true && interactTiles.some(t => t.building.type == "NONE")){
         placeBuilding(interactTiles[selectedTile],playerBuildings[selectedBuilding]);
+        playerBuildings = playerBuildings.filter(b => b.value > 0);
         interactTiles[selectedTile].highlighted = false;
         interactTiles = interactTiles.filter(t => t != interactTiles[selectedTile]);
         selectedTile = Math.min(interactTiles.length - 1, selectedTile);
+        selectedBuilding = Math.min(playerBuildings.length-1,selectedBuilding);
     }
     //If E is pressed and in remove mode and buildings
     if(removeMode && inputs.inter == false && prevInputs.inter == true && interactTiles.some(t => t.building.type != "NONE")){
@@ -311,27 +316,45 @@ function handleBuildingInteraction(playerTile){
     switch(playerTile.building.type){
         case "CONSTRUCTOR":
             if(settingRecipe){
-                playerTile.building.recipe = Object.assign({},recipes[selectedBuilding]);
+                var selectedRecipe = Object.assign({},recipes[selectedBuilding]);
+                if(selectedRecipe.product != "EXIT")
+                {
+                    playerTile.building.recipe = selectedRecipe;
+                }
                 settingRecipe = false;
             } else if(playerTile.building.recipe == null){
                 settingRecipe = true;
                 selectedBuilding = 0;
             } else {
                 if(playerTile.building.storedProduct == 0) {
-                var recipeItems = playerTile.building.recipe.items;
-                if(recipeItems.filter(i => playerResources.some(ii => ii.type == i.type && ii.value >= i.value)).length == recipeItems.length){
-                    playerResources.forEach(i => {
-                        var recipeItem = recipeItems.find(ii => ii.type == i.type);
-                        if(recipeItem != null){
-                            i.value -= recipeItem.value;
-                            addToBuildingStorage(playerTile.building.storedItems,recipeItem.type,recipeItem.value);
+                    if(playerTile.building.queued < craftMaxQueued){
+                        var recipeItems = playerTile.building.recipe.items;
+                        if(recipeItems.filter(i => playerResources.some(ii => ii.type == i.type && ii.value >= i.value)).length == recipeItems.length){
+                            playerResources.forEach(i => {
+                                var recipeItem = recipeItems.find(ii => ii.type == i.type);
+                                if(recipeItem != null){
+                                    i.value -= recipeItem.value;
+                                    messages.unshift({text:"Used " + recipeItem.value + " units of " + i.type,time:0});
+                                    addToBuildingStorage(playerTile.building.storedItems,recipeItem.type,recipeItem.value);
+                                }
+                            });
+                            playerTile.building.queued += 1;
+                        } else {
+                            recipeItems.forEach(i => {
+                                var missingItem = playerResources.find(ii => ii.type == i.type && ii.value < i.value);
+                                if(missingItem != null){
+                                    messages.unshift({text:(i.value - missingItem.value) + " more " + i.type + " needed",time:0});
+                                } else if(!playerResources.some(ii => ii.type == i.type)){
+                                    messages.unshift({text:i.value + " more " + i.type + " needed",time:0});
+                                }
+                            });
                         }
-                    });
-                } else {
-                    messages.unshift({text:"Not enough resources",time:0});
-                }
+                    } else {
+                        messages.unshift({text:"Maximum craft queue sized reached",time:0});
+                    }
             } else {
                 addToPlayerBuildings(playerTile.building.recipe.product,playerTile.building.storedProduct);
+                messages.unshift({text:"Gained " + playerTile.building.storedProduct + " units of " + playerTile.building.recipe.product,time:0});
                 playerTile.building.storedProduct = 0;
             }
             }
@@ -339,15 +362,20 @@ function handleBuildingInteraction(playerTile){
         case "LAB":
             if(settingResearch){
                 var selectedUpgrade = Object.assign({},research[selectedBuilding]);
-                console.log(selectedUpgrade);
-                if(selectedUpgrade.points <= upgradePoints){
-                    currentUpgrade = selectedUpgrade;
+                if(selectedUpgrade.unlock == "EXIT"){
                     selectedBuilding = 0;
                     settingResearch = false;
                 } else {
-                    selectedBuilding = 0;
-                    settingResearch = false;
-                    messages.unshift({text:"Need " + (selectedUpgrade.points - upgradePoints) + " more upgrade points",time:0});
+                    if(selectedUpgrade.points <= upgradePoints){
+                        currentUpgrade = selectedUpgrade;
+                        upgradePoints -= selectedUpgrade.points;
+                        selectedBuilding = 0;
+                        settingResearch = false;
+                    } else {
+                        selectedBuilding = 0;
+                        settingResearch = false;
+                        messages.unshift({text:"Need " + (selectedUpgrade.points - upgradePoints) + " more upgrade points",time:0});
+                    }
                 }
             } else if(currentUpgrade == null){
                 settingResearch = true;
@@ -357,7 +385,7 @@ function handleBuildingInteraction(playerTile){
         case "MINER":
             if(!minerTransmit){
                 playerTile.building.storedItems.forEach(i => {
-                    addToPlayerResources(i.type,i.value);
+                    addToPlayerResources(i.type,i.value,false);
                     i.value = 0;
                 });
                 playerTile.building.storedItems = [];
@@ -368,6 +396,27 @@ function handleBuildingInteraction(playerTile){
 }
 
 function handleHUD(){
+
+    var modeHeight = 60;
+    var selectionHeight = 30;
+    var textColour = hudColourScheme.staticText;
+
+    ctx.strokeStyle = hudColourScheme.outline;
+    ctx.fillStyle = hudColourScheme.infill;
+    var points = generateHudOverlay();
+    ctx.beginPath();
+    for(var i = 0;i<points.length;i++){
+        if(i == 0){
+            ctx.moveTo(points[i].x,points[i].y);
+        } else {
+            ctx.lineTo(points[i].x,points[i].y);
+        }
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+
     ctx.font = "15px Arial";
     ctx.fillStyle = "#FFFFFF";
     ctx.strokeStyle = "#000000";
@@ -379,57 +428,64 @@ function handleHUD(){
         message.time += frameSpeedFactor;
     });
 
+    ctx.fillStyle = hudColourScheme.text;
     ctx.fillText("Available resources:",10,25);
-    playerResources.forEach(r => ctx.fillText(r.value + " units of " + r.type,10, 50 + playerResources.indexOf(r) * 25));
+    playerResources.forEach(r => ctx.fillText(r.value + "/" + maxStorage + " units of " + r.type,10, 50 + playerResources.indexOf(r) * 25));
     ctx.fillText("Available buildings:",canvas.width - 200,25);
     playerBuildings.forEach(b => {
         if(selectedBuilding == playerBuildings.indexOf(b) && buildMode){
-            ctx.fillStyle = "#FFFF00";
+            ctx.fillStyle = hudColourScheme.dynamicText;
         } else {
-            ctx.fillStyle = "#FFFFFF";
+            ctx.fillStyle = textColour;
         }
         ctx.fillText(b.value + " units of " + b.type,canvas.width - 200, 50 + playerBuildings.indexOf(b) * 25);
     });
 
-    ctx.fillStyle = "#FFFFFF";
     
     ctx.textAlign = "center"; 
     ctx.textBaseline = "middle";
+    ctx.fillStyle = hudColourScheme.text;
+    ctx.fillText("Sol: " + sols + " Planet Rotation: " + time.toFixed(2) + "°" + " GPS X:" + playerPos.x + " Y:" + playerPos.y,canvas.width/2,15);
+    ctx.fillStyle = "#FFFFFF";
     if(upgradePointUnlock){
         ctx.font = "20px Tahoma";
         ctx.fillText("Upgrade Points:" + upgradePoints,canvas.width/2, canvas.height * 0.97);
     }
     ctx.font = "30px Tahoma";
     if(buildMode){
-        ctx.fillText("Build Mode",canvas.width/2,30);
+        ctx.fillText("Build Mode",canvas.width/2,modeHeight);
     }
     if(removeMode){
-        ctx.fillText("Remove Mode",canvas.width/2,30);
+        ctx.fillText("Remove Mode",canvas.width/2,modeHeight);
     }
     if(settingRecipe){
-        ctx.fillText("Set Recipe:",canvas.width/2,30);
+        ctx.fillText("Set Recipe:",canvas.width/2,modeHeight);
         ctx.font = "20px Tahoma";
         recipes.forEach(r => {
             var index = recipes.indexOf(r);
             if(selectedBuilding == index){
-                ctx.fillStyle = "#FFFF00";
+                ctx.fillStyle = hudColourScheme.dynamicText;
             } else {
                 ctx.fillStyle = "#FFFFFF";
             }
-            ctx.fillText(r.product,canvas.width/2,60 + 25 * index);
+            ctx.fillText(r.product,canvas.width/2,modeHeight + selectionHeight + (25 * index));
         });
     }
     if(settingResearch){
-        ctx.fillText("Set Research:",canvas.width/2,30);
+        ctx.fillText("Set Research:",canvas.width/2,modeHeight);
         ctx.font = "20px Tahoma";
         research.forEach(r => {
             var index = research.indexOf(r);
             if(selectedBuilding == index){
-                ctx.fillStyle = "#FFFF00";
+                ctx.fillStyle = hudColourScheme.dynamicText;
             } else {
                 ctx.fillStyle = "#FFFFFF";
             }
-            ctx.fillText(r.unlock,canvas.width/2,60 + 25 * index);
+            if(r.unlock != "EXIT"){
+                ctx.fillText(r.unlock + " Points: " + r.points,canvas.width/2,modeHeight + selectionHeight + (25 * index));
+            } else {
+                ctx.fillText(r.unlock,canvas.width/2,modeHeight + selectionHeight + (25 * index));
+            }
         });
     }
 }
@@ -451,17 +507,17 @@ function handleUpgrades(){
                 break;
             case "MINE_EFFICIENCY1":
                 mineFactor += 0.5;
-                research = research.find(r => r.unlock != "MINE_EFFICIENCY1");
+                research = research.filter(r => r.unlock != "MINE_EFFICIENCY1");
                 research.unshift({unlock:"MINE_EFFICIENCY2",points:16,value:30});
                 break;
             case "MINE_EFFICIENCY2":
                 mineFactor += 0.5;
-                research = research.find(r => r.unlock != "MINE_EFFICIENCY2");
+                research = research.filter(r => r.unlock != "MINE_EFFICIENCY2");
                 research.unshift({unlock:"MINER_RECIPE",points:25,value:30});
                 break;
             case "MINER_RECIPE":
                 recipes.unshift({product:"MINER",items:[{type:"IRON",value:20},{type:"COPPER",value:15},{type:"CARBON",value:15}],energy:10});
-                research = research.find(r => r.unlock != "MINER_RECIPE");
+                research = research.filter(r => r.unlock != "MINER_RECIPE");
                 break;
         }
         currentUpgrade = null;
@@ -494,6 +550,7 @@ function handleTileUpdates(t){
                         buildingItems.forEach(i => i.value -= recipeItems.find(ii => ii.type == i.type).value);
                         t.building.crafting = true;
                         t.building.energy -= t.building.recipe.energy;
+                        t.building.queued -= 1;
                     }
                 }
                 if(t.building.crafting){
@@ -518,12 +575,13 @@ function handleTileUpdates(t){
                         t.building.craftTimer = 0;
                     }
                 }
-                if(t.hasPlayer && !escMenu){
-                    ctx.fillText("Recipe: " + t.building.recipe.product,canvas.width - 200,canvas.height - 100);
-                    ctx.fillText("Energy: " + Math.trunc(t.building.energy),canvas.width - 200,canvas.height - 80);
-                    ctx.fillText("Progress: " + Math.trunc(t.building.craftTimer * 100) + "%",canvas.width - 200,canvas.height - 60);
-                    ctx.fillText("Stored: " + t.building.storedProduct,canvas.width - 200,canvas.height - 40);
-                }
+            }
+            if(t.hasPlayer && !escMenu){
+                ctx.fillText("Recipe: " + (t.building.recipe != undefined ? t.building.recipe.product : "None") ,canvas.width - 200,canvas.height - 100);
+                ctx.fillText("Energy: " + Math.trunc(t.building.energy),canvas.width - 200,canvas.height - 80);
+                ctx.fillText("Queued: " + t.building.queued,canvas.width - 200,canvas.height - 60);
+                ctx.fillText("Progress: " + Math.trunc(t.building.craftTimer * 100) + "%",canvas.width - 200,canvas.height - 40);
+                ctx.fillText("Stored: " + t.building.storedProduct,canvas.width - 200,canvas.height - 20);
             }
             t.building.storedItems = t.building.storedItems.filter(i => i.value > 0);
             break;
@@ -544,7 +602,7 @@ function handleTileUpdates(t){
             }
             if(minerTransmit){
                 t.building.storedItems.forEach(i => {
-                    addToPlayerResources(i.type,i.value);
+                    addToPlayerResources(i.type,i.value,false);
                     i.value = 0;
                 });
                 t.building.storedItems = [];
