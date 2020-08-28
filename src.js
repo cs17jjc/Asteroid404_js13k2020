@@ -18,6 +18,7 @@ var soundFxVolume = 0.1;
 
 var recipes = [{product:"LAB",items:[{type:"IRON",value:10},{type:"COPPER",value:5}],energy:4},{product:"EXIT",items:[],energy:0}];
 var research = [{unlock:"RADAR_RECIPE",points:2,value:10},{unlock:"EXIT",points:0,value:0}];
+var exploreableResearch = [{unlock:"STEP_HEIGHT1",points:10,value:10},{unlock:"STORAGE_SIZE1",points:10,value:10},{unlock:"STEP_HEIGHT2",points:10,value:10},{unlock:"QUEUE_LENGTH1",points:10,value:10},{unlock:"RTG_POWER1",points:10,value:10}];
 
 var playerPos = {x:0,y:0};
 
@@ -26,8 +27,8 @@ canvas.height = 720;
 canvas.style.width = canvas.width + "px";
 canvas.style.height = canvas.height + "px";
 
-var prevInputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false};
-var inputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false};
+var prevInputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,info:false};
+var inputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,info:false};
 
 var tiles = [];
 var messages = [];
@@ -292,6 +293,43 @@ function handleInput(){
         interactTiles = interactTiles.filter(t => t != interactTiles[selectedTile]);
         selectedTile = Math.min(interactTiles.length - 1, selectedTile);
     }
+    if(prevInputs.info == true && inputs.info == false){
+        var playerTile = tiles.find(t => t.hasPlayer);
+        if(playerTile.building != undefined){
+            switch(playerTile.building.type){
+                case "CONSTRUCTOR":
+                    messages.unshift({text:"Used to construct buildings and upgrade points from energy and resources.",time:0});
+                    messages.unshift({text:"Use E to remove stored items or deposit more resources for construction.",time:0});
+                    break;
+                case "LAB":
+                    messages.unshift({text:"Converts energy into upgrade progress.",time:0});
+                    messages.unshift({text:"More labs produce more progress per second.",time:0});
+                    messages.unshift({text:"Use E to select an upgrade.",time:0});
+                    break;
+                case "RTG":
+                    messages.unshift({text:"Radiothermal Isotope generator produces 5 energy per second.",time:0});
+                    messages.unshift({text:"Energy is evenly distributed to each surrounding tile.",time:0});
+                    break;
+                case "RADAR":
+                    messages.unshift({text:"Uncovers surrounding tiles.",time:0});
+                    break;
+                case "BATTERY":
+                    messages.unshift({text:"Stores energy and distributes to surrounding tiles.",time:0});
+                    messages.unshift({text:"Won't distribute energy to neighbouring batteries if another tile is present.",time:0});
+                    messages.unshift({text:"Will only charge neighbouring batteries to current level - 1.",time:0});
+                    break;
+                case "SOLAR":
+                    messages.unshift({text:"Produces energy from solar radiation and distributes to surrounding tiles.",time:0});
+                    messages.unshift({text:"Energy output varies depending on planet rotation.",time:0});
+                    break;
+                case "MINER":
+                    messages.unshift({text:"Automatically mines resources from the tile below at the cost of energy.",time:0});
+                    messages.unshift({text:"At the current level " + minerFactor + " energy is required to mine " + minerFactor + " resources.",time:0});
+                    messages.unshift({text:"Use E to remove stored items.",time:0});
+                    break;
+            }
+        }
+    }
 }
 
 function handleMenuInput(){
@@ -433,7 +471,7 @@ function handleHUD(){
     ctx.strokeStyle = "#000000";
     ctx.textAlign = "start"; 
     ctx.textBaseline = "alphabetic";
-    messages = messages.slice(0,5).filter(m => m.time < 2000);
+    messages = messages.slice(0,5).filter(m => m.time < 5000);
     messages.forEach(message => {
         ctx.fillText(message.text,10,canvas.height - 25 - (messages.indexOf(message) * 25));
         message.time += frameSpeedFactor;
@@ -511,6 +549,7 @@ function handleUpgrades(){
     if(upgradeProgress >= currentUpgrade.value){
         upgradeProgress = 0;
         messages.unshift({text:"Upgrade " + currentUpgrade.unlock + " completed",time:0});
+        zzfx(...[soundFxVolume,,440,,,,,,,,50,.07]).start();
         switch(currentUpgrade.unlock){
             case "RADAR_RECIPE":
                 recipes.unshift({product:"RADAR",items:[{type:"IRON",value:10},{type:"COPPER",value:5}],energy:5});
@@ -742,6 +781,9 @@ document.addEventListener('keydown', (event) => {
         case 82:
             inputs.remove = true;
             break;
+        case 73:
+            inputs.info = true;
+            break;
     }
 });
 document.addEventListener('keyup', (event) => {
@@ -769,6 +811,9 @@ document.addEventListener('keyup', (event) => {
             break;
         case 27:
             escMenu = !escMenu;
+        case 73:
+            inputs.info = false;
+            break;
     }
 });
 
