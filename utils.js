@@ -3,14 +3,14 @@ let perspRatio = 0.4;
 let offsets = [{x:1,y:0},{x:0.5,y:0.8660254037844386},{x:-0.5,y:0.8660254037844387},{x:-1,y:0},{x:-0.5,y:-0.8660254037844387},{x:0.5,y:-0.8660254037844387}];
 let tileViewRadius = 11;
 let tileStepHeight = 5;
-var maxStepHeight = 1;
 let roverImgScale = 1;
 let radarRange = 8;
 
 
-function drawHexTile(context, scrX, scrY, tile){
+function drawHexTile(context, tile){
 
-    drawHexagon(context,scrX,scrY);
+    var scrPos = tile.screenPos;
+    drawHexagon(context,scrPos);
 
     if(tile.isVisible && tile.resource.type != "NONE"){
         var resourceColour = null;
@@ -36,9 +36,9 @@ function drawHexTile(context, scrX, scrY, tile){
         context.strokeStyle = resourceColour.darkend(0.4).toHex();
         tile.resource.lines.forEach(l => {
             context.beginPath();
-            context.moveTo(l[0].x + scrX,l[0].y + scrY);
+            context.moveTo(l[0].x + scrPos.x,l[0].y + scrPos.y);
             for(var ll = 1; ll < l.length;ll++){
-                context.lineTo(l[ll].x + scrX,l[ll].y + scrY);
+                context.lineTo(l[ll].x + scrPos.x,l[ll].y + scrPos.y);
             }
             context.closePath();
             context.fill();
@@ -47,21 +47,19 @@ function drawHexTile(context, scrX, scrY, tile){
     }
 }
 
-function renderMap(context,tiles){
+function renderMap(context,tiles,drawHeight,playerPosOffset){
     var tileWithPlayer = tiles.find(t => t.hasPlayer);
     var visableTiles = tiles.filter(t => Math.abs(t.x - tileWithPlayer.x) <= tileViewRadius).sort((a,b) => a.height - b.height).sort((a,b) => a.y - b.y).sort((a,b) => a.isVisible - b.isVisible);
-    var screenCoords = []
     visableTiles.forEach(t => {
-        var scrX = t.x * tileRadius * 1.5 + canvas.width/2 - tileWithPlayer.x * tileRadius * 1.5;
-        var scrY = t.y * tileRadius * 2 * 0.8660254037844387 * perspRatio + 0.5 * canvas.height;
+        t.screenPos.x = t.x * tileRadius * 1.5 + canvas.width/2 - tileWithPlayer.x * tileRadius * 1.5;
+        t.screenPos.y = t.y * tileRadius * 2 * 0.8660254037844387 * perspRatio + drawHeight;
     
         if(t.x % 2 != 0){
-            scrY += 0.8660254037844387 * tileRadius * perspRatio;
+            t.screenPos.y += 0.8660254037844387 * tileRadius * perspRatio;
         }
 
         if(t.isVisible){
-            scrY -= t.height;
-            screenCoords.push({x:scrX,y:scrY});
+            t.screenPos.y -= t.height;
             context.strokeStyle = t.colour.darkend(0.2).toHex();
             context.fillStyle = t.colour.toHex();
             if(interactTiles.includes(t)){
@@ -75,51 +73,109 @@ function renderMap(context,tiles){
                 }
             }
             context.lineWidth = 3;
-            drawHexTile(context,scrX,scrY,t);
+            drawHexTile(context,t);
             switch(t.building.type){
                 case "RADAR":
-                    context.drawImage(towerImg,Math.trunc(scrX - towerImg.width/2),Math.trunc(scrY - towerImg.height*0.9));
+                    context.drawImage(towerImg,Math.trunc(t.screenPos.x - towerImg.width/2),Math.trunc(t.screenPos.y - towerImg.height*0.9));
                     break;
                 case "CONSTRUCTOR":
-                    context.drawImage(constructorImg,Math.trunc(scrX - constructorImg.width/2),Math.trunc(scrY - constructorImg.height*0.8));
+                    context.drawImage(constructorImg,Math.trunc(t.screenPos.x - constructorImg.width/2),Math.trunc(t.screenPos.y - constructorImg.height*0.6));
                     break;
                 case "SOLAR":
-                    context.drawImage(solarImg,Math.trunc(scrX - solarImg.width/2),Math.trunc(scrY - solarImg.height*0.5));
+                    context.drawImage(solarImg,Math.trunc(t.screenPos.x - solarImg.width/2),Math.trunc(t.screenPos.y - solarImg.height*0.5));
                     break;
                 case "MINER":
-                    context.drawImage(minerImg,Math.trunc(scrX - minerImg.width/2),Math.trunc(scrY - minerImg.height*0.8));
+                    context.drawImage(minerImg,Math.trunc(t.screenPos.x - minerImg.width/2),Math.trunc(t.screenPos.y - minerImg.height*0.8));
                     break;
                 case "LAB":
-                    context.drawImage(labImg,Math.trunc(scrX - labImg.width/2),Math.trunc(scrY - labImg.height*0.6));
+                    context.drawImage(labImg,Math.trunc(t.screenPos.x - labImg.width/2),Math.trunc(t.screenPos.y - labImg.height*0.6));
                     break;
                 case "BATTERY":
-                    context.drawImage(batteryImg,Math.trunc(scrX - batteryImg.width/2),Math.trunc(scrY - batteryImg.height*0.6));
+                    context.drawImage(batteryImg,Math.trunc(t.screenPos.x - batteryImg.width/2),Math.trunc(t.screenPos.y - batteryImg.height*0.6));
                     break;
                 case "RTG":
-                        context.drawImage(rtgImg,Math.trunc(scrX - rtgImg.width/2),Math.trunc(scrY - rtgImg.height*0.6));
+                        context.drawImage(rtgImg,Math.trunc(t.screenPos.x - rtgImg.width/2),Math.trunc(t.screenPos.y - rtgImg.height*0.6));
+                        break;
+                case "TELEDEPOT":
+                        context.drawImage(teledepotImg,Math.trunc(t.screenPos.x - teledepotImg.width/2),Math.trunc(t.screenPos.y - teledepotImg.height*0.6));
+                        break;
+                case "ROBOSHOP":
+                        context.drawImage(roboshopImg,Math.trunc(t.screenPos.x - roboshopImg.width/2),Math.trunc(t.screenPos.y - roboshopImg.height*0.6));
                         break;
                 default:
                     break;
             }
         } else {
-            screenCoords.push({x:scrX,y:scrY});
             context.strokeStyle = "#000000";
-            context.fillStyle = "#FFFFFF";
+            context.fillStyle = "#AAAAAA";
             context.lineWidth = 3;
-            drawHexTile(context,scrX,scrY,t);
+            drawHexTile(context,t);
             context.fillStyle = "#000000";
             var fontSize = Math.trunc(tileRadius*perspRatio);
             context.font = fontSize + "px Arial";
             context.textAlign = "center"; 
             context.textBaseline = "middle"; 
-            context.fillText("404",scrX ,scrY);
+            context.fillText("404",t.screenPos.x ,t.screenPos.y);
         }
     });
     var playerTile = visableTiles.find(t => t.hasPlayer);
-    var playerTileCoords = screenCoords[visableTiles.indexOf(playerTile)];
-    context.drawImage(roverImg,playerTileCoords.x - Math.trunc(roverImg.width*roverImgScale/2),Math.trunc(playerTileCoords.y - (roverImg.height*roverImgScale/2) - 10 + Math.sin(180 * time * (Math.PI/180)) * 4),Math.trunc(roverImg.width*roverImgScale),Math.trunc(roverImg.height*roverImgScale));
+    var playerTileCoords = playerTile.screenPos;
+    if(!playerDeadState){
+        context.drawImage(roverImg,(playerTileCoords.x - Math.trunc(roverImg.width*roverImgScale/2)) + Math.trunc(playerPosOffset.x),(Math.trunc(playerTileCoords.y - (roverImg.height*roverImgScale/2) - 10 + Math.sin(180 * time * (Math.PI/180)) * 4)) + Math.trunc(playerPosOffset.y),Math.trunc(roverImg.width*roverImgScale),Math.trunc(roverImg.height*roverImgScale));
+    } else {
+        context.drawImage(roverImg,(playerTileCoords.x - Math.trunc(roverImg.width*roverImgScale/2)) + Math.trunc(playerPosOffset.x),(Math.trunc(playerTileCoords.y - (roverImg.height*roverImgScale/2) - 10)) + Math.trunc(playerPosOffset.y),Math.trunc(roverImg.width*roverImgScale),Math.trunc(roverImg.height*roverImgScale));
+    }
+    
+}
+function drawLogo(context,x,y,size){
+    var topY = -size/2;
+    var bottomY = size/2;
+    var leftX = -size/2;
+    var rightX = size/2;
+    context.save();
+    context.translate(x,y);
+    context.strokeStyle = "#A2A2A2";
+    ctx.beginPath();
+    ctx.moveTo(0, topY);
+    ctx.lineTo(leftX,bottomY);
+    ctx.lineTo(rightX,bottomY);
+    ctx.closePath();
+    ctx.stroke();
+    context.fillStyle = "#FF0000";
+    ctx.beginPath();
+    ctx.arc(0, topY, size/4, 0, 2 * Math.PI);
+    ctx.fill();
+    context.fillStyle = "#FFF500";
+    ctx.beginPath();
+    ctx.arc(leftX,bottomY, size/4, 0, 2 * Math.PI);
+    ctx.fill();
+    context.fillStyle = "#0045FF";
+    ctx.beginPath();
+    ctx.arc(rightX,bottomY, size/4, 0, 2 * Math.PI);
+    ctx.fill();
+    context.restore();
+}
+function drawBattery(context,x,y,size,percentage){
+    var topY = -size/2;
+    var bottomY = size/2
+    var width = size * 0.25;
+    context.save();
+    context.translate(x,y);
+    context.fillStyle = new Colour(255 - (255 * percentage),255 * percentage,0,255).toHex();
+    context.fillRect(0,-size * percentage,width,size * percentage);
+    context.strokeStyle = "#FFFFFF";
+    context.beginPath();
+    context.moveTo(0,-size);
+    context.lineTo(width,-size);
+    context.lineTo(width,0);
+    context.lineTo(0,0);
+    context.closePath();
+    context.stroke();
+    context.restore();
 }
 function updatePlayerPos(tiles,deltaX,deltaY){
+    interactTimer = 0;
+    moving = true;
     var playerTile = tiles.find(t => t.hasPlayer);
         var newTile = tiles.find(t => t.x == playerTile.x + deltaX && t.y == playerTile.y + deltaY);
         if(newTile != null){
@@ -129,13 +185,19 @@ function updatePlayerPos(tiles,deltaX,deltaY){
                     newTile.hasPlayer = true;
                     console.log(newTile.biome);
                     playerPos = {x:newTile.x,y:newTile.y};
+                    playerPosOffset = {x:playerTile.screenPos.x - newTile.screenPos.x,y:playerTile.screenPos.y - newTile.screenPos.y};
+                    zzfx(...[soundFxVolume,.1,440,,,.07,,,,,50,.07]).start();
                 } else {
-                    messages.unshift({text:"Incline too steep",time:0});
+                    messages.push({text:"Incline too steep",time:0});
                 }
             } else {
-                messages.unshift({text:"Cannot enter unfound tile",time:0});
+                messages.push({text:"Cannot enter unfound tile",time:0});
             }
         }
+}
+function lerp(value1, value2, amount) {
+    amount = Math.min(1,Math.max(0,amount));
+    return value1 + (value2 - value1) * amount;
 }
 function mineTile(tile){
     if(tile.resource.type != "NONE"){
@@ -191,7 +253,7 @@ function placeBuilding(tile,building){
         building.value -= 1;
         zzfx(...[soundFxVolume,,191,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]).start();
     } else {
-        messages.unshift({text:"Cannot place building",time:0});
+        messages.push({text:"Cannot place building",time:0});
     }
 }
 function removeBuilding(tile){
@@ -216,7 +278,7 @@ function removeBuilding(tile){
                     tiles.filter(t => radarsInPlayerRange.some(t2 => Math.abs(t.x - t2.x) < radarRange)).forEach(t => t.isVisible = true);
                     zzfx(...[soundFxVolume,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]).start();
                 } else {
-                    messages.unshift({text:"No other radar in range",time:0});
+                    messages.push({text:"No other radar in range",time:0});
                 }
                 break;
             default:
@@ -226,7 +288,7 @@ function removeBuilding(tile){
                 break;
         }
     } else {
-        messages.unshift({text:"Tile has no building",time:0});
+        messages.push({text:"Tile has no building",time:0});
     }
 }
 
@@ -269,10 +331,10 @@ function addToBuildingStorage(buildingStorage,type,ammount){
     }
 }
 
-function drawHexagon(context,scrX,scrY){
+function drawHexagon(context,pos){
     var screenPoints = []
     for(var offset = 0; offset < offsets.length;offset++){
-        screenPoints.unshift({x:scrX + tileRadius * offsets[offset].x,y:scrY + tileRadius * offsets[offset].y * perspRatio});
+        screenPoints.unshift({x:pos.x + tileRadius * offsets[offset].x,y:pos.y + tileRadius * offsets[offset].y * perspRatio});
     }
 
     context.beginPath();
@@ -305,7 +367,7 @@ function drawHexHeight(context,scrX,scrY,height){
 }
 
 function componentToHex(c) {
-    var hex = c.toString(16);
+    var hex = Math.trunc(c).toString(16);
     return hex.length == 1 ? "0" + hex : hex;
   }
   
@@ -314,21 +376,69 @@ function componentToHex(c) {
   }
 
   function generateHudOverlay(){
+      var leftHeight = 0.23;
+      var leftHeight2 = 0.43;
     var bottomY = (canvas.height / 2) - 100;
     var points = [];
-    points.unshift({x:0,y:bottomY});
-    points.unshift({x:canvas.width * 0.1,y:bottomY});
-    points.unshift({x:canvas.width * 0.2,y:bottomY - canvas.height * 0.1});
-    points.unshift({x:canvas.width * 0.2,y:canvas.height * 0.04});
 
-    points.unshift({x:canvas.width * 0.8,y:canvas.height * 0.04});
-    points.unshift({x:canvas.width * 0.8,y:bottomY - canvas.height * 0.1});
-    points.unshift({x:canvas.width * 0.9,y:bottomY});
+    points.unshift({x:0,y:canvas.height * leftHeight});
+    points.unshift({x:canvas.width * 0.09,y:canvas.height * leftHeight});
+    points.unshift({x:canvas.width * 0.1,y:canvas.height * (leftHeight - 0.02)});
+    points.unshift({x:canvas.width * 0.1,y:0});
+    points.unshift({x:0,y:0});
 
+    points.unshift({x:0,y:canvas.height * leftHeight2});
+    points.unshift({x:canvas.width * 0.09,y:canvas.height * leftHeight2});
+    points.unshift({x:canvas.width * 0.1,y:canvas.height * (leftHeight2 - 0.02)});
+    points.unshift({x:canvas.width * 0.1,y:canvas.height * leftHeight});
+    points.unshift({x:0,y:canvas.height * leftHeight});
+    points.unshift({x:0,y:0});
+
+    points.unshift({x:canvas.width * 0.3,y:0});
+    points.unshift({x:canvas.width * 0.33,y:canvas.height * 0.04});
+    points.unshift({x:canvas.width * 0.67,y:canvas.height * 0.04});
+    points.unshift({x:canvas.width * 0.7,y:0});
+
+    points.unshift({x:canvas.width * 0.84,y:0});
+    points.unshift({x:canvas.width * 0.84,y:bottomY - canvas.height * 0.05});
+    points.unshift({x:canvas.width * 0.88,y:bottomY});
     points.unshift({x:canvas.width,y:bottomY});
     points.unshift({x:canvas.width,y:0});
     points.unshift({x:0,y:0});
     return points;
+  }
+
+  function generateUIOverlay(context,height,length,width){
+      var cornerLength = 0.04;
+      var rightX = 1 - width;
+      context.beginPath();
+      context.moveTo(canvas.width * (width + cornerLength),canvas.height * height);
+      context.lineTo(canvas.width * (rightX - cornerLength),canvas.height * height);
+      context.lineTo(canvas.width * (rightX),canvas.height * (height + cornerLength));
+      context.lineTo(canvas.width * (rightX),canvas.height * ((height + length) - cornerLength));
+      context.lineTo(canvas.width * (rightX - cornerLength),canvas.height * (height + length));
+      context.lineTo(canvas.width * (width + cornerLength),canvas.height * (height + length));
+      context.lineTo(canvas.width * (width),canvas.height * (height + length - cornerLength));
+      context.lineTo(canvas.width * (width),canvas.height * (height + cornerLength));
+      context.closePath();
+      context.fill();
+      context.stroke();
+
+      var sizeOffset = 0.02;
+      var height2 = height + sizeOffset;
+      var length2 = length - sizeOffset * 2;
+      context.beginPath();
+      context.moveTo(canvas.width * (width + sizeOffset + cornerLength),canvas.height * height2);
+      context.lineTo(canvas.width * (rightX - sizeOffset - cornerLength),canvas.height * height2);
+      context.lineTo(canvas.width * (rightX - sizeOffset),canvas.height * (height2 + cornerLength));
+      context.lineTo(canvas.width * (rightX - sizeOffset),canvas.height * ((height2 + length2) - cornerLength));
+      context.lineTo(canvas.width * (rightX - sizeOffset - cornerLength),canvas.height * (height2 + length2));
+      context.lineTo(canvas.width * (width + sizeOffset + cornerLength),canvas.height * (height2 + length2));
+      context.lineTo(canvas.width * (width + sizeOffset),canvas.height * (height2 + length2 - cornerLength));
+      context.lineTo(canvas.width * (width + sizeOffset),canvas.height * (height2 + cornerLength));
+      context.closePath();
+      context.fill();
+      context.stroke();
   }
 
   function getSurroundingTiles(tiles,tile){
@@ -375,7 +485,7 @@ function componentToHex(c) {
     }
     angles.forEach(a => {
         var x = xOffset + (Math.cos(a) * size * tileRadius + (Math.random() * 15 * size));
-        var y = yOffset + (Math.sin(a) * size * (tileRadius*perspRatio) + (Math.random() * 15 * size));
+        var y = yOffset + (Math.sin(a) * size * (tileRadius*perspRatio) + (Math.random() * 15 * size * perspRatio));
         x = Math.min(tileRadius * 0.6 - 5,x);
         x = Math.max(-tileRadius * 0.6 + 5,x);
         y = Math.min(tileRadius * perspRatio - 5,y);
@@ -386,7 +496,7 @@ function componentToHex(c) {
   }
 
 
-  function generateMap(width,biomeSeq,colours){
+  function generateMap(width,biomeSeq,colours,startX){
 
     var tiles = [];
     for(var y = 0; y < 5;y++){
@@ -446,7 +556,6 @@ function componentToHex(c) {
             getSurroundingTiles(tiles,t).filter(t => 0.7 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"SILICON",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
         }
     });
-    var startX = 224;
     tiles.find(t => t.x == startX).hasPlayer = true;
     //Generate start area resources
     tiles.filter(t => Math.abs(startX - t.x) < 20).forEach(t => {
