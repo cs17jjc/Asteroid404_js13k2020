@@ -60,8 +60,9 @@ function renderMap(context,tiles,drawHeight,playerPosOffset){
 
         if(t.isVisible){
             t.screenPos.y -= t.height;
-            context.strokeStyle = t.colour.darkend(0.2).toHex();
-            context.fillStyle = t.colour.toHex();
+            var tileColour = new Colour(Math.max(0,t.colour.r * (1 - t.hazard)),Math.min(255,t.colour.g * (1 + t.hazard)),Math.max(0,t.colour.b * (1 - t.hazard)),255);
+            context.strokeStyle = t.hazard == 0 ? tileColour.darkend(0.2).toHex() : tileColour.darkend(1.5).toHex();
+            context.fillStyle = tileColour.toHex();
             if(interactTiles.includes(t)){
                 if(buildMode){
                     context.strokeStyle = "#FFFF00";

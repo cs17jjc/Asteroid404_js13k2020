@@ -10,6 +10,7 @@ class Tile {
         this.highlighted = false;
         this.isVisible = true;
         this.screenPos = {x:0,y:0};
+        this.hazard = 0;
     }
 }
 
@@ -25,6 +26,6 @@ class Colour{
         return rgbToHex(this.r,this.g,this.b,this.a);
     }
     darkend(factor){
-        return new Colour(Math.trunc(this.r * factor),Math.trunc(this.g * factor),Math.trunc(this.b * factor),this.a);
+        return new Colour(Math.min(255, Math.trunc(this.r * factor)),Math.min(255, Math.trunc(this.g * factor)),Math.min(255, Math.trunc(this.b * factor)),this.a);
     }
 }

@@ -28,6 +28,7 @@ var playerEnergy = 50;
 var playerDeadState = false;
 
 var playerBalance = 0;
+var playerBalanceDisplayed = 0;
 
 canvas.width = 1280;
 canvas.height = 720;
@@ -144,6 +145,9 @@ placeBuilding(tiles.find(t => t.x == spawnX && t.y == 2),{type:"RADAR",value:1})
 placeBuilding(tiles.find(t => t.x == spawnX && t.y == 0),{type:"RTG",value:1});
 placeBuilding(tiles.find(t => t.x == spawnX + 3 && t.y == 2),{type:"TELEDEPOT",value:1});
 placeBuilding(tiles.find(t => t.x == spawnX - 3 && t.y == 1),{type:"ROBOSHOP",value:1});
+var hazardTile = tiles.find(t => t.x == spawnX - 4 && t.y == 2);
+hazardTile.hazard = 0.5;
+getSurroundingTiles(tiles,hazardTile).forEach(t => t.hazard = 0.5);
 updatePlayerPos(tiles,0,0);
 var millisOnLastFrame = new Date().getTime();
 var frameSpeedFactor = 0;
@@ -481,7 +485,6 @@ function handleBuildingInteraction(playerTile){
         case "TELEDEPOT":
             if(selectingResource){
                 playerResources[selectedResource].value -= 1;
-                zzfx(...[soundFxVolume,0,1002,,.05,.02,,1.82,,,276,.08,.04,,,,,.99,.03]).start();
                 playerBalance += prices.find(r => r.type == playerResources[selectedResource].type).price;
             } else {
                 selectedResource = 0;
@@ -580,7 +583,7 @@ function handleHUD(){
     ctx.textAlign = "center"; 
     ctx.textBaseline = "middle";
     ctx.fillStyle = hudColourScheme.text;
-    ctx.fillText("Sol: " + sols + " Planet Rotation: " + time.toFixed(2) + "°" + " GPS X:" + playerPos.x + " Y:" + playerPos.y,canvas.width/2,15);
+    ctx.fillText("Sol: " + sols + " Planet Rotation: " + time.toFixed(0) + "°" + " GPS X:" + playerPos.x + " Y:" + playerPos.y,canvas.width/2,15);
 
 
     if(buildMode){
@@ -643,7 +646,8 @@ function handleHUD(){
     ctx.fillText("JMC",canvas.width * 0.05,canvas.height * 0.16);
     drawLogo(ctx,canvas.width * 0.05,canvas.height * 0.072,50);
     ctx.font = "15px Tahoma";
-    ctx.fillText("₿" + playerBalance ,canvas.width * 0.05,canvas.height * 0.2);
+    ctx.fillText("₿" + playerBalanceDisplayed.toFixed(0) ,canvas.width * 0.05,canvas.height * 0.2);
+    playerBalanceDisplayed = lerp(playerBalance,playerBalanceDisplayed,(frameSpeedFactor/100));
     drawBattery(ctx,canvas.width * 0.02,canvas.height * 0.40,100,playerEnergy/playerMaxEnergy);
     var batteryStatusHeight = 0.24;
     ctx.fillText("Battery",canvas.width * 0.07,canvas.height * (batteryStatusHeight + 0.05));
