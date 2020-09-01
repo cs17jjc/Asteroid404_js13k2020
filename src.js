@@ -146,8 +146,8 @@ placeBuilding(tiles.find(t => t.x == spawnX && t.y == 0),{type:"RTG",value:1});
 placeBuilding(tiles.find(t => t.x == spawnX + 3 && t.y == 2),{type:"TELEDEPOT",value:1});
 placeBuilding(tiles.find(t => t.x == spawnX - 3 && t.y == 1),{type:"ROBOSHOP",value:1});
 var hazardTile = tiles.find(t => t.x == spawnX - 4 && t.y == 2);
-hazardTile.hazard = 0.5;
-getSurroundingTiles(tiles,hazardTile).forEach(t => t.hazard = 0.5);
+hazardTile.hazard = 5;
+getSurroundingTiles(tiles,hazardTile).forEach(t => t.hazard = 5);
 updatePlayerPos(tiles,0,0);
 var millisOnLastFrame = new Date().getTime();
 var frameSpeedFactor = 0;
@@ -220,8 +220,9 @@ function gameloop(){
         }
 
         //Drain player battery
-        if(!["RTG","SOLAR"].includes(tiles.find(t => t.hasPlayer).building.type)){
-            playerEnergy -= playerDrainRate * (frameSpeedFactor/1000);
+        var playerTile = tiles.find(t => t.hasPlayer);
+        if(!["RTG","SOLAR"].includes(playerTile.building.type)){
+            playerEnergy -= (playerDrainRate + playerTile.hazard) * (frameSpeedFactor/1000);
         } else {
             hudFlash = false;
         }
