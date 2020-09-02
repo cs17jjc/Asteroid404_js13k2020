@@ -8,7 +8,7 @@ class Tile {
         this.resource = {type:"NONE"};
         this.building = {type:"NONE"};
         this.highlighted = false;
-        this.isVisible = true;
+        this.isVisible = false;
         this.screenPos = {x:0,y:0};
         this.hazard = 0;
     }

@@ -30,6 +30,12 @@ function drawHexTile(context, tile){
             case "SILICON":
                 resourceColour = new Colour(0,153,204,255);
                 break;
+            case "ROCK":
+                resourceColour = new Colour(100,100,100,255);
+                break;
+            case "PLUTONIUM":
+                resourceColour = new Colour(0,255,0,255);
+                break;
         }
         context.lineWidth = 3;
         context.fillStyle = resourceColour.toHex();
@@ -223,13 +229,11 @@ function placeBuilding(tile,building){
                 tiles.filter(t => Math.abs(t.x - tile.x) < radarRange).forEach(t => t.isVisible = true);
                 break;
             case "CONSTRUCTOR":
-                tile.building.storedItems = [];
                 tile.building.energy = 0;
                 tile.building.maxEnergy = 10;
                 tile.building.crafting = false;
                 tile.building.craftTimer = 0;
-                tile.building.storedProduct = 0;
-                tile.building.queued = 0;
+                tile.building.storedProduct = false;
                 break;
             case "MINER":
                 tile.building.storedItems = [];
@@ -379,7 +383,7 @@ function componentToHex(c) {
   function generateHudOverlay(){
       var leftHeight = 0.23;
       var leftHeight2 = 0.43;
-    var bottomY = (canvas.height / 2) - 100;
+    var bottomY = canvas.height * 0.55;
     var points = [];
 
     points.unshift({x:0,y:canvas.height * leftHeight});
@@ -401,8 +405,8 @@ function componentToHex(c) {
     points.unshift({x:canvas.width * 0.7,y:0});
 
     points.unshift({x:canvas.width * 0.84,y:0});
-    points.unshift({x:canvas.width * 0.84,y:bottomY - canvas.height * 0.05});
-    points.unshift({x:canvas.width * 0.88,y:bottomY});
+    points.unshift({x:canvas.width * 0.84,y:bottomY - canvas.height * 0.02});
+    points.unshift({x:canvas.width * 0.86,y:bottomY});
     points.unshift({x:canvas.width,y:bottomY});
     points.unshift({x:canvas.width,y:0});
     points.unshift({x:0,y:0});
@@ -466,9 +470,12 @@ function componentToHex(c) {
   }
 
   function generateResourcePoints(value,type){
-      var points = 7;
-      var number = 1;
-      var size = value/20;
+    var points = 7;
+    if(type == "ROCK"){
+        points = 5;
+    }
+    var number = 1;
+    var size = value/20;
     var lines = [];
     for(var n = 0; n < number;n++){
         var xOffset = (Math.random() - 0.5) * (tileRadius*0.2) * size;
@@ -535,42 +542,42 @@ function componentToHex(c) {
         t.height = tileStepHeight * heightNumber;
         t.colour = colours.find(c => c.levels.includes(heightNumber)).colour;
 
-        if(Math.random() * 100 > 97 && (t.biome == 1 || t.biome == 3) && t.height >= 15){
-            var resourceAmmount = Math.random() * 10;
-            t.resource = {type:"IRON",value:Math.max(3,Math.trunc(resourceAmmount))};
-            getSurroundingTiles(tiles,t).filter(t => 0.5 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"IRON",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
-        } else if(Math.random() * 100 > 97 && (t.biome == 0 || t.biome == 1)) {
-            var resourceAmmount = Math.random() * 10;
-            t.resource = {type:"COPPER",value:Math.max(3,Math.trunc(resourceAmmount))};
-            getSurroundingTiles(tiles,t).filter(t => 0.5 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"COPPER",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
-        } else if(Math.random() * 100 > 92 && t.biome == 0 && t.height <= 10) {
-            var resourceAmmount = Math.random() * 20;
-            t.resource = {type:"CARBON",value:Math.max(5,Math.trunc(resourceAmmount))};
-            getSurroundingTiles(tiles,t).filter(t => 0.8 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"CARBON",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
-        } else if(Math.random() * 100 > 96 && t.biome == 3) {
-            var resourceAmmount = Math.random() * 15;
-            t.resource = {type:"LITHIUM",value:Math.max(2,Math.trunc(resourceAmmount))};
-            getSurroundingTiles(tiles,t).filter(t => 0.9 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"LITHIUM",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
-        } else if(Math.random() * 100 > 85 && t.biome == 4 && t.height >= 40) {
-            var resourceAmmount = Math.random() * 15;
-            t.resource = {type:"SILICON",value:Math.max(2,Math.trunc(resourceAmmount))};
-            getSurroundingTiles(tiles,t).filter(t => 0.7 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"SILICON",value:Math.max(1,Math.trunc(resourceAmmount * Math.random()))});
+        if(Math.abs(startX - t.x) > 3 && Math.random() * 100 > 80 + Math.min(20,Math.abs(startX - t.x)/15)){
+            addResourceToTile(tiles,t,"IRON",Math.random() * 15,10,0.6);
+        } else if(Math.abs(startX - t.x) > 20 && Math.random() * 100 > 97) {
+           addResourceToTile(tiles,t,"COPPER",Math.random() * 10,10,0.5);
+        } else if(Math.abs(startX - t.x) > 30 && Math.random() * 100 > 92) {
+            addResourceToTile(tiles,t,"CARBON",Math.random() * 15,10,0.8);
+        } else if(Math.abs(startX - t.x) > 50 && Math.random() * 100 > 96) {
+            addResourceToTile(tiles,t,"LITHIUM",Math.random() * 15,10,0.7);
+        } else if(Math.abs(startX - t.x) > 100 && Math.random() * 100 > 85) {
+            addResourceToTile(tiles,t,"SILICON",Math.random() * 15,10,0.7);
+        } else if(Math.abs(startX - t.x) > 100 && Math.random() * 100 > 85) {
+            var ammount = Math.random() * 15;
+            addResourceToTile(tiles,t,"PLUTONIUM",ammount,10,0.7);
+            addHazardToTile(tiles,t,4);
+        } else if(Math.random() * 100 > 85 + Math.min(15,Math.abs(startX - t.x)/10)) {
+            addResourceToTile(tiles,t,"ROCK",Math.random() * 15,10,0.0);
+        }
+        if(Math.abs(startX - t.x) > 80 && Math.random() * 100 > 95){
+            addHazardToTile(tiles,t,Math.random() * 5);
+        } else if(Math.abs(startX - t.x) > 150 && Math.random() * 100 > 85){
+            addHazardToTile(tiles,t,Math.random() * 10);
         }
     });
     tiles.find(t => t.x == startX).hasPlayer = true;
-    //Generate start area resources
-    tiles.filter(t => Math.abs(startX - t.x) < 20).forEach(t => {
-        if(Math.random() * 100 > 80){
-            var resourceAmmount = Math.random() * 15;
-            t.resource = {type:"IRON",value:Math.max(5,Math.trunc(resourceAmmount))};
-            getSurroundingTiles(tiles,t).filter(t => 0.2 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"IRON",value:Math.max(10,Math.trunc(resourceAmmount * Math.random()))});
-        } else if(Math.random() * 100 > 85) {
-            var resourceAmmount = Math.random() * 15;
-            t.resource = {type:"COPPER",value:Math.max(5,Math.trunc(resourceAmmount))};
-            getSurroundingTiles(tiles,t).filter(t => 0.2 > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:"COPPER",value:Math.max(10,Math.trunc(resourceAmmount * Math.random()))});
-        }
-    });
     tiles.filter(t => t.resource.type != "NONE").forEach(t => t.resource.lines = generateResourcePoints(t.resource.value,t.resource.type));
     
     return tiles;
+  }
+
+  function addResourceToTile(tiles,tile,type,ammount,minimum,expansion){
+    var resourceAmmount = Math.max(minimum,Math.trunc(ammount));
+    tile.resource = {type:type,value:resourceAmmount};
+    getSurroundingTiles(tiles,tile).filter(t => expansion > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:type,value:Math.max(5,Math.trunc(resourceAmmount * Math.random()))});
+  }
+
+  function addHazardToTile(tiles,tile,ammount){
+    tile.hazard = ammount;
+    getSurroundingTiles(tiles,tile).forEach(t => t.hazard = ammount * 0.8);
   }

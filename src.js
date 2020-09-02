@@ -19,8 +19,17 @@ var selectedMenuItem = 0;
 
 var soundFxVolume = 0;
 
-var recipes = [{product:"LAB",items:[{type:"IRON",value:10},{type:"COPPER",value:5}],energy:4},{product:"EXIT",items:[],energy:0}];
-var prices = [{type:"COPPER",price:25},{type:"IRON",price:50}];
+var recipes = [{product:"EXIT",items:[],energy:0},
+               {product:"RADAR",items:[{type:"IRON",value:20}],energy:4},
+               {product:"CONSTRUCTOR",items:[{type:"IRON",value:20},{type:"COPPER",value:20}],energy:6}];
+var prices = [{type:"EXIT",price:0,ammount:0},
+              {type:"ROCK",price:1,ammount:1},{type:"ROCK",price:1,ammount:10},{type:"ROCK",price:1,ammount:50},
+              {type:"COPPER",price:25,ammount:1},{type:"COPPER",price:25,ammount:10},{type:"COPPER",price:25,ammount:50},
+              {type:"IRON",price:50,ammount:1},{type:"IRON",price:50,ammount:10},{type:"IRON",price:50,ammount:50},
+              {type:"CARBON",price:75,ammount:1},{type:"CARBON",price:75,ammount:10},{type:"CARBON",price:75,ammount:50},
+              {type:"LITHIUM",price:150,ammount:1},{type:"LITHIUM",price:150,ammount:10},{type:"LITHIUM",price:150,ammount:50},
+              {type:"SILICON",price:500,ammount:1},{type:"SILICON",price:500,ammount:10},{type:"SILICON",price:500,ammount:50},
+              {type:"PLUTONIUM",price:1000,ammount:1},{type:"PLUTONIUM",price:1000,ammount:10},{type:"PLUTONIUM",price:1000,ammount:50}];
 var shopItems = [{item:"RADAR_RECIPE",cost:500}];
 
 var playerPos = {x:0,y:0};
@@ -44,10 +53,10 @@ var tiles = [];
 var messages = [];
 var interactTiles = [];
 var selectedTile = 0;
-var selectedResource = 0;
+var selectedSell = 0;
 
-var playerResources = [];
-var playerBuildings = [{type:"CONSTRUCTOR",value:1},{type:"SOLAR",value:1}];
+var playerResources = [{type:"ROCK",value:25},{type:"COPPER",value:25},{type:"IRON",value:25},{type:"CARBON",value:25},{type:"LITHIUM",value:25}];
+var playerBuildings = [{type:"CONSTRUCTOR",value:1},{type:"SOLAR",value:1},{type:"MINER",value:3},{type:"RTG",value:3},{type:"BATTERY",value:3}];
 var selectedBuilding = 0;
 
 //Modes
@@ -55,7 +64,7 @@ var buildMode = false;
 var removeMode = false;
 var settingRecipe = false;
 var escMenu = false;
-var selectingResource = false;
+var selectingSell = false;
 var buyingMode = false;
 
 //Player Upgrades:
@@ -69,12 +78,11 @@ var maxStorage = 50;
 //Building Upgrades:
 var solarOutput = 1;
 var craftSpeed = 1;
-var craftMaxQueued = 2;
 var minerFactor = 5;
 var mineSpeed = 3;
 var minerTransmit = false;
 var constructorTransmit = false;
-var batteryDischarge = 1;
+var batteryDischarge = 1.5;
 var RTGOutput = 5;
 
 var time = 0;
@@ -145,9 +153,6 @@ placeBuilding(tiles.find(t => t.x == spawnX && t.y == 2),{type:"RADAR",value:1})
 placeBuilding(tiles.find(t => t.x == spawnX && t.y == 0),{type:"RTG",value:1});
 placeBuilding(tiles.find(t => t.x == spawnX + 3 && t.y == 2),{type:"TELEDEPOT",value:1});
 placeBuilding(tiles.find(t => t.x == spawnX - 3 && t.y == 1),{type:"ROBOSHOP",value:1});
-var hazardTile = tiles.find(t => t.x == spawnX - 4 && t.y == 2);
-hazardTile.hazard = 5;
-getSurroundingTiles(tiles,hazardTile).forEach(t => t.hazard = 5);
 updatePlayerPos(tiles,0,0);
 var millisOnLastFrame = new Date().getTime();
 var frameSpeedFactor = 0;
@@ -200,7 +205,7 @@ function gameloop(){
         playerPosOffset.y = lerp(playerPosOffset.y,0,(frameSpeedFactor/150) * playerSpeed);
 
         playerResources = playerResources.filter(r => r.value > 0);
-        selectedResource = Math.min(playerResources.length - 1,selectedResource);
+        selectedSell = Math.min(prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT").length - 1,selectedSell);
         playerBuildings = playerBuildings.filter(b => b.value > 0);
     
         //Reset modes
@@ -214,9 +219,9 @@ function gameloop(){
             removeMode = false;
             interactTiles = [];
         }
-        if(selectingResource && playerResources.length == 0){
-            selectedResource = 0;
-            selectingResource = false;
+        if(selectingSell && prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount)).length == 0){
+            selectedSell = 0;
+            selectingSell = false;
         }
 
         //Drain player battery
@@ -270,35 +275,35 @@ function gameloop(){
 }
 
 function handleInput(){
-    if(inputs.up == true && prevInputs.up == false && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingResource && Math.abs(playerPosOffset.y) < 10){
+    if(inputs.up == true && prevInputs.up == false && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingSell && Math.abs(playerPosOffset.y) < 10){
         updatePlayerPos(tiles,0,-1);
     }
-    if(inputs.down == true && prevInputs.down == false && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingResource && Math.abs(playerPosOffset.y) < 10){
+    if(inputs.down == true && prevInputs.down == false && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingSell && Math.abs(playerPosOffset.y) < 10){
         updatePlayerPos(tiles,0,+1);
     }
-    if(inputs.up == true && prevInputs.up == true && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingResource && Math.abs(playerPosOffset.y) < 10){
+    if(inputs.up == true && prevInputs.up == true && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingSell && Math.abs(playerPosOffset.y) < 10){
         updatePlayerPos(tiles,0,-1);
     }
-    if(inputs.down == true && prevInputs.down == true && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingResource && Math.abs(playerPosOffset.y) < 10){
+    if(inputs.down == true && prevInputs.down == true && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingSell && Math.abs(playerPosOffset.y) < 10){
         updatePlayerPos(tiles,0,+1);
     }
-    if(inputs.up == false && prevInputs.up == true && buildMode){
+    if(inputs.up == true && prevInputs.up == false && buildMode){
         selectedBuilding = Math.max(0,selectedBuilding - 1);
     }
-    if(inputs.down == false && prevInputs.down == true && buildMode){
+    if(inputs.down == true && prevInputs.down == false && buildMode){
         selectedBuilding = Math.max(0,Math.min(playerBuildings.length - 1,selectedBuilding + 1));
     }
-    if(inputs.up == false && prevInputs.up == true && settingRecipe){
+    if(inputs.up == true && prevInputs.up == false && settingRecipe){
         selectedBuilding = Math.max(0,selectedBuilding - 1);
     }
-    if(inputs.down == false && prevInputs.down == true && settingRecipe){
+    if(inputs.down == true && prevInputs.down == false && settingRecipe){
         selectedBuilding = Math.max(0,Math.min(recipes.length - 1,selectedBuilding + 1));
     }
-    if(inputs.up == false && prevInputs.up == true && selectingResource){
-        selectedResource = Math.max(0,selectedResource - 1);
+    if(inputs.up == true && prevInputs.up == false && selectingSell){
+        selectedSell = Math.max(0,selectedSell - 1);
     }
-    if(inputs.down == false && prevInputs.down == true && selectingResource){
-        selectedResource = Math.min(playerResources.length - 1,selectedResource + 1);
+    if(inputs.down == true && prevInputs.down == false && selectingSell){
+        selectedSell = Math.min(prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT").length - 1,selectedSell + 1);
     }
 
     if(inputs.right == true && prevInputs.right == false && !buildMode && !removeMode && !settingRecipe && !escMenu && Math.abs(playerPosOffset.x) < 10){
@@ -313,10 +318,10 @@ function handleInput(){
     if(inputs.left == true && prevInputs.left == true && !buildMode && !removeMode && !settingRecipe && !escMenu && Math.abs(playerPosOffset.x) < 10){
         updatePlayerPos(tiles,-1,0);
     }
-    if(inputs.right == false && prevInputs.right == true && (buildMode || removeMode)){
+    if(inputs.right == true && prevInputs.right == false && (buildMode || removeMode)){
         selectedTile = Math.min(interactTiles.length - 1,selectedTile + 1);
     }
-    if(inputs.left == false && prevInputs.left == true && (buildMode || removeMode)){
+    if(inputs.left == true && prevInputs.left == false && (buildMode || removeMode)){
         selectedTile = Math.max(0,selectedTile - 1);
     }
 
@@ -355,30 +360,30 @@ function handleInput(){
     }
 
     //If B is pressed and not in any modes and player has buildings
-    if(inputs.build == false && prevInputs.build == true && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingResource && playerBuildings.length > 0){
+    if(inputs.build == true && prevInputs.build == false && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingSell && playerBuildings.length > 0){
         selectedBuilding = 0;
         buildMode = true;
         interactTiles = getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type == "NONE");
         interactTiles.forEach(t => t.highlighted = true);
-    } else if(inputs.build == false && prevInputs.build == true && buildMode){
+    } else if(inputs.build == true && prevInputs.build == false && buildMode){
         selectedTile = 0;
         buildMode = false;
         interactTiles = [];
     }
 
     //If R is pressed and not in any modes and player has buildings
-    if(inputs.remove == false && prevInputs.remove == true && !buildMode && !removeMode && !settingRecipe && !selectingResource && !escMenu){
+    if(inputs.remove == true && prevInputs.remove == false && !buildMode && !removeMode && !settingRecipe && !selectingSell && !escMenu){
         removeMode = true;
         interactTiles = getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type != "NONE");
         interactTiles.forEach(t => t.highlighted = true);
-    } else if(inputs.remove == false && prevInputs.remove == true && removeMode){
+    } else if(inputs.remove == true && prevInputs.remove == false && removeMode){
         selectedTile = 0;
         removeMode = false;
         interactTiles = [];
     }
 
     //If E is pressed and in build mode and empty spaces
-    if(buildMode && inputs.inter == false && prevInputs.inter == true && interactTiles.some(t => t.building.type == "NONE")){
+    if(buildMode && inputs.inter == true && prevInputs.inter == false && interactTiles.some(t => t.building.type == "NONE")){
         placeBuilding(interactTiles[selectedTile],playerBuildings[selectedBuilding]);
         playerBuildings = playerBuildings.filter(b => b.value > 0);
         interactTiles[selectedTile].highlighted = false;
@@ -387,7 +392,7 @@ function handleInput(){
         selectedBuilding = Math.min(playerBuildings.length-1,selectedBuilding);
     }
     //If E is pressed and in remove mode and buildings
-    if(removeMode && inputs.inter == false && prevInputs.inter == true && interactTiles.some(t => t.building.type != "NONE")){
+    if(removeMode && inputs.inter == true && prevInputs.inter == false && interactTiles.some(t => t.building.type != "NONE")){
         removeBuilding(interactTiles[selectedTile]);
         interactTiles[selectedTile].highlighted = false;
         interactTiles = interactTiles.filter(t => t != interactTiles[selectedTile]);
@@ -429,28 +434,20 @@ function handleBuildingInteraction(playerTile){
         case "CONSTRUCTOR":
             if(settingRecipe){
                 var selectedRecipe = Object.assign({},recipes[selectedBuilding]);
-                if(selectedRecipe.product != "EXIT")
-                {
-                    playerTile.building.recipe = selectedRecipe;
-                }
-                settingRecipe = false;
-            } else if(playerTile.building.recipe == null){
-                settingRecipe = true;
-                selectedBuilding = 0;
-            } else {
-                if(playerTile.building.storedProduct == 0) {
-                    if(playerTile.building.queued < craftMaxQueued){
-                        var recipeItems = playerTile.building.recipe.items;
+                if(selectedRecipe.product != "EXIT") {
+                    if(playerTile.building.energy >= selectedRecipe.energy){
+                        var recipeItems = selectedRecipe.items;
                         if(recipeItems.filter(i => playerResources.some(ii => ii.type == i.type && ii.value >= i.value)).length == recipeItems.length){
+                            playerTile.building.recipe = selectedRecipe;
                             playerResources.forEach(i => {
                                 var recipeItem = recipeItems.find(ii => ii.type == i.type);
                                 if(recipeItem != null){
                                     i.value -= recipeItem.value;
                                     messages.push({text:"Used " + recipeItem.value + " units of " + i.type,time:0});
-                                    addToBuildingStorage(playerTile.building.storedItems,recipeItem.type,recipeItem.value);
                                 }
                             });
-                            playerTile.building.queued += 1;
+                            playerTile.building.craftTimer = 0;
+                            playerTile.building.crafting = true;
                             zzfx(...[soundFxVolume,,542,,.01,.01,1,1.1,61.9,-94.8,-1e3,.02,.1,.1,3,,.01,,.08]).start();
                         } else {
                             recipeItems.forEach(i => {
@@ -464,14 +461,19 @@ function handleBuildingInteraction(playerTile){
                             zzfx(...[soundFxVolume,0,604,,,.13,4,2.01,-0.1,.2,50,,.01,,,.4,.05,.68,.05]).start();
                         }
                     } else {
-                        messages.push({text:"Maximum craft queue sized reached",time:0});
+                        messages.push({text:"Not enough energy",time:0});
                     }
-            } else {
-                addToPlayerBuildings(playerTile.building.recipe.product,playerTile.building.storedProduct);
-                messages.push({text:"Gained " + playerTile.building.storedProduct + " units of " + playerTile.building.recipe.product,time:0});
-                playerTile.building.storedProduct = 0;
+                }
+                settingRecipe = false;
+            } else if(playerTile.building.storedProduct){
+                addToPlayerBuildings(playerTile.building.recipe.product,1);
+                messages.push({text:"Gained " + playerTile.building.recipe.product,time:0});
+                playerTile.building.storedProduct = false;
+                playerTile.building.recipe = null;
                 zzfx(...[soundFxVolume,,521,,.01,.01,1,1.1,61.9,-94.8,-2250,.02,.1,.1,3,,.01,,.08]).start();
-            }
+            } else if(playerTile.building.recipe == null){
+                settingRecipe = true;
+                selectedBuilding = 0;
             }
             break;
         case "MINER":
@@ -484,12 +486,23 @@ function handleBuildingInteraction(playerTile){
             }
             break;
         case "TELEDEPOT":
-            if(selectingResource){
-                playerResources[selectedResource].value -= 1;
-                playerBalance += prices.find(r => r.type == playerResources[selectedResource].type).price;
+            if(selectingSell){
+                var price = prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT")[selectedSell];
+                if(price.type != "EXIT"){
+                    var playerResource = playerResources.find(r => r.type == price.type);
+                    if(playerResource.value >= price.ammount){
+                        playerResource.value -= price.ammount;
+                        playerBalance += price.ammount * price.price;
+                    } else {
+                        messages.push({text:"Cannot sell " + price.ammount + " of " + price.type,time:0});
+                    }
+                } else {
+                    selectedSell = 0;
+                    selectingSell = false;
+                }
             } else {
-                selectedResource = 0;
-                selectingResource = true;
+                selectedSell = 0;
+                selectingSell = true;
             }
             break;
     }
@@ -498,11 +511,11 @@ function handleBuildingInteraction(playerTile){
 function handleHUD(){
 
     var modeHeight = canvas.height * 0.12;
-    var selectionHeight = 30;
+    var selectionHeight = 40;
 
     if(hudFlash){
         if(hudFlashTimer >= 1){
-            zzfx(...[,0,500,.2,,0,1,.5,,,50,.12,,,,,,,.01]).start();
+            zzfx(...[soundFxVolume,0,500,.2,,0,1,.5,,,50,.12,,,,,,,.01]).start();
             hudSwap = !hudSwap;
             hudFlashTimer = 0;
         }
@@ -544,15 +557,16 @@ function handleHUD(){
         ctx.fillText(message.text,canvas.width * 0.01,canvas.height * 0.42 + (6 * 25) - topHeight + (messages.indexOf(message) * 25));
         message.time += frameSpeedFactor;
     });
-
-    var rightInfoHeight = 25;
+    ctx.font = "25px Arial";
+    ctx.fillText("Inventory",canvas.width * 0.88,30);
+    ctx.font = "15px Arial";
+    var rightInfoHeight = 55;
     var rightInfoStep = 25;
     ctx.fillStyle = hudColourScheme.text;
     ctx.fillText("Available resources:",canvas.width * 0.85,rightInfoHeight);
-    playerResources.forEach(r => ctx.fillText(r.value + "/" + maxStorage + " units of " + r.type,canvas.width * 0.85, 25 + rightInfoHeight + (playerResources.indexOf(r) * rightInfoStep)));
     playerResources.forEach(r => {
-        if(selectingResource){
-            if(selectedResource == playerResources.indexOf(r)){
+        if(selectingSell){
+            if(prices.filter(p => prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT")[selectedSell].type == r.type)){
                 ctx.fillStyle = hudColourScheme.dynamicText;
             } else {
                 ctx.fillStyle = hudColourScheme.staticText;
@@ -577,7 +591,7 @@ function handleHUD(){
             ctx.fillStyle = hudColourScheme.text;
         }
         
-        ctx.fillText(b.value + " units of " + b.type,canvas.width * 0.85, rightInfoHeight + 75 + sectionStep + (playerBuildings.indexOf(b) * rightInfoHeight));
+        ctx.fillText(b.value + " units of " + b.type,canvas.width * 0.85, rightInfoHeight + 75 + sectionStep + (playerBuildings.indexOf(b) * rightInfoStep));
     });
 
     
@@ -595,6 +609,7 @@ function handleHUD(){
         ctx.font = "30px Tahoma";
         ctx.fillText("Build Mode",canvas.width/2,modeHeight);
     }
+
     if(removeMode){
         ctx.strokeStyle = hudColourScheme.outline;
         ctx.fillStyle = hudColourScheme.infill;
@@ -603,10 +618,23 @@ function handleHUD(){
         ctx.font = "30px Tahoma";
         ctx.fillText("Remove Mode",canvas.width/2,modeHeight);
     }
+
     if(settingRecipe){
-        ctx.fillText("Set Recipe:",canvas.width/2,modeHeight);
+        ctx.strokeStyle = hudColourScheme.outline;
+        ctx.fillStyle = hudColourScheme.infill;
+        generateUIOverlay(ctx,0.05,0.5,0.3);
+        ctx.beginPath();
+        ctx.moveTo(canvas.width * 0.5,canvas.height * 0.07);
+        ctx.lineTo(canvas.width * 0.5,canvas.height * 0.53);
+        ctx.stroke();
+
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = "30px Tahoma";
+        ctx.fillText("Set Recipe:",canvas.width*0.4,modeHeight + (canvas.width*0.01));
         ctx.font = "20px Tahoma";
-        recipes.forEach(r => {
+        var number = 5;
+        var visableOptions = recipes.filter(p => Math.abs(recipes.indexOf(p) - selectedBuilding) < number + (Math.max(0,number - 1 - selectedBuilding)));
+        visableOptions.forEach(r => {
             var index = recipes.indexOf(r);
             if(selectedBuilding == index){
                 ctx.fillStyle = hudColourScheme.dynamicText;
@@ -614,32 +642,44 @@ function handleHUD(){
                 ctx.fillStyle = hudColourScheme.staticText;
             }
             if(r.product == "EXIT"){
-                ctx.fillText(r.product,canvas.width/2,modeHeight + selectionHeight + (25 * index));
+                ctx.fillText(r.product,canvas.width*0.4,modeHeight + (canvas.width*0.01) + selectionHeight + (25 * visableOptions.indexOf(r)));
             } else {
-                var itemStr = "";
-                r.items.forEach(i => itemStr = itemStr + " " + i.value + " " + i.type);
-                ctx.fillText(r.product + " :" + itemStr,canvas.width/2,modeHeight + selectionHeight + (25 * index));
+                
+                if(selectedBuilding == index){
+                    ctx.font = "25px Tahoma";
+                    r.items.forEach(i => ctx.fillText(i.value + " " + i.type, canvas.width*0.59, modeHeight + (canvas.width*0.01) + selectionHeight + (25 * r.items.indexOf(i))));
+                    ctx.fillText(r.energy + " ENERGY", canvas.width*0.59, modeHeight + (canvas.width*0.01) + selectionHeight + (25 * r.items.length))
+                }
+                ctx.font = "20px Tahoma";
+                ctx.fillText(r.product,canvas.width*0.4,modeHeight + (canvas.width*0.01) + selectionHeight + (25 * visableOptions.indexOf(r)));
             }
         });
     }
 
 
-    if(selectingResource){
+    if(selectingSell){
         ctx.strokeStyle = hudColourScheme.outline;
         ctx.fillStyle = hudColourScheme.infill;
-        generateUIOverlay(ctx,0.1,0.4,0.2);
+        generateUIOverlay(ctx,0.05,0.5,0.4);
         ctx.font = "30px Tahoma";
         ctx.fillStyle = "#FFFFFF";
         ctx.fillText("Sell Mode",canvas.width/2,modeHeight);
         ctx.font = "20px Tahoma";
-        prices.filter(p => playerResources.some(r => p.type == r.type)).forEach(p => {
-            var index = playerResources.indexOf(playerResources.find(r => r.type == p.type));
-            if(selectedResource == index){
+        var number = 5;
+        var options = prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT");
+        var visableOptions = options.filter(p => Math.abs(options.indexOf(p) - selectedSell) < number + (Math.max(0,number - 1 - selectedSell)));
+        visableOptions.forEach(p => {
+            var index = options.indexOf(p);
+            if(selectedSell == index){
                 ctx.fillStyle = hudColourScheme.dynamicText;
             } else {
                 ctx.fillStyle = hudColourScheme.staticText;
             }
-            ctx.fillText(p.type + " : ₿" + p.price,canvas.width/2,modeHeight + selectionHeight + (25 * index));
+            if(p.type != "EXIT"){
+                ctx.fillText(p.ammount + " " + p.type + " : ₿" + p.price * p.ammount,canvas.width/2,modeHeight + selectionHeight + (25 * visableOptions.indexOf(p)));
+            } else {
+                ctx.fillText(p.type ,canvas.width/2,modeHeight + selectionHeight + (25 * visableOptions.indexOf(p)));
+            }
         });
     }
     ctx.fillStyle = "#FFFFFF";
@@ -681,7 +721,7 @@ function handleHUD(){
 }
 
 function handleTileUpdates(t){
-    var infoX = canvas.width * 0.85;
+    var infoX = canvas.width * 0.6;
     var infoY = canvas.height * 0.45;
     var infoStep = 20;
     switch(t.building.type){
@@ -707,24 +747,14 @@ function handleTileUpdates(t){
             break;
         case "CONSTRUCTOR":
             if(t.building.recipe != null){
-                if(t.building.recipe.energy <= t.building.energy){
-                    var buildingItems = t.building.storedItems;
-                    var recipeItems = t.building.recipe.items;
-                    if(recipeItems.filter(i => buildingItems.some(ii => ii.type == i.type && ii.value >= i.value)).length == recipeItems.length && !t.building.crafting){
-                        buildingItems.forEach(i => i.value -= recipeItems.find(ii => ii.type == i.type).value);
-                        t.building.crafting = true;
-                        t.building.energy -= t.building.recipe.energy;
-                        t.building.queued -= 1;
-                    }
-                }
                 if(t.building.crafting){
                     t.building.craftTimer += (frameSpeedFactor/10000) * craftSpeed;
                     if(t.building.craftTimer >= 1){
                         if(constructorTransmit){
                             addToPlayerBuildings(t.building.recipe.product,t.building.recipe.storedProduct);
-                            t.building.storedProduct = 0;
+                            t.building.storedProduct = false;
                         } else {
-                            t.building.storedProduct += 1;
+                            t.building.storedProduct = true;
                         }
                         t.building.crafting = false;
                         t.building.craftTimer = 0;
@@ -734,11 +764,12 @@ function handleTileUpdates(t){
             if(t.hasPlayer && !escMenu){
                 ctx.fillText("Recipe: " + (t.building.recipe != undefined ? t.building.recipe.product : "None") ,infoX,infoY);
                 ctx.fillText("Energy: " + Math.trunc(t.building.energy),infoX,infoY + infoStep);
-                ctx.fillText("Queued: " + t.building.queued,infoX,infoY + infoStep*2);
-                ctx.fillText("Progress: " + Math.trunc(t.building.craftTimer * 100) + "%",infoX,infoY + infoStep*3);
-                ctx.fillText("Stored: " + t.building.storedProduct,infoX,infoY + infoStep*4);
+                if(t.building.crafting){
+                    ctx.fillText("Progress: " + Math.trunc(t.building.craftTimer * 100) + "%",infoX,infoY + infoStep*2);
+                } else if (t.building.storedProduct){
+                    ctx.fillText("Finished Construction",infoX,infoY + infoStep*2);
+                }
             }
-            t.building.storedItems = t.building.storedItems.filter(i => i.value > 0);
             break;
         case "MINER":
             if(!t.building.mining){
@@ -835,7 +866,7 @@ function handleTileUpdates(t){
             break;
         case "TELEDEPOT":
             if(!t.hasPlayer){
-                selectingResource = false;
+                selectingSell = false;
             }
             break;
     }
