@@ -306,16 +306,16 @@ function handleInput(){
         selectedSell = Math.min(prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT").length - 1,selectedSell + 1);
     }
 
-    if(inputs.right == true && prevInputs.right == false && !buildMode && !removeMode && !settingRecipe && !escMenu && Math.abs(playerPosOffset.x) < 10){
+    if(inputs.right == true && prevInputs.right == false && !buildMode && !removeMode && !escMenu && Math.abs(playerPosOffset.x) < 10){
         updatePlayerPos(tiles,+1,0);
     }
-    if(inputs.left == true && prevInputs.left == false && !buildMode && !removeMode && !settingRecipe && !escMenu && Math.abs(playerPosOffset.x) < 10){
+    if(inputs.left == true && prevInputs.left == false && !buildMode && !removeMode && !escMenu && Math.abs(playerPosOffset.x) < 10){
         updatePlayerPos(tiles,-1,0);
     }
-    if(inputs.right == true && prevInputs.right == true && !buildMode && !removeMode && !settingRecipe && !escMenu && Math.abs(playerPosOffset.x) < 10){
+    if(inputs.right == true && prevInputs.right == true && !buildMode && !removeMode && !escMenu && Math.abs(playerPosOffset.x) < 10){
         updatePlayerPos(tiles,+1,0);
     }
-    if(inputs.left == true && prevInputs.left == true && !buildMode && !removeMode && !settingRecipe && !escMenu && Math.abs(playerPosOffset.x) < 10){
+    if(inputs.left == true && prevInputs.left == true && !buildMode && !removeMode && !escMenu && Math.abs(playerPosOffset.x) < 10){
         updatePlayerPos(tiles,-1,0);
     }
     if(inputs.right == true && prevInputs.right == false && (buildMode || removeMode)){
@@ -760,6 +760,9 @@ function handleTileUpdates(t){
                         t.building.craftTimer = 0;
                     }
                 }
+            }
+            if(!t.hasPlayer){
+                settingRecipe = false;
             }
             if(t.hasPlayer && !escMenu){
                 ctx.fillText("Recipe: " + (t.building.recipe != undefined ? t.building.recipe.product : "None") ,infoX,infoY);
