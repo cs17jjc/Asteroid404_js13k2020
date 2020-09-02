@@ -95,6 +95,8 @@ var hudSwap = false;
 var interactTimer = 0;
 var interactTimerSpeed = 1;
 
+var batteryStatusMessage = "Nominal";
+
 //var hudColourScheme = {outline:"#00FF00",infill:"#000000AA",text:"#00FF00",staticText:"#00AA00",dynamicText:"#00FF00"};
 var hudColourScheme = {outline:"#FFFFFF",infill:"#000000AA",text:"#FFFFFF",staticText:"#AAAAAA",dynamicText:"#FFFFFF"};
 
@@ -230,6 +232,7 @@ function gameloop(){
             playerEnergy -= (playerDrainRate + playerTile.hazard) * (frameSpeedFactor/1000);
         } else {
             hudFlash = false;
+            batteryStatusMessage = "Charging";
         }
 
         handleHUD();
@@ -695,26 +698,27 @@ function handleHUD(){
     ctx.fillText("Status:",canvas.width * 0.07,canvas.height * (batteryStatusHeight + 0.07));
     var percentEnergy = playerEnergy/playerMaxEnergy;
     ctx.font = "12px Tahoma";
+    ctx.fillText(batteryStatusMessage,canvas.width * 0.07,canvas.height * (batteryStatusHeight + 0.09));
     if(percentEnergy > 0.6){
-        ctx.fillText("Nominal",canvas.width * 0.07,canvas.height * (batteryStatusHeight + 0.09));
+        batteryStatusMessage = "Nominal";
         hudFlash = false;
     } else if(percentEnergy > 0.4) {
-        ctx.fillText("Satisfactory",canvas.width * 0.07,canvas.height * (batteryStatusHeight + 0.09));
+        batteryStatusMessage = "Satisfactory";
         hudFlash = false;
     } else if(percentEnergy > 0.3) {
-        ctx.fillText("Low",canvas.width * 0.07,canvas.height * (batteryStatusHeight + 0.09));
+        batteryStatusMessage = "Low";
         hudFlash = false;
         hudFlashTimer = 0;
     } else if(percentEnergy > 0.15) {
-        ctx.fillText("Very Low",canvas.width * 0.07,canvas.height * (batteryStatusHeight + 0.09));
+        batteryStatusMessage = "Very Low";
         hudFlash = true;
         hudFlashTimer += (frameSpeedFactor/400);
     } else if(percentEnergy > 0.05) {
-        ctx.fillText("Critical",canvas.width * 0.07,canvas.height * (batteryStatusHeight + 0.09));
+        batteryStatusMessage = "Critical";
         hudFlash = true;
         hudFlashTimer += (frameSpeedFactor/150);
     } else if(percentEnergy < 0.05) {
-        ctx.fillText("Deadly",canvas.width * 0.07,canvas.height * (batteryStatusHeight + 0.09));
+        batteryStatusMessage = "Deadly";
         hudFlash = true;
         hudFlashTimer += (frameSpeedFactor/50);
     };
