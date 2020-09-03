@@ -508,6 +508,11 @@ function handleBuildingInteraction(playerTile){
                 selectingSell = true;
             }
             break;
+        case "ROBOSHOP":
+            if(!buyingMode){
+                buyingMode = true;
+            }
+            break;
     }
 }
 
@@ -685,6 +690,13 @@ function handleHUD(){
             }
         });
     }
+
+    if(buyingMode){
+        ctx.strokeStyle = hudColourScheme.outline;
+        ctx.fillStyle = hudColourScheme.infill;
+        generateUIOverlay(ctx,0.05,0.5,0.4);
+    }
+
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "30px Tahoma";
     ctx.fillText("JMC",canvas.width * 0.05,canvas.height * 0.16);
@@ -724,7 +736,7 @@ function handleHUD(){
     };
 }
 
-function handleTileUpdates(t){
+function handleTileUpdates(t) {
     var infoX = canvas.width * 0.6;
     var infoY = canvas.height * 0.45;
     var infoStep = 20;
@@ -874,6 +886,11 @@ function handleTileUpdates(t){
         case "TELEDEPOT":
             if(!t.hasPlayer){
                 selectingSell = false;
+            }
+            break;
+        case "ROBOSHOP":
+            if(!t.hasPlayer){
+                buyingMode = false;
             }
             break;
     }
