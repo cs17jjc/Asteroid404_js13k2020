@@ -114,42 +114,13 @@ var mapWidth = 500;
 //var marsColourScheme = [{levels:[0,1,2],colour:new Colour(69,24,4,255)},{levels:[3,4],colour:new Colour(193,68,14,255)},{levels:[5,6,7],colour:new Colour(231,125,17,255)},{levels:[8,9],colour:new Colour(253,166,0,255)}];
 //var otherColourScheme = [{levels:[0,1,2],colour:new Colour(134, 187, 216,255)},{levels:[3,4],colour:new Colour(97, 231, 134,255)},{levels:[5,6,7],colour:new Colour(240, 101, 67,255)},{levels:[8,9],colour:new Colour(26, 94, 99,255)}];
 var otherColourScheme = [{levels:[0,1,2],colour:new Colour(62, 47, 91,255)},{levels:[3,4],colour:new Colour(190, 184, 235,255)},{levels:[5,6,7],colour:new Colour(64, 121, 140,255)},{levels:[8,9],colour:new Colour(115, 251, 211,255)}];
-var lastBiome = 0;
-var lastBiomeLength = 0;
-var biomeSeq = Array.from(Array(mapWidth).keys()).map(i => {
-    if(i >= 0 && i < 50){
-        return 4;
-    }
-    if(i >= 50 && i < 100){
-        return 0;
-    }
-    if(i >= 100 && i < 150){
-        return 1;
-    }
-    if(i >= 150 && i < 200){
-        return 0;
-    }
-    if(i >= 200 && i < 250){
-        return 1;
-    }
-    if(i >= 250 && i < 254){
-        return 2;
-    }
-    if(i >= 254 && i < 300){
-        return 3;
-    }
-    if(i >= 300 && i < 350){
-        return 4;
-    }
-    if(i >= 350 && i < 450){
-        return 3;
-    }
-    if(i >= 450 && i <= 500){
-        return 4;
-    }
-});
-
 var spawnX = 240;
+var biomeSeq = Array.from(Array(mapWidth).keys()).map(i => {
+    var dist = Math.abs(spawnX - i) / (mapWidth * 0.5);
+    var biome = Math.trunc(4 * (Math.sin((Math.PI * 6) * dist)));
+    console.log(i + " : " + Math.abs(biome));
+    return Math.abs(biome);
+});
 tiles = generateMap(mapWidth,biomeSeq,otherColourScheme,spawnX);
 placeBuilding(tiles.find(t => t.x == spawnX && t.y == 2),{type:"RADAR",value:1});
 placeBuilding(tiles.find(t => t.x == spawnX && t.y == 0),{type:"RTG",value:1});
@@ -451,6 +422,7 @@ function handleBuildingInteraction(playerTile){
                             });
                             playerTile.building.craftTimer = 0;
                             playerTile.building.crafting = true;
+                            playerTile.building.energy -= selectedRecipe.energy;
                             zzfx(...[soundFxVolume,,542,,.01,.01,1,1.1,61.9,-94.8,-1e3,.02,.1,.1,3,,.01,,.08]).start();
                         } else {
                             recipeItems.forEach(i => {
@@ -894,6 +866,13 @@ function handleTileUpdates(t) {
             }
             break;
     }
+}
+
+function exploreMode(){
+    playerDrainRate = 0;
+    playerMaxEnergy = 10000000000;
+    playerEnergy = 10000000000;
+    tiles.forEach(t => t.isVisible = true);
 }
 
 document.addEventListener('keydown', (event) => {

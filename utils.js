@@ -190,7 +190,6 @@ function updatePlayerPos(tiles,deltaX,deltaY){
                 if(Math.abs(newTile.height - playerTile.height) <= maxStepHeight * tileStepHeight){
                     playerTile.hasPlayer = false;
                     newTile.hasPlayer = true;
-                    console.log(newTile.biome);
                     playerPos = {x:newTile.x,y:newTile.y};
                     playerPosOffset = {x:playerTile.screenPos.x - newTile.screenPos.x,y:playerTile.screenPos.y - newTile.screenPos.y};
                     zzfx(...[soundFxVolume,.1,440,,,.07,,,,,50,.07]).start();
@@ -521,7 +520,7 @@ function componentToHex(c) {
                 //Flatlands
                 heightNumber = Math.min(6,Math.max(4,Math.trunc(Math.abs((noise.perlin2(t.x/5, t.y/5)+1)/2 * 10))));
                 break;
-            case 3:
+            case 2:
                 //Bumpy
                 heightNumber = Math.min(9,Math.trunc(Math.abs((noise.perlin2(t.x/4, t.y/4)+1)/2 * 10)));
                 break;
@@ -529,23 +528,19 @@ function componentToHex(c) {
                 //Lowlands
                 heightNumber = Math.min(5,Math.max(0,Math.trunc(Math.abs((noise.perlin2(t.x/5, t.y/5)+1)/2 * 10))) - 1);
                 break;
-            case 4:
+            case 3:
                 //Moutains
-                heightNumber = Math.min(9,Math.trunc(Math.abs((noise.perlin2(t.x/3, t.y/3)+1)/2 * 10) + 2));
-                break;
-            case 2:
-                //Ridge
-                heightNumber = Math.min(9,Math.trunc(Math.abs((noise.perlin2(t.x/3, t.y/3)+1)/2 * 15) + 2));
+                heightNumber = Math.min(9,Math.trunc(Math.abs((noise.perlin2(t.x, t.y/3)+1)/2 * 10) + 2));
                 break;
         }
         heightNumber = Math.max(0,heightNumber);
         t.height = tileStepHeight * heightNumber;
         t.colour = colours.find(c => c.levels.includes(heightNumber)).colour;
 
-        if(Math.abs(startX - t.x) > 3 && Math.random() * 100 > 80 + Math.min(20,Math.abs(startX - t.x)/15)){
+        if(Math.abs(startX - t.x) > 3 && Math.random() * 100 > 90 + Math.min(20,Math.abs(startX - t.x)/15)){
             addResourceToTile(tiles,t,"IRON",Math.random() * 15,10,0.6);
-        } else if(Math.abs(startX - t.x) > 20 && Math.random() * 100 > 97) {
-           addResourceToTile(tiles,t,"COPPER",Math.random() * 10,10,0.5);
+        } else if(Math.abs(startX - t.x) > 20 && Math.random() * 100 > 90) {
+           addResourceToTile(tiles,t,"COPPER",Math.random() * 15,10,0.5);
         } else if(Math.abs(startX - t.x) > 30 && Math.random() * 100 > 92) {
             addResourceToTile(tiles,t,"CARBON",Math.random() * 15,10,0.8);
         } else if(Math.abs(startX - t.x) > 50 && Math.random() * 100 > 96) {
@@ -557,7 +552,7 @@ function componentToHex(c) {
             addResourceToTile(tiles,t,"PLUTONIUM",ammount,10,0.7);
             addHazardToTile(tiles,t,4);
         } else if(Math.random() * 100 > 85 + Math.min(15,Math.abs(startX - t.x)/10)) {
-            addResourceToTile(tiles,t,"ROCK",Math.random() * 15,10,0.0);
+            addResourceToTile(tiles,t,"ROCK",Math.random() * 15,10,0.9);
         }
         if(Math.abs(startX - t.x) > 80 && Math.random() * 100 > 95){
             addHazardToTile(tiles,t,Math.random() * 5);
@@ -574,7 +569,7 @@ function componentToHex(c) {
   function addResourceToTile(tiles,tile,type,ammount,minimum,expansion){
     var resourceAmmount = Math.max(minimum,Math.trunc(ammount));
     tile.resource = {type:type,value:resourceAmmount};
-    getSurroundingTiles(tiles,tile).filter(t => expansion > Math.random() && t.resource.type == "NONE").forEach(t => t.resource = {type:type,value:Math.max(5,Math.trunc(resourceAmmount * Math.random()))});
+    getSurroundingTiles(tiles,tile).filter(t => Math.random() > expansion).forEach(t => t.resource = {type:type,value:Math.max(5,Math.trunc(resourceAmmount * Math.random()))});
   }
 
   function addHazardToTile(tiles,tile,ammount){
