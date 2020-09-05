@@ -19,9 +19,7 @@ var selectedMenuItem = 0;
 
 var soundFxVolume = 0;
 
-var recipes = [{product:"EXIT",items:[],energy:0},
-               {product:"RADAR",items:[{type:"IRON",value:20}],energy:4},
-               {product:"CONSTRUCTOR",items:[{type:"IRON",value:20},{type:"COPPER",value:20}],energy:6}];
+var recipes = [{product:"EXIT",items:[],energy:0}];
 var prices = [{type:"EXIT",price:0,ammount:0},
               {type:"ROCK",price:1,ammount:1},{type:"ROCK",price:1,ammount:10},{type:"ROCK",price:1,ammount:50},
               {type:"COPPER",price:25,ammount:1},{type:"COPPER",price:25,ammount:10},{type:"COPPER",price:25,ammount:50},
@@ -30,7 +28,14 @@ var prices = [{type:"EXIT",price:0,ammount:0},
               {type:"LITHIUM",price:150,ammount:1},{type:"LITHIUM",price:150,ammount:10},{type:"LITHIUM",price:150,ammount:50},
               {type:"SILICON",price:500,ammount:1},{type:"SILICON",price:500,ammount:10},{type:"SILICON",price:500,ammount:50},
               {type:"PLUTONIUM",price:1000,ammount:1},{type:"PLUTONIUM",price:1000,ammount:10},{type:"PLUTONIUM",price:1000,ammount:50}];
-var shopItems = [{item:"RADAR_RECIPE",cost:500}];
+var shopItems = [{type:"EXIT",item:"EXIT",cost:0,costMulti:0,desc:[]},
+                 {type:"CRAFT UPGRADES",item:"RESOURCE STORAGE",cost:250,costMulti:1.2,desc:["Increases JMC™ Craft resource capacity by 20%"]},
+                 {type:"CRAFT UPGRADES",item:"BATTERY EFFICENCY",cost:500,costMulti:1.25,desc:["Increases JMC™ Craft battery capacity by 25%"]},
+                 {type:"CRAFT UPGRADES",item:"CPU EFFICENCY",cost:750,costMulti:2,desc:["Reduces JMC™ Craft battery usage by 10%"]},
+                 {type:"CRAFT UPGRADES",item:"CRAFT SPEED",cost:800,costMulti:2,desc:["Increases JMC™ Craft speed by 5%"]},
+                 {type:"RECIPES",item:"RADAR",cost:25,desc:["Adds JMC™ Radar Tower to Constructor Database.","JMC™ Radar Towers uncover surrounding tiles."]},
+                 {type:"RECIPES",item:"CONSTRUCTOR",cost:200,desc:["Adds JMC™ Constructor to Constructor Database.","Constructors manufacture other JMC™ Buildings."]},
+                 {type:"RECIPES",item:"MINER",cost:1000,desc:["Adds JMC™ Miner to Constructor Database.","JMC™ Miners use energy to gather resources automatically"]}];
 
 var playerPos = {x:0,y:0};
 var playerEnergy = 50;
@@ -54,6 +59,7 @@ var messages = [];
 var interactTiles = [];
 var selectedTile = 0;
 var selectedSell = 0;
+var selectedBuy = 0;
 
 var playerResources = [{type:"ROCK",value:25},{type:"COPPER",value:25},{type:"IRON",value:25},{type:"CARBON",value:25},{type:"LITHIUM",value:25}];
 var playerBuildings = [{type:"CONSTRUCTOR",value:1},{type:"SOLAR",value:1},{type:"MINER",value:3},{type:"RTG",value:3},{type:"BATTERY",value:3}];
@@ -180,6 +186,7 @@ function gameloop(){
         playerResources = playerResources.filter(r => r.value > 0);
         selectedSell = Math.min(prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT").length - 1,selectedSell);
         playerBuildings = playerBuildings.filter(b => b.value > 0);
+        selectedBuy = Math.min(shopItems.length - 1,selectedBuy);
     
         //Reset modes
         if(buildMode && (playerBuildings.length == 0 || !interactTiles.some(t => t.building.type == "NONE"))){
@@ -199,11 +206,13 @@ function gameloop(){
 
         //Drain player battery
         var playerTile = tiles.find(t => t.hasPlayer);
-        if(!["RTG","SOLAR"].includes(playerTile.building.type)){
-            playerEnergy -= (playerDrainRate + playerTile.hazard) * (frameSpeedFactor/1000);
-        } else {
+        if(["RTG","SOLAR"].includes(playerTile.building.type)){
             hudFlash = false;
             batteryStatusMessage = "Charging";
+        } else if(selectingSell || buyingMode){
+            batteryStatusMessage = "Paused";
+        } else {
+            playerEnergy -= (playerDrainRate + playerTile.hazard) * (frameSpeedFactor/1000);
         }
 
         handleHUD();
@@ -249,16 +258,16 @@ function gameloop(){
 }
 
 function handleInput(){
-    if(inputs.up == true && prevInputs.up == false && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingSell && Math.abs(playerPosOffset.y) < 10){
+    if(inputs.up == true && prevInputs.up == false && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.y) < 10){
         updatePlayerPos(tiles,0,-1);
     }
-    if(inputs.down == true && prevInputs.down == false && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingSell && Math.abs(playerPosOffset.y) < 10){
+    if(inputs.down == true && prevInputs.down == false && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.y) < 10){
         updatePlayerPos(tiles,0,+1);
     }
-    if(inputs.up == true && prevInputs.up == true && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingSell && Math.abs(playerPosOffset.y) < 10){
+    if(inputs.up == true && prevInputs.up == true && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.y) < 10){
         updatePlayerPos(tiles,0,-1);
     }
-    if(inputs.down == true && prevInputs.down == true && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingSell && Math.abs(playerPosOffset.y) < 10){
+    if(inputs.down == true && prevInputs.down == true && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.y) < 10){
         updatePlayerPos(tiles,0,+1);
     }
     if(inputs.up == true && prevInputs.up == false && buildMode){
@@ -279,17 +288,24 @@ function handleInput(){
     if(inputs.down == true && prevInputs.down == false && selectingSell){
         selectedSell = Math.min(prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT").length - 1,selectedSell + 1);
     }
+    if(inputs.up == true && prevInputs.up == false && buyingMode){
+        selectedBuy= Math.max(0,selectedBuy - 1);
+    }
+    if(inputs.down == true && prevInputs.down == false && buyingMode){
+        selectedBuy = Math.min(shopItems.length - 1,selectedBuy + 1);
+    }
 
-    if(inputs.right == true && prevInputs.right == false && !buildMode && !removeMode && !escMenu && Math.abs(playerPosOffset.x) < 10){
+
+    if(inputs.right == true && prevInputs.right == false && !buildMode && !removeMode && !escMenu && !buyingMode && Math.abs(playerPosOffset.x) < 10){
         updatePlayerPos(tiles,+1,0);
     }
-    if(inputs.left == true && prevInputs.left == false && !buildMode && !removeMode && !escMenu && Math.abs(playerPosOffset.x) < 10){
+    if(inputs.left == true && prevInputs.left == false && !buildMode && !removeMode && !escMenu && !buyingMode && Math.abs(playerPosOffset.x) < 10){
         updatePlayerPos(tiles,-1,0);
     }
-    if(inputs.right == true && prevInputs.right == true && !buildMode && !removeMode && !escMenu && Math.abs(playerPosOffset.x) < 10){
+    if(inputs.right == true && prevInputs.right == true && !buildMode && !removeMode && !escMenu && !buyingMode && Math.abs(playerPosOffset.x) < 10){
         updatePlayerPos(tiles,+1,0);
     }
-    if(inputs.left == true && prevInputs.left == true && !buildMode && !removeMode && !escMenu && Math.abs(playerPosOffset.x) < 10){
+    if(inputs.left == true && prevInputs.left == true && !buildMode && !removeMode && !escMenu && !buyingMode && Math.abs(playerPosOffset.x) < 10){
         updatePlayerPos(tiles,-1,0);
     }
     if(inputs.right == true && prevInputs.right == false && (buildMode || removeMode)){
@@ -334,7 +350,7 @@ function handleInput(){
     }
 
     //If B is pressed and not in any modes and player has buildings
-    if(inputs.build == true && prevInputs.build == false && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingSell && playerBuildings.length > 0){
+    if(inputs.build == true && prevInputs.build == false && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingSell && !buyingMode && playerBuildings.length > 0){
         selectedBuilding = 0;
         buildMode = true;
         interactTiles = getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type == "NONE");
@@ -346,7 +362,7 @@ function handleInput(){
     }
 
     //If R is pressed and not in any modes and player has buildings
-    if(inputs.remove == true && prevInputs.remove == false && !buildMode && !removeMode && !settingRecipe && !selectingSell && !escMenu){
+    if(inputs.remove == true && prevInputs.remove == false && !buildMode && !removeMode && !settingRecipe && !selectingSell && !buyingMode && !escMenu){
         removeMode = true;
         interactTiles = getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type != "NONE");
         interactTiles.forEach(t => t.highlighted = true);
@@ -468,6 +484,7 @@ function handleBuildingInteraction(playerTile){
                     if(playerResource.value >= price.ammount){
                         playerResource.value -= price.ammount;
                         playerBalance += price.ammount * price.price;
+                        zzfx(...[soundFxVolume,.01,287,.11,,0,3,.01,,,198,.09,,,,,.06,.5]).start();
                     } else {
                         messages.push({text:"Cannot sell " + price.ammount + " of " + price.type,time:0});
                     }
@@ -481,7 +498,47 @@ function handleBuildingInteraction(playerTile){
             }
             break;
         case "ROBOSHOP":
-            if(!buyingMode){
+            if(buyingMode){
+                if(shopItems[selectedBuy].type != "EXIT"){
+                    if(playerBalance >= shopItems[selectedBuy].cost){
+                        playerBalance -= shopItems[selectedBuy].cost;
+                        switch(shopItems[selectedBuy].item){
+                            case "RESOURCE STORAGE":
+                                maxStorage = Math.round(maxStorage * 1.25);
+                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * 1.20);
+                                break;
+                            case "BATTERY EFFICENCY":
+                                playerMaxEnergy = Math.round(playerMaxEnergy * 1.25);
+                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * 1.25);
+                                break;
+                            case "CPU EFFICENCY":
+                                playerDrainRate = Math.round(playerDrainRate * 1.1);
+                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
+                                break;
+                            case "CRAFT SPEED":
+                                playerSpeed = Math.round(playerSpeed * 1.05);
+                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
+                                break;
+                            case "RADAR":
+                                recipes.push({product:"RADAR",items:[{type:"IRON",value:20}],energy:4});
+                                shopItems = shopItems.filter(i => i.item != "RADAR");
+                                break;
+                            case "CONSTRUCTOR":
+                                recipes.push({product:"CONSTRUCTOR",items:[{type:"IRON",value:20},{type:"COPPER",value:20}],energy:6});
+                                shopItems = shopItems.filter(i => i.item != "CONSTRUCTOR");
+                                break;
+                            case "MINER":
+                                recipes.push({product:"MINER",items:[{type:"IRON",value:35},{type:"COPPER",value:10},{type:"CARBON",value:15}],energy:10});
+                                shopItems = shopItems.filter(i => i.item != "MINER");
+                                break;
+                        }
+                    } else {
+                        messages.push({text:"Cannot afford " + shopItems[selectedBuy].item,time:0});
+                    }
+                } else {
+                    buyingMode = false;
+                }
+            } else {
                 buyingMode = true;
             }
             break;
@@ -650,7 +707,7 @@ function handleHUD(){
         var visableOptions = options.filter(p => Math.abs(options.indexOf(p) - selectedSell) < number + (Math.max(0,number - 1 - selectedSell)));
         visableOptions.forEach(p => {
             var index = options.indexOf(p);
-            if(selectedSell == index){
+            if(selectedSell == index && !inputs.inter){
                 ctx.fillStyle = hudColourScheme.dynamicText;
             } else {
                 ctx.fillStyle = hudColourScheme.staticText;
@@ -666,7 +723,43 @@ function handleHUD(){
     if(buyingMode){
         ctx.strokeStyle = hudColourScheme.outline;
         ctx.fillStyle = hudColourScheme.infill;
-        generateUIOverlay(ctx,0.05,0.5,0.4);
+        generateUIOverlay(ctx,0.05,0.5,0.2);
+        ctx.beginPath();
+        ctx.moveTo(canvas.width * 0.5,canvas.height * 0.07);
+        ctx.lineTo(canvas.width * 0.5,canvas.height * 0.53);
+        ctx.stroke();
+        if(shopItems[selectedBuy].type != "EXIT"){
+            ctx.beginPath();
+            ctx.moveTo(canvas.width * 0.5,canvas.height * 0.46);
+            ctx.lineTo(canvas.width * 0.78,canvas.height * 0.46);
+            ctx.stroke();
+        }
+        ctx.font = "30px Tahoma";
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillText("Buy Mode",canvas.width * 0.36,modeHeight);
+        ctx.font = "20px Tahoma";
+        var number = 5;
+        var visableOptions = shopItems.filter(p => Math.abs(shopItems.indexOf(p) - selectedBuy) < number + (Math.max(0,number - 1 - selectedBuy)));
+        visableOptions.forEach(i => {
+            var index = shopItems.indexOf(i);
+            if(selectedBuy == index){
+                ctx.fillStyle = hudColourScheme.dynamicText;
+            } else {
+                ctx.fillStyle = hudColourScheme.staticText;
+            }
+            if(i.type != "EXIT"){
+                ctx.font = "20px Tahoma";
+                ctx.fillText(i.item ,canvas.width * 0.36,modeHeight + 20 + selectionHeight + (25 * visableOptions.indexOf(i)));
+                if(selectedBuy == index){
+                    ctx.fillText("₿" + i.cost ,canvas.width * 0.64,canvas.height * 0.495);
+                    ctx.font = "15px Tahoma";
+                    i.desc.forEach(s => ctx.fillText(s ,canvas.width * 0.64,canvas.height * 0.3 + (25 * i.desc.indexOf(s))));
+                }
+            } else {
+                ctx.font = "20px Tahoma";
+                ctx.fillText(i.type ,canvas.width * 0.36,modeHeight + 20 + selectionHeight + (25 * visableOptions.indexOf(i)));
+            }
+        });
     }
 
     ctx.fillStyle = "#FFFFFF";
@@ -748,9 +841,6 @@ function handleTileUpdates(t) {
                         t.building.craftTimer = 0;
                     }
                 }
-            }
-            if(!t.hasPlayer){
-                settingRecipe = false;
             }
             if(t.hasPlayer && !escMenu){
                 ctx.fillText("Recipe: " + (t.building.recipe != undefined ? t.building.recipe.product : "None") ,infoX,infoY);
@@ -855,16 +945,6 @@ function handleTileUpdates(t) {
                 }
             }
             break;
-        case "TELEDEPOT":
-            if(!t.hasPlayer){
-                selectingSell = false;
-            }
-            break;
-        case "ROBOSHOP":
-            if(!t.hasPlayer){
-                buyingMode = false;
-            }
-            break;
     }
 }
 
@@ -873,6 +953,7 @@ function exploreMode(){
     playerMaxEnergy = 10000000000;
     playerEnergy = 10000000000;
     tiles.forEach(t => t.isVisible = true);
+    playerSpeed = 5;
 }
 
 document.addEventListener('keydown', (event) => {
@@ -890,6 +971,9 @@ document.addEventListener('keydown', (event) => {
             inputs.left = true;
             break;
         case 69:
+            inputs.inter = true;
+            break;
+        case 32:
             inputs.inter = true;
             break;
         case 66:
@@ -918,6 +1002,9 @@ document.addEventListener('keyup', (event) => {
             inputs.left = false;
             break;
         case 69:
+            inputs.inter = false;
+            break;
+        case 32:
             inputs.inter = false;
             break;
         case 66:

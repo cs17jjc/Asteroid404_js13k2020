@@ -537,17 +537,17 @@ function componentToHex(c) {
         t.height = tileStepHeight * heightNumber;
         t.colour = colours.find(c => c.levels.includes(heightNumber)).colour;
 
-        if(Math.abs(startX - t.x) > 3 && Math.random() * 100 > 90 + Math.min(20,Math.abs(startX - t.x)/15)){
+        if(Math.abs(startX - t.x) > (mapWidth * 0.005) && Math.random() * 100 > 90 + Math.min(20,Math.abs(startX - t.x)/15)){
             addResourceToTile(tiles,t,"IRON",Math.random() * 15,10,0.6);
-        } else if(Math.abs(startX - t.x) > 20 && Math.random() * 100 > 90) {
+        } else if(Math.abs(startX - t.x) > (mapWidth * 0.05) && Math.random() * 100 > 90) {
            addResourceToTile(tiles,t,"COPPER",Math.random() * 15,10,0.5);
-        } else if(Math.abs(startX - t.x) > 30 && Math.random() * 100 > 92) {
+        } else if(Math.abs(startX - t.x) > (mapWidth * 0.1) && Math.random() * 100 > 92) {
             addResourceToTile(tiles,t,"CARBON",Math.random() * 15,10,0.8);
-        } else if(Math.abs(startX - t.x) > 50 && Math.random() * 100 > 96) {
+        } else if(Math.abs(startX - t.x) > (mapWidth * 0.25) && Math.random() * 100 > 96) {
             addResourceToTile(tiles,t,"LITHIUM",Math.random() * 15,10,0.7);
-        } else if(Math.abs(startX - t.x) > 100 && Math.random() * 100 > 85) {
+        } else if(Math.abs(startX - t.x) > (mapWidth * 0.25) && Math.random() * 100 > 85) {
             addResourceToTile(tiles,t,"SILICON",Math.random() * 15,10,0.7);
-        } else if(Math.abs(startX - t.x) > 100 && Math.random() * 100 > 85) {
+        } else if(Math.abs(startX - t.x) > (mapWidth * 0.3) && Math.random() * 100 > 85) {
             var ammount = Math.random() * 15;
             addResourceToTile(tiles,t,"PLUTONIUM",ammount,10,0.7);
             addHazardToTile(tiles,t,4);
