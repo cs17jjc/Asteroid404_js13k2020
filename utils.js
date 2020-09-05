@@ -398,10 +398,11 @@ function componentToHex(c) {
     points.unshift({x:0,y:canvas.height * leftHeight});
     points.unshift({x:0,y:0});
 
-    points.unshift({x:canvas.width * 0.3,y:0});
-    points.unshift({x:canvas.width * 0.33,y:canvas.height * 0.04});
-    points.unshift({x:canvas.width * 0.67,y:canvas.height * 0.04});
-    points.unshift({x:canvas.width * 0.7,y:0});
+    var topLength = 0.2;
+    points.unshift({x:canvas.width * (0.5 - topLength - 0.03),y:0});
+    points.unshift({x:canvas.width * (0.5 - topLength),y:canvas.height * 0.04});
+    points.unshift({x:canvas.width * (0.5 + topLength),y:canvas.height * 0.04});
+    points.unshift({x:canvas.width * (0.5 + topLength + 0.03),y:0});
 
     points.unshift({x:canvas.width * 0.83,y:0});
     points.unshift({x:canvas.width * 0.83,y:rightHeight - canvas.height * 0.02});
@@ -542,7 +543,7 @@ function componentToHex(c) {
         t.height = tileStepHeight * heightNumber;
         t.colour = colours.find(c => c.levels.includes(heightNumber)).colour;
 
-        if(Math.abs(startX - t.x) > (width * 0.005) && Math.random() * 100 > 90 + Math.min(20,Math.abs(startX - t.x)/15)){
+        if(Math.abs(startX - t.x) > (width * 0.005) && Math.random() * 100 > 85 + Math.min(15,Math.abs(startX - t.x)/15)){
             addResourceToTile(tiles,t,"IRON",Math.random() * 15,10,0.6);
         } else if(Math.abs(startX - t.x) > (width * 0.05) && Math.random() * 100 > 90) {
            addResourceToTile(tiles,t,"COPPER",Math.random() * 15,10,0.5);

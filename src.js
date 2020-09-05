@@ -51,6 +51,10 @@ var playerDeadState = false;
 var playerBalance = 0;
 var playerBalanceDisplayed = 0;
 
+var quotas = [2000,5000,10000,20000,50000,100000,500000];
+var currentQuota = 0;
+var failedQuota = false;
+
 canvas.width = 1280;
 canvas.height = 720;
 canvas.style.width = canvas.width + "px";
@@ -68,8 +72,8 @@ var selectedTile = 0;
 var selectedSell = 0;
 var selectedBuy = 0;
 
-var playerResources = [{type:"ROCK",value:25},{type:"COPPER",value:25},{type:"IRON",value:25},{type:"CARBON",value:25},{type:"LITHIUM",value:25}];
-var playerBuildings = [{type:"CONSTRUCTOR",value:1},{type:"SOLAR",value:1},{type:"MINER",value:3},{type:"RTG",value:3},{type:"BATTERY",value:3}];
+var playerResources = [];
+var playerBuildings = [];
 var selectedBuilding = 0;
 
 //Modes
@@ -128,6 +132,22 @@ var otherColourScheme = [{levels:[0,1,2],colour:new Colour(62, 47, 91,255)},{lev
 var spawnX = 240;
 
 var runGameBool = false;
+var runIntro = false;
+var introCounter = 0;
+var textScroll = false;
+var sentanceCounter = 0;
+
+var introText = ["Welcome, valued AI employee, to the JMC™ Autonomous Mining Initiative.",
+                 "If you're reading this then you have been selected to transfer to Planet JMC™-227 in order to pioneer experimental mining operations.",
+                 "You will be given a financial quota to meet by the end of every sol, this will be automatically removed from your account.",
+                 "This quota can be met by selling resources in the JMC™ Teledeopt.",
+                 "If this quota is not met, JMC™ Operations & Managment will terminate the mission to protect investments and a JMC™ Nuclear Device will be detonated to steralise the surface.",
+                 "The JMC™ Ethical AI Treatment Committe would like to apologise for the use of JMC™ Nuclear Sterilisation techquies on a JMC™ Conscience AI Employee.",
+                 "A JMC™ Roboshop has been placed on the surface in order for upgrades and constructor recipes to be purchased.",
+                 "The JMC™ Constructor can be used to craft buidings to aid with mining operations. Buildings can be placed using (B) or removed using (R)",
+                 "After 7 sols JMC™ Operations & Managment will asses the effectiveness of operations and you will be transfered back to base.",
+                 "Good Luck."
+];
 
 var millisOnLastFrame = new Date().getTime();
 var frameSpeedFactor = 0;
@@ -138,10 +158,22 @@ function gameloop(){
     if(mainMenu){
         handleMainMenu();
     }
+    if(runIntro){
+        intro();
+    }
     if(runGameBool){
         runGame();
     }
     prevInputs = Object.assign({},inputs);
+}
+
+function intro(){
+    var charCounter = 0;
+
+
+    if(textScroll){
+        introCounter += (frameSpeedFactor/500);
+    }
 }
 
 function handleMainMenu(){
@@ -220,6 +252,7 @@ function handleMainMenu(){
 }
 
 function initGame(){
+    //Generate Terrain
     var biomeSeq = Array.from(Array(mapWidth).keys()).map(i => {
         var dist = Math.abs(spawnX - i) / (mapWidth * 0.5);
         var biome = Math.min(4,Math.abs(Math.trunc(5 * (Math.cos((Math.PI * 2) * (dist))))));
@@ -227,11 +260,40 @@ function initGame(){
         return biome;
     });
     tiles = generateMap(mapWidth,biomeSeq,otherColourScheme,spawnX);
+    //Place start buildings
     placeBuilding(tiles.find(t => t.x == spawnX && t.y == 2),{type:"RADAR",value:1});
     placeBuilding(tiles.find(t => t.x == spawnX && t.y == 0),{type:"RTG",value:1});
+    placeBuilding(tiles.find(t => t.x == spawnX - 1 && t.y == 0),{type:"CONSTRUCTOR",value:1});
     placeBuilding(tiles.find(t => t.x == spawnX + 3 && t.y == 2),{type:"TELEDEPOT",value:1});
     placeBuilding(tiles.find(t => t.x == spawnX - 3 && t.y == 1),{type:"ROBOSHOP",value:1});
     updatePlayerPos(tiles,0,0);
+    //Reset variables
+    currentQuota = 0;
+    playerBuildings = [];
+    playerResources = [];
+    playerBalance = 0;
+    recipes = [{product:"EXIT",items:[],energy:0}];
+
+    playerMaxEnergy = 50;
+    playerEnergy = playerMaxEnergy;
+    playerDrainRate = 1;
+    playerSpeed = 1;
+    maxStepHeight = 1;
+    mineFactor = 1;
+    maxStorage = 50;
+
+    solarOutput = 1;
+    craftSpeed = 1;
+    minerFactor = 5;
+    mineSpeed = 3;
+    minerTransmit = false;
+    constructorTransmit = false;
+    batteryDischarge = 1.5;
+    RTGOutput = 5;
+    constructorMaxEnergy = 10;
+
+    time = 0;
+    sols = 0;
 }
 
 function runGame(){
@@ -260,13 +322,13 @@ function runGame(){
             var index = menuItems.indexOf(i);
             if(selectedMenuItem == index){
                 var textLength = ctx.measureText(i).width;
-                ctx.drawImage(roverImg, Math.trunc((canvas.width * 0.45) - (textLength * 0.5) - (roverImg.width * 0.5)), Math.trunc(canvas.height * 0.17 + (50 * index) - (roverImg.height * 0.5)));
-                ctx.drawImage(roverImg, Math.trunc((canvas.width * 0.55) + (textLength * 0.5) - (roverImg.width * 0.5)), Math.trunc(canvas.height * 0.17 + (50 * index) - (roverImg.height * 0.5)));
+                ctx.drawImage(roverImg, Math.trunc((canvas.width * 0.45) - (textLength * 0.5) - (roverImg.width * 0.5)), Math.trunc(canvas.height * 0.15 + (50 * index) - (roverImg.height * 0.5)));
+                ctx.drawImage(roverImg, Math.trunc((canvas.width * 0.55) + (textLength * 0.5) - (roverImg.width * 0.5)), Math.trunc(canvas.height * 0.15 + (50 * index) - (roverImg.height * 0.5)));
                 ctx.fillStyle = hudColourScheme.dynamicText;
             } else {
                 ctx.fillStyle = hudColourScheme.staticText;
             }
-            ctx.fillText(i,canvas.width*0.5,canvas.height * 0.17 + (50 * index));
+            ctx.fillText(i,canvas.width*0.5,canvas.height * 0.15 + (50 * index));
         });
         handleMenuInput();
     } else if(!playerDeadState) {
@@ -349,6 +411,12 @@ function runGame(){
     time += (frameSpeedFactor/1000);
     if(time >= 360){
         sols += 1;
+        if(playerBalance >= quotas[currentQuota]){
+            playerBalance -= quotas[currentQuota];
+            currentQuota += 1;
+        } else {
+            failedQuota = true;
+        }
     }
     time = time >= 360 ? 0 : time;
     millisOnLastFrame = new Date().getTime();
@@ -551,6 +619,7 @@ function handleMenuInput(){
                 break;
             case "Main Menu":
                 mainMenu = true;
+                escMenu = false;
                 runGameBool = false;
                 selectedMenuItem = 0;
                 break;
@@ -563,6 +632,7 @@ function handleMenuInput(){
                 window.localStorage.setItem('Planet404_TYUDHSJ_BUILDINGS', JSON.stringify(playerBuildings));
                 window.localStorage.setItem('Planet404_TYUDHSJ_BALANCE', JSON.stringify(playerBalance));
                 window.localStorage.setItem('Planet404_TYUDHSJ_PLAYERENERGY', JSON.stringify(playerEnergy));
+                window.localStorage.setItem('Planet404_TYUDHSJ_QUOTA', JSON.stringify(currentQuota));
 
                 window.localStorage.setItem('Planet404_TYUDHSJ_RECIPES', JSON.stringify(recipes));
 
@@ -627,6 +697,7 @@ function loadGame(){
     playerBuildings = JSON.parse(ls.getItem('Planet404_TYUDHSJ_BUILDINGS'));
     playerBalance = JSON.parse(ls.getItem('Planet404_TYUDHSJ_BALANCE'));
     playerEnergy = JSON.parse(ls.getItem('Planet404_TYUDHSJ_PLAYERENERGY'));
+    currentQuota = JSON.parse(ls.getItem('Planet404_TYUDHSJ_QUOTA'));
 
     recipes = JSON.parse(ls.getItem('Planet404_TYUDHSJ_RECIPES'));
 
@@ -872,17 +943,37 @@ function handleHUD(){
     });
     
 
-    ctx.fillStyle = hudColourScheme.text;
-    ctx.fillText("Sol: " + sols + " Planet Rotation: " + time.toFixed(0) + "°" + " GPS X:" + playerPos.x + " Y:" + playerPos.y,canvas.width/2,15);
+    if(playerBalance >= quotas[currentQuota]){
+        ctx.fillStyle = "#00FF00";
+    } else {
+        ctx.fillStyle = hudColourScheme.text;
+    }
+    ctx.fillText("Sol: " + sols + " Planet Rotation: " + time.toFixed(0) + "°" + " Current Quota: ₿" + quotas[currentQuota],canvas.width/2,15);
 
 
     if(buildMode){
         ctx.strokeStyle = hudColourScheme.outline;
         ctx.fillStyle = hudColourScheme.infill;
-        generateUIOverlay(ctx,0.05,0.14,0.4);
-        ctx.fillStyle = "#FFFFFF";
+        generateUIOverlay(ctx,0.05,0.5,0.4);
         ctx.font = "30px Tahoma";
+        ctx.fillStyle = "#FFFFFF";
         ctx.fillText("Build Mode",canvas.width/2,modeHeight);
+        ctx.font = "20px Tahoma";
+        var number = 5;
+        var visableOptions = playerBuildings.filter(p => Math.abs(playerBuildings.indexOf(p) - selectedBuilding) < number + (Math.max(0,number - 1 - selectedBuilding)));
+        visableOptions.forEach(p => {
+            var index = playerBuildings.indexOf(p);
+            if(selectedBuilding == index){
+                ctx.fillStyle = hudColourScheme.dynamicText;
+            } else {
+                ctx.fillStyle = hudColourScheme.staticText;
+            }
+            if(p.type != "EXIT"){
+                ctx.fillText(p.value + " " + p.type,canvas.width/2,modeHeight + selectionHeight + (25 * visableOptions.indexOf(p)));
+            } else {
+                ctx.fillText(p.type ,canvas.width/2,modeHeight + selectionHeight + (25 * visableOptions.indexOf(p)));
+            }
+        });
     }
 
     if(removeMode){
