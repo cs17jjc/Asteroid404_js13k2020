@@ -549,6 +549,8 @@ function handleHUD(){
 
     var modeHeight = canvas.height * 0.12;
     var selectionHeight = 40;
+    var rightInfoHeight = 55;
+    var rightInfoStep = 25;
 
     if(hudFlash){
         if(hudFlashTimer >= 1){
@@ -565,8 +567,10 @@ function handleHUD(){
     } else {
         ctx.strokeStyle = hudColourScheme.outline;
     }
+
+    var rightHeight = rightInfoHeight + (rightInfoStep * playerResources.length) + canvas.height * 0.05;
     ctx.fillStyle = hudColourScheme.infill;
-    var points = generateHudOverlay();
+    var points = generateHudOverlay(rightHeight);
     ctx.beginPath();
     for(var i = 0;i<points.length;i++){
         if(i == 0){
@@ -594,13 +598,12 @@ function handleHUD(){
         ctx.fillText(message.text,canvas.width * 0.01,canvas.height * 0.42 + (6 * 25) - topHeight + (messages.indexOf(message) * 25));
         message.time += frameSpeedFactor;
     });
+
+    ctx.textAlign = "center"; 
+    ctx.textBaseline = "middle";
     ctx.font = "25px Arial";
-    ctx.fillText("Inventory",canvas.width * 0.88,30);
+    ctx.fillText("Inventory",canvas.width * 0.92,30);
     ctx.font = "15px Arial";
-    var rightInfoHeight = 55;
-    var rightInfoStep = 25;
-    ctx.fillStyle = hudColourScheme.text;
-    ctx.fillText("Available resources:",canvas.width * 0.85,rightInfoHeight);
     playerResources.forEach(r => {
         if(selectingSell){
             if(prices.filter(p => prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT")[selectedSell].type == r.type)){
@@ -612,28 +615,10 @@ function handleHUD(){
             ctx.fillStyle = hudColourScheme.text;
         }
         
-        ctx.fillText(r.value + "/" + maxStorage + " units of " + r.type,canvas.width * 0.85, 25 + rightInfoHeight + (playerResources.indexOf(r) * rightInfoStep));
+        ctx.fillText(r.value + "/" + maxStorage + " units of " + r.type,canvas.width * 0.92, 25 + rightInfoHeight + (playerResources.indexOf(r) * rightInfoStep));
     });
-    ctx.fillStyle = hudColourScheme.text;
-    var sectionStep = playerResources.length * rightInfoStep;
-    ctx.fillText("Available buildings:",canvas.width * 0.85,rightInfoHeight + 50 + sectionStep);
-    playerBuildings.forEach(b => {
-        if(buildMode){
-            if(selectedBuilding == playerBuildings.indexOf(b)){
-                ctx.fillStyle = hudColourScheme.dynamicText;
-            } else {
-                ctx.fillStyle = hudColourScheme.staticText;
-            }
-        } else {
-            ctx.fillStyle = hudColourScheme.text;
-        }
-        
-        ctx.fillText(b.value + " units of " + b.type,canvas.width * 0.85, rightInfoHeight + 75 + sectionStep + (playerBuildings.indexOf(b) * rightInfoStep));
-    });
-
     
-    ctx.textAlign = "center"; 
-    ctx.textBaseline = "middle";
+
     ctx.fillStyle = hudColourScheme.text;
     ctx.fillText("Sol: " + sols + " Planet Rotation: " + time.toFixed(0) + "°" + " GPS X:" + playerPos.x + " Y:" + playerPos.y,canvas.width/2,15);
 

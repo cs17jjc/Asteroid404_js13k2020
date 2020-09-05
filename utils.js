@@ -379,7 +379,7 @@ function componentToHex(c) {
     return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b) + componentToHex(a);
   }
 
-  function generateHudOverlay(){
+  function generateHudOverlay(rightHeight){
       var leftHeight = 0.23;
       var leftHeight2 = 0.43;
     var bottomY = canvas.height * 0.55;
@@ -403,10 +403,10 @@ function componentToHex(c) {
     points.unshift({x:canvas.width * 0.67,y:canvas.height * 0.04});
     points.unshift({x:canvas.width * 0.7,y:0});
 
-    points.unshift({x:canvas.width * 0.84,y:0});
-    points.unshift({x:canvas.width * 0.84,y:bottomY - canvas.height * 0.02});
-    points.unshift({x:canvas.width * 0.86,y:bottomY});
-    points.unshift({x:canvas.width,y:bottomY});
+    points.unshift({x:canvas.width * 0.83,y:0});
+    points.unshift({x:canvas.width * 0.83,y:rightHeight - canvas.height * 0.02});
+    points.unshift({x:canvas.width * 0.85,y:rightHeight});
+    points.unshift({x:canvas.width,y:rightHeight});
     points.unshift({x:canvas.width,y:0});
     points.unshift({x:0,y:0});
     return points;
