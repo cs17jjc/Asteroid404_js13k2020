@@ -14,8 +14,11 @@ var brokenImg = document.getElementById("broken");
 var teledepotImg = document.getElementById("teledepot");
 var roboshopImg = document.getElementById("shop");
 
-var menuItems = ["Mute Music","Mute Sound FX"];
+var menuItems = ["Resume","Main Menu","Save Game","Load Game","Mute Music","Mute Sound FX","Controls"];
 var selectedMenuItem = 0;
+
+var mainMenuItems = ["New Game","Load Game","Mute Music","Mute Sound FX"];
+var mainMenu = true;
 
 var soundFxVolume = 0;
 
@@ -29,13 +32,17 @@ var prices = [{type:"EXIT",price:0,ammount:0},
               {type:"SILICON",price:500,ammount:1},{type:"SILICON",price:500,ammount:10},{type:"SILICON",price:500,ammount:50},
               {type:"PLUTONIUM",price:1000,ammount:1},{type:"PLUTONIUM",price:1000,ammount:10},{type:"PLUTONIUM",price:1000,ammount:50}];
 var shopItems = [{type:"EXIT",item:"EXIT",cost:0,costMulti:0,desc:[]},
-                 {type:"CRAFT UPGRADES",item:"RESOURCE STORAGE",cost:250,costMulti:1.2,desc:["Increases JMC™ Craft resource capacity by 20%"]},
+                 {type:"CRAFT UPGRADES",item:"RESOURCE STORAGE",cost:300,costMulti:1.5,desc:["Increases JMC™ Craft resource capacity by 20%"]},
                  {type:"CRAFT UPGRADES",item:"BATTERY EFFICENCY",cost:500,costMulti:1.25,desc:["Increases JMC™ Craft battery capacity by 25%"]},
-                 {type:"CRAFT UPGRADES",item:"CPU EFFICENCY",cost:750,costMulti:2,desc:["Reduces JMC™ Craft battery usage by 10%"]},
+                 {type:"CRAFT UPGRADES",item:"CPU EFFICENCY",cost:250,costMulti:2,desc:["Reduces JMC™ Craft battery usage by 20%"]},
                  {type:"CRAFT UPGRADES",item:"CRAFT SPEED",cost:800,costMulti:2,desc:["Increases JMC™ Craft speed by 5%"]},
+                 {type:"BUILDING UPGRADES",item:"RTG OUTPUT",cost:500,costMulti:1.5,desc:["Increases JMC™ RTG output by 50%"]},
+                 {type:"BUILDING UPGRADES",item:"CONSTRUCTOR SPEED",cost:300,costMulti:1.5,desc:["Increases JMC™ Constructor speed by 50%"]},
+                 {type:"BUILDING UPGRADES",item:"CONSTRUCTOR ENERGY",cost:1500,costMulti:1.2,desc:["Increases JMC™ Constructor energy storage by 100%"]},
+                 {type:"BUILDING UPGRADES",item:"CONSTRUCTOR TRANSMITTER",cost:5000,desc:["JMC™ Constructor transmits finished objects to Craft."]},
                  {type:"RECIPES",item:"RADAR",cost:25,desc:["Adds JMC™ Radar Tower to Constructor Database.","JMC™ Radar Towers uncover surrounding tiles."]},
                  {type:"RECIPES",item:"CONSTRUCTOR",cost:200,desc:["Adds JMC™ Constructor to Constructor Database.","Constructors manufacture other JMC™ Buildings."]},
-                 {type:"RECIPES",item:"MINER",cost:1000,desc:["Adds JMC™ Miner to Constructor Database.","JMC™ Miners use energy to gather resources automatically"]}];
+                 {type:"RECIPES",item:"MINER",cost:1000,desc:["Adds JMC™ Miner to Constructor Database.","JMC™ Miners use energy to gather resources."]}];
 
 var playerPos = {x:0,y:0};
 var playerEnergy = 50;
@@ -49,8 +56,8 @@ canvas.height = 720;
 canvas.style.width = canvas.width + "px";
 canvas.style.height = canvas.height + "px";
 
-var prevInputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,info:false};
-var inputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,info:false};
+var prevInputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,info:false,esc:false};
+var inputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,info:false,esc:false};
 
 var playerPosOffset = {x:0,y:0};
 
@@ -77,7 +84,7 @@ var buyingMode = false;
 var playerMaxEnergy = 50;
 var playerDrainRate = 1;
 var playerSpeed = 1;
-var maxStepHeight = 5;
+var maxStepHeight = 1;
 var mineFactor = 1;
 var maxStorage = 50;
 
@@ -90,6 +97,7 @@ var minerTransmit = false;
 var constructorTransmit = false;
 var batteryDischarge = 1.5;
 var RTGOutput = 5;
+var constructorMaxEnergy = 10;
 
 var time = 0;
 var sols = 0;
@@ -109,37 +117,124 @@ var hudColourScheme = {outline:"#FFFFFF",infill:"#000000AA",text:"#FFFFFF",stati
 let mySongData = zzfxM(...song);
 let myAudioNode = zzfxP(...mySongData);
 myAudioNode.loop = true;
-//myAudioNode.start();
+myAudioNode.start();
 
 var stars = Array.from(Array(500).keys()).map(i => {return {x:(Math.random() * 2 * canvas.width) - canvas.width,y:(Math.random() * 2 * canvas.height) - canvas.height,r:Math.random() * 3}});
 
 noise.seed(Math.random());
 
 var mapWidth = 500;
-
-//var marsColourScheme = [{levels:[0,1,2],colour:new Colour(69,24,4,255)},{levels:[3,4],colour:new Colour(193,68,14,255)},{levels:[5,6,7],colour:new Colour(231,125,17,255)},{levels:[8,9],colour:new Colour(253,166,0,255)}];
-//var otherColourScheme = [{levels:[0,1,2],colour:new Colour(134, 187, 216,255)},{levels:[3,4],colour:new Colour(97, 231, 134,255)},{levels:[5,6,7],colour:new Colour(240, 101, 67,255)},{levels:[8,9],colour:new Colour(26, 94, 99,255)}];
 var otherColourScheme = [{levels:[0,1,2],colour:new Colour(62, 47, 91,255)},{levels:[3,4],colour:new Colour(190, 184, 235,255)},{levels:[5,6,7],colour:new Colour(64, 121, 140,255)},{levels:[8,9],colour:new Colour(115, 251, 211,255)}];
 var spawnX = 240;
-var biomeSeq = Array.from(Array(mapWidth).keys()).map(i => {
-    var dist = Math.abs(spawnX - i) / (mapWidth * 0.5);
-    var biome = Math.trunc(4 * (Math.sin((Math.PI * 6) * dist)));
-    console.log(i + " : " + Math.abs(biome));
-    return Math.abs(biome);
-});
-tiles = generateMap(mapWidth,biomeSeq,otherColourScheme,spawnX);
-placeBuilding(tiles.find(t => t.x == spawnX && t.y == 2),{type:"RADAR",value:1});
-placeBuilding(tiles.find(t => t.x == spawnX && t.y == 0),{type:"RTG",value:1});
-placeBuilding(tiles.find(t => t.x == spawnX + 3 && t.y == 2),{type:"TELEDEPOT",value:1});
-placeBuilding(tiles.find(t => t.x == spawnX - 3 && t.y == 1),{type:"ROBOSHOP",value:1});
-updatePlayerPos(tiles,0,0);
+
+var runGameBool = false;
+
 var millisOnLastFrame = new Date().getTime();
 var frameSpeedFactor = 0;
-soundFxVolume = 0.5;
 function gameloop(){
     frameSpeedFactor =  escMenu ? 0 : new Date().getTime() - millisOnLastFrame;
     ctx.fillStyle = "#000000";
     ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight);
+    if(mainMenu){
+        handleMainMenu();
+    }
+    if(runGameBool){
+        runGame();
+    }
+    prevInputs = Object.assign({},inputs);
+}
+
+function handleMainMenu(){
+    ctx.fillStyle = "#FFFFF0";
+    ctx.save();
+    ctx.translate(canvas.width/2,canvas.height/2);
+    ctx.rotate(Math.PI * Math.sin(frameSpeedFactor/200000));
+    stars.forEach(s => {
+        ctx.beginPath();
+        ctx.arc(s.x,s.y,s.r,0, 2 * Math.PI);
+        ctx.fill();
+    });
+    ctx.restore();
+    
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "center"; 
+    ctx.textBaseline = "middle";
+    ctx.font = "65px Tahoma";
+    ctx.fillText("Planet 404",canvas.width/2,canvas.height*0.1);
+
+    if(inputs.up == true && prevInputs.up == false){
+        selectedMenuItem = Math.max(0,selectedMenuItem - 1);
+    }
+    if(inputs.down == true && prevInputs.down == false){
+        selectedMenuItem = Math.min(mainMenuItems.length - 1,selectedMenuItem + 1);
+    }
+    if(inputs.inter == true && prevInputs.inter == false){
+        switch(mainMenuItems[selectedMenuItem]){
+            case "New Game":
+                initGame();
+                soundFxVolume = 0.5;
+                runGameBool = true;
+                mainMenu = false;
+                selectedMenuItem = 0;
+                break;
+            case "Load Game":
+                loadGame();
+                soundFxVolume = 0.5;
+                runGameBool = true;
+                mainMenu = false;
+                selectedMenuItem = 0;
+                break;
+            case "Mute Music":
+                myAudioNode.disconnect();
+                mainMenuItems[selectedMenuItem] = "Unmute Music";
+                break;
+            case "Mute Sound FX":
+                soundFxVolume = 0;
+                mainMenuItems[selectedMenuItem] = "Unmute Sound FX";
+                break;
+            case "Unmute Music":
+                myAudioNode.connect(zzfxX.destination);
+                mainMenuItems[selectedMenuItem] = "Mute Music";
+                break;
+            case "Unmute Sound FX":
+                soundFxVolume = 1;
+                mainMenuItems[selectedMenuItem] = "Mute Sound FX";
+                break;
+        }
+    }
+
+    ctx.font = "40px Tahoma";
+    mainMenuItems.forEach(i => {
+        var index = mainMenuItems.indexOf(i);
+        if(selectedMenuItem == index){
+            var textLength = ctx.measureText(i).width;
+            ctx.drawImage(roverImg, Math.trunc((canvas.width * 0.45) - (textLength * 0.5) - (roverImg.width * 0.5)), Math.trunc(canvas.height * 0.3 + (80 * index) - (roverImg.height * 0.5)));
+            ctx.drawImage(roverImg, Math.trunc((canvas.width * 0.55) + (textLength * 0.5) - (roverImg.width * 0.5)), Math.trunc(canvas.height * 0.3 + (80 * index) - (roverImg.height * 0.5)));
+            ctx.fillStyle = hudColourScheme.dynamicText;
+        } else {
+            ctx.fillStyle = hudColourScheme.staticText;
+        }
+        ctx.fillText(i,canvas.width*0.5,canvas.height * 0.3 + (80 * index));
+    });
+
+}
+
+function initGame(){
+    var biomeSeq = Array.from(Array(mapWidth).keys()).map(i => {
+        var dist = Math.abs(spawnX - i) / (mapWidth * 0.5);
+        var biome = Math.min(4,Math.abs(Math.trunc(5 * (Math.cos((Math.PI * 2) * (dist))))));
+        console.log( i + " : " + biome);
+        return biome;
+    });
+    tiles = generateMap(mapWidth,biomeSeq,otherColourScheme,spawnX);
+    placeBuilding(tiles.find(t => t.x == spawnX && t.y == 2),{type:"RADAR",value:1});
+    placeBuilding(tiles.find(t => t.x == spawnX && t.y == 0),{type:"RTG",value:1});
+    placeBuilding(tiles.find(t => t.x == spawnX + 3 && t.y == 2),{type:"TELEDEPOT",value:1});
+    placeBuilding(tiles.find(t => t.x == spawnX - 3 && t.y == 1),{type:"ROBOSHOP",value:1});
+    updatePlayerPos(tiles,0,0);
+}
+
+function runGame(){
     ctx.fillStyle = "#FFFFF0";
     ctx.save();
     ctx.translate(canvas.width/2,canvas.height/2);
@@ -158,17 +253,20 @@ function gameloop(){
         ctx.fillStyle = "#FFFFFF";
         ctx.textAlign = "center"; 
         ctx.textBaseline = "middle";
-        ctx.font = "30px Tahoma";
+        ctx.font = "45px Tahoma";
         ctx.fillText("Paused",canvas.width/2,30);
-        ctx.font = "25px Tahoma";
-        menuItems.forEach(s => {
-            var index = menuItems.indexOf(s);
-            if(index == selectedMenuItem){
-                ctx.fillStyle = "#FFFF00";
+        ctx.font = "35px Tahoma";
+        menuItems.forEach(i => {
+            var index = menuItems.indexOf(i);
+            if(selectedMenuItem == index){
+                var textLength = ctx.measureText(i).width;
+                ctx.drawImage(roverImg, Math.trunc((canvas.width * 0.45) - (textLength * 0.5) - (roverImg.width * 0.5)), Math.trunc(canvas.height * 0.17 + (50 * index) - (roverImg.height * 0.5)));
+                ctx.drawImage(roverImg, Math.trunc((canvas.width * 0.55) + (textLength * 0.5) - (roverImg.width * 0.5)), Math.trunc(canvas.height * 0.17 + (50 * index) - (roverImg.height * 0.5)));
+                ctx.fillStyle = hudColourScheme.dynamicText;
             } else {
-                ctx.fillStyle = "#FFFFFF";
+                ctx.fillStyle = hudColourScheme.staticText;
             }
-            ctx.fillText(s,canvas.width/2,60 + 25 * index);
+            ctx.fillText(i,canvas.width*0.5,canvas.height * 0.17 + (50 * index));
         });
         handleMenuInput();
     } else if(!playerDeadState) {
@@ -245,7 +343,6 @@ function gameloop(){
 
     }
 
-    prevInputs = Object.assign({},inputs);
     if(playerEnergy <= 0){
         playerDeadState = true;
     }
@@ -295,17 +392,50 @@ function handleInput(){
         selectedBuy = Math.min(shopItems.length - 1,selectedBuy + 1);
     }
 
+    if(inputs.up == true && prevInputs.up == true && selectingSell){
+        if(interactTimer >= 1){
+            selectedSell = Math.max(0,selectedSell - 1);
+            interactTimer = 0;
+        } else {
+            interactTimer += (frameSpeedFactor/100);
+        }
+    }
+    if(inputs.down == true && prevInputs.down == true && selectingSell){
+        if(interactTimer >= 1){
+            selectedSell = Math.min(prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT").length - 1,selectedSell + 1);
+            interactTimer = 0;
+        } else {
+            interactTimer += (frameSpeedFactor/100);
+        }
+    }
+    if(inputs.up == true && prevInputs.up == true && buyingMode){
+        if(interactTimer >= 1){
+            selectedBuy= Math.max(0,selectedBuy - 1);
+            interactTimer = 0;
+        } else {
+            interactTimer += (frameSpeedFactor/100);
+        }
+    }
+    if(inputs.down == true && prevInputs.down == true && buyingMode){
+        if(interactTimer >= 1){
+            selectedBuy = Math.min(shopItems.length - 1,selectedBuy + 1);
+            interactTimer = 0;
+        } else {
+            interactTimer += (frameSpeedFactor/100);
+        }
+    }
 
-    if(inputs.right == true && prevInputs.right == false && !buildMode && !removeMode && !escMenu && !buyingMode && Math.abs(playerPosOffset.x) < 10){
+
+    if(inputs.right == true && prevInputs.right == false && !buildMode && !removeMode && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.x) < 10){
         updatePlayerPos(tiles,+1,0);
     }
-    if(inputs.left == true && prevInputs.left == false && !buildMode && !removeMode && !escMenu && !buyingMode && Math.abs(playerPosOffset.x) < 10){
+    if(inputs.left == true && prevInputs.left == false && !buildMode && !removeMode && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.x) < 10){
         updatePlayerPos(tiles,-1,0);
     }
-    if(inputs.right == true && prevInputs.right == true && !buildMode && !removeMode && !escMenu && !buyingMode && Math.abs(playerPosOffset.x) < 10){
+    if(inputs.right == true && prevInputs.right == true && !buildMode && !removeMode && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.x) < 10){
         updatePlayerPos(tiles,+1,0);
     }
-    if(inputs.left == true && prevInputs.left == true && !buildMode && !removeMode && !escMenu && !buyingMode && Math.abs(playerPosOffset.x) < 10){
+    if(inputs.left == true && prevInputs.left == true && !buildMode && !removeMode && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.x) < 10){
         updatePlayerPos(tiles,-1,0);
     }
     if(inputs.right == true && prevInputs.right == false && (buildMode || removeMode)){
@@ -388,6 +518,20 @@ function handleInput(){
         interactTiles = interactTiles.filter(t => t != interactTiles[selectedTile]);
         selectedTile = Math.min(interactTiles.length - 1, selectedTile);
     }
+    if(inputs.esc == true && prevInputs.esc == false && (buildMode || removeMode || selectingSell || buyingMode || settingRecipe)){
+        buildMode = false;
+        removeMode = false;
+        selectingSell = false;
+        buyingMode = false;
+        settingRecipe = false;
+
+        interactTiles = [];
+        selectedTile = 0;
+        selectedBuilding = 0;
+        selectingSell = 0;
+    } else if (inputs.esc == true && prevInputs.esc == false){
+        escMenu = true;
+    }
 }
 
 function handleMenuInput(){
@@ -397,8 +541,51 @@ function handleMenuInput(){
     if(inputs.down == false && prevInputs.down == true){
         selectedMenuItem = Math.min(menuItems.length - 1, selectedMenuItem + 1);
     }
+    if (inputs.esc == true && prevInputs.esc == false){
+        escMenu = false;
+    }
     if(inputs.inter == false && prevInputs.inter == true){
         switch(menuItems[selectedMenuItem]){
+            case "Resume":
+                escMenu = false;
+                break;
+            case "Main Menu":
+                mainMenu = true;
+                runGameBool = false;
+                selectedMenuItem = 0;
+                break;
+            case "Save Game":
+                window.localStorage.setItem('Planet404_TYUDHSJ_TILES', JSON.stringify(tiles));
+                window.localStorage.setItem('Planet404_TYUDHSJ_TIME', JSON.stringify(time));
+                window.localStorage.setItem('Planet404_TYUDHSJ_SOLS', JSON.stringify(sols));
+
+                window.localStorage.setItem('Planet404_TYUDHSJ_RESOURCES', JSON.stringify(playerResources));
+                window.localStorage.setItem('Planet404_TYUDHSJ_BUILDINGS', JSON.stringify(playerBuildings));
+                window.localStorage.setItem('Planet404_TYUDHSJ_BALANCE', JSON.stringify(playerBalance));
+                window.localStorage.setItem('Planet404_TYUDHSJ_PLAYERENERGY', JSON.stringify(playerEnergy));
+
+                window.localStorage.setItem('Planet404_TYUDHSJ_RECIPES', JSON.stringify(recipes));
+
+                window.localStorage.setItem('Planet404_TYUDHSJ_playerMaxEnergy', JSON.stringify(playerMaxEnergy));
+                window.localStorage.setItem('Planet404_TYUDHSJ_playerDrainRate', JSON.stringify(playerDrainRate));
+                window.localStorage.setItem('Planet404_TYUDHSJ_playerSpeed', JSON.stringify(playerSpeed));
+                window.localStorage.setItem('Planet404_TYUDHSJ_maxStepHeight', JSON.stringify(maxStepHeight));
+                window.localStorage.setItem('Planet404_TYUDHSJ_mineFactor', JSON.stringify(mineFactor));
+                window.localStorage.setItem('Planet404_TYUDHSJ_maxStorage', JSON.stringify(maxStorage));
+
+                window.localStorage.setItem('Planet404_TYUDHSJ_solarOutput', JSON.stringify(solarOutput));
+                window.localStorage.setItem('Planet404_TYUDHSJ_craftSpeed', JSON.stringify(craftSpeed));
+                window.localStorage.setItem('Planet404_TYUDHSJ_minerFactor', JSON.stringify(minerFactor));
+                window.localStorage.setItem('Planet404_TYUDHSJ_mineSpeed', JSON.stringify(mineSpeed));
+                window.localStorage.setItem('Planet404_TYUDHSJ_minerTransmit', JSON.stringify(minerTransmit));
+                window.localStorage.setItem('Planet404_TYUDHSJ_constructorTransmit', JSON.stringify(constructorTransmit));
+                window.localStorage.setItem('Planet404_TYUDHSJ_batteryDischarge', JSON.stringify(batteryDischarge));
+                window.localStorage.setItem('Planet404_TYUDHSJ_RTGOutput', JSON.stringify(RTGOutput));
+                window.localStorage.setItem('Planet404_TYUDHSJ_constructorMaxEnergy', JSON.stringify(constructorMaxEnergy));
+                break;
+            case "Load Game":
+                loadGame();
+                break;
             case "Mute Music":
                 myAudioNode.disconnect();
                 menuItems[selectedMenuItem] = "Unmute Music";
@@ -417,6 +604,49 @@ function handleMenuInput(){
                 break;
         }
     }
+}
+
+function loadGame(){
+    buildMode = false;
+    removeMode = false;
+    selectingSell = false;
+    buyingMode = false;
+    settingRecipe = false;
+
+    interactTiles = [];
+    selectedTile = 0;
+    selectedBuilding = 0;
+    selectingSell = 0;
+
+    var ls = window.localStorage;
+    tiles = JSON.parse(ls.getItem('Planet404_TYUDHSJ_TILES'));
+    time = JSON.parse(ls.getItem('Planet404_TYUDHSJ_TIME'));
+    sols = JSON.parse(ls.getItem('Planet404_TYUDHSJ_SOLS'));
+
+    playerResources = JSON.parse(ls.getItem('Planet404_TYUDHSJ_RESOURCES'));
+    playerBuildings = JSON.parse(ls.getItem('Planet404_TYUDHSJ_BUILDINGS'));
+    playerBalance = JSON.parse(ls.getItem('Planet404_TYUDHSJ_BALANCE'));
+    playerEnergy = JSON.parse(ls.getItem('Planet404_TYUDHSJ_PLAYERENERGY'));
+
+    recipes = JSON.parse(ls.getItem('Planet404_TYUDHSJ_RECIPES'));
+
+    playerMaxEnergy = JSON.parse(ls.getItem('Planet404_TYUDHSJ_playerMaxEnergy'));
+    playerDrainRate = JSON.parse(ls.getItem('Planet404_TYUDHSJ_playerDrainRate'));
+    playerSpeed = JSON.parse(ls.getItem('Planet404_TYUDHSJ_playerSpeed'));
+    maxStepHeight = JSON.parse(ls.getItem('Planet404_TYUDHSJ_maxStepHeight'));
+    mineFactor = JSON.parse(ls.getItem('Planet404_TYUDHSJ_mineFactor'));
+    maxStorage = JSON.parse(ls.getItem('Planet404_TYUDHSJ_maxStorage'));
+
+    solarOutput = JSON.parse(ls.getItem('Planet404_TYUDHSJ_solarOutput'));
+    craftSpeed = JSON.parse(ls.getItem('Planet404_TYUDHSJ_craftSpeed'));
+    minerFactor = JSON.parse(ls.getItem('Planet404_TYUDHSJ_minerFactor'));
+    mineSpeed = JSON.parse(ls.getItem('Planet404_TYUDHSJ_mineSpeed'));
+    minerTransmit = JSON.parse(ls.getItem('Planet404_TYUDHSJ_minerTransmit'));
+    constructorTransmit = JSON.parse(ls.getItem('Planet404_TYUDHSJ_constructorTransmit'));
+    batteryDischarge = JSON.parse(ls.getItem('Planet404_TYUDHSJ_batteryDischarge'));
+    RTGOutput = JSON.parse(ls.getItem('Planet404_TYUDHSJ_RTGOutput'));
+    constructorMaxEnergy = JSON.parse(ls.getItem('Planet404_TYUDHSJ_constructorMaxEnergy'));
+    updatePlayerPos(tiles,0,0);
 }
 
 function handleBuildingInteraction(playerTile){
@@ -512,13 +742,32 @@ function handleBuildingInteraction(playerTile){
                                 shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * 1.25);
                                 break;
                             case "CPU EFFICENCY":
-                                playerDrainRate = Math.round(playerDrainRate * 1.1);
+                                playerDrainRate = Math.round(playerDrainRate * 0.8);
                                 shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
                             case "CRAFT SPEED":
                                 playerSpeed = Math.round(playerSpeed * 1.05);
                                 shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
+
+                            case "RTG OUTPUT":
+                                RTGOutput = Math.round(RTGOutput * 1.5);
+                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
+                                break;
+                            case "CONSTRUCTOR SPEED":
+                                craftSpeed = Math.round(craftSpeed * 1.5);
+                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
+                                break;
+                            case "CONSTRUCTOR ENERGY":
+                                constructorMaxEnergy = Math.round(constructorMaxEnergy * 2);
+                                tiles.filter(t => t.building.type == "CONSTRUCTOR").forEach(t => t.building.maxEnergy = constructorMaxEnergy);
+                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
+                                break;
+                            case "CONSTRUCTOR TRANSMITTER":
+                                constructorTransmit = true;
+                                shopItems = shopItems.filter(i => i.item != "CONSTRUCTOR TRANSMITTER");
+                                break;
+
                             case "RADAR":
                                 recipes.push({product:"RADAR",items:[{type:"IRON",value:20}],energy:4});
                                 shopItems = shopItems.filter(i => i.item != "RADAR");
@@ -529,6 +778,10 @@ function handleBuildingInteraction(playerTile){
                                 break;
                             case "MINER":
                                 recipes.push({product:"MINER",items:[{type:"IRON",value:35},{type:"COPPER",value:10},{type:"CARBON",value:15}],energy:10});
+                                shopItems = shopItems.filter(i => i.item != "MINER");
+                                break;
+                            case "BATTERY":
+                                recipes.push({product:"BATTERY",items:[{type:"IRON",value:50},{type:"COPPER",value:25},{type:"LITHIUM",value:15}],energy:15});
                                 shopItems = shopItems.filter(i => i.item != "MINER");
                                 break;
                         }
@@ -692,7 +945,7 @@ function handleHUD(){
         var visableOptions = options.filter(p => Math.abs(options.indexOf(p) - selectedSell) < number + (Math.max(0,number - 1 - selectedSell)));
         visableOptions.forEach(p => {
             var index = options.indexOf(p);
-            if(selectedSell == index && !inputs.inter){
+            if(selectedSell == index){
                 ctx.fillStyle = hudColourScheme.dynamicText;
             } else {
                 ctx.fillStyle = hudColourScheme.staticText;
@@ -748,12 +1001,13 @@ function handleHUD(){
     }
 
     ctx.fillStyle = "#FFFFFF";
-    ctx.font = "30px Tahoma";
-    ctx.fillText("JMC",canvas.width * 0.05,canvas.height * 0.16);
-    drawLogo(ctx,canvas.width * 0.05,canvas.height * 0.072,50);
-    ctx.font = "15px Tahoma";
-    ctx.fillText("₿" + playerBalanceDisplayed.toFixed(0) ,canvas.width * 0.05,canvas.height * 0.2);
+    ctx.font = "20px Tahoma";
+    ctx.fillText("JMC",canvas.width * 0.05,canvas.height * 0.14);
+    drawLogo(ctx,canvas.width * 0.05,canvas.height * 0.070,50);
+    ctx.font = "25px Tahoma";
+    ctx.fillText("₿" + playerBalanceDisplayed.toLocaleString('en-US', {maximumFractionDigits: 0}) ,canvas.width * 0.05,canvas.height * 0.19);
     playerBalanceDisplayed = lerp(playerBalance,playerBalanceDisplayed,(frameSpeedFactor/100));
+    ctx.font = "15px Tahoma";
     drawBattery(ctx,canvas.width * 0.02,canvas.height * 0.40,100,playerEnergy/playerMaxEnergy);
     var batteryStatusHeight = 0.24;
     ctx.fillText("Battery",canvas.width * 0.07,canvas.height * (batteryStatusHeight + 0.05));
@@ -967,6 +1221,8 @@ document.addEventListener('keydown', (event) => {
         case 82:
             inputs.remove = true;
             break;
+        case 27:
+            inputs.esc = true;
         case 73:
             inputs.info = true;
             break;
@@ -999,7 +1255,7 @@ document.addEventListener('keyup', (event) => {
             inputs.remove = false;
             break;
         case 27:
-            escMenu = !escMenu;
+            inputs.esc = false;
         case 73:
             inputs.info = false;
             break;

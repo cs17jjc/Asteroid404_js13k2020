@@ -229,7 +229,7 @@ function placeBuilding(tile,building){
                 break;
             case "CONSTRUCTOR":
                 tile.building.energy = 0;
-                tile.building.maxEnergy = 10;
+                tile.building.maxEnergy = constructorMaxEnergy;
                 tile.building.crafting = false;
                 tile.building.craftTimer = 0;
                 tile.building.storedProduct = false;
@@ -516,38 +516,43 @@ function componentToHex(c) {
 
         var heightNumber = 0;
         switch(t.biome){
+            case 0:
+                //Lowlands
+                heightNumber = Math.abs((noise.perlin2(t.x/10, t.y/10)+1)/2 * 3);
+                break;
             case 1:
                 //Flatlands
-                heightNumber = Math.min(6,Math.max(4,Math.trunc(Math.abs((noise.perlin2(t.x/5, t.y/5)+1)/2 * 10))));
+                heightNumber = Math.abs((noise.perlin2(t.x/10, t.y/10)+1)/2 * 4);
                 break;
             case 2:
                 //Bumpy
-                heightNumber = Math.min(9,Math.trunc(Math.abs((noise.perlin2(t.x/4, t.y/4)+1)/2 * 10)));
-                break;
-            case 0:
-                //Lowlands
-                heightNumber = Math.min(5,Math.max(0,Math.trunc(Math.abs((noise.perlin2(t.x/5, t.y/5)+1)/2 * 10))) - 1);
+                heightNumber = Math.abs((noise.perlin2(t.x/10, t.y/10)+1)/2 * 6);
                 break;
             case 3:
                 //Moutains
-                heightNumber = Math.min(9,Math.trunc(Math.abs((noise.perlin2(t.x, t.y/3)+1)/2 * 10) + 2));
+                heightNumber = Math.abs((noise.perlin2(t.x/10, t.y/10)+1)/2 * 8);
+                break;
+            case 4:
+                //Peak
+                heightNumber = Math.abs((noise.perlin2(t.x/10, t.y/10)+1)/2 * 10);
                 break;
         }
-        heightNumber = Math.max(0,heightNumber);
+        heightNumber = Math.max(0,Math.trunc(heightNumber));
+        console.log(heightNumber);
         t.height = tileStepHeight * heightNumber;
         t.colour = colours.find(c => c.levels.includes(heightNumber)).colour;
 
-        if(Math.abs(startX - t.x) > (mapWidth * 0.005) && Math.random() * 100 > 90 + Math.min(20,Math.abs(startX - t.x)/15)){
+        if(Math.abs(startX - t.x) > (width * 0.005) && Math.random() * 100 > 90 + Math.min(20,Math.abs(startX - t.x)/15)){
             addResourceToTile(tiles,t,"IRON",Math.random() * 15,10,0.6);
-        } else if(Math.abs(startX - t.x) > (mapWidth * 0.05) && Math.random() * 100 > 90) {
+        } else if(Math.abs(startX - t.x) > (width * 0.05) && Math.random() * 100 > 90) {
            addResourceToTile(tiles,t,"COPPER",Math.random() * 15,10,0.5);
-        } else if(Math.abs(startX - t.x) > (mapWidth * 0.1) && Math.random() * 100 > 92) {
+        } else if(Math.abs(startX - t.x) > (width * 0.1) && Math.random() * 100 > 92) {
             addResourceToTile(tiles,t,"CARBON",Math.random() * 15,10,0.8);
-        } else if(Math.abs(startX - t.x) > (mapWidth * 0.25) && Math.random() * 100 > 96) {
+        } else if(Math.abs(startX - t.x) > (width * 0.25) && Math.random() * 100 > 96) {
             addResourceToTile(tiles,t,"LITHIUM",Math.random() * 15,10,0.7);
-        } else if(Math.abs(startX - t.x) > (mapWidth * 0.25) && Math.random() * 100 > 85) {
+        } else if(Math.abs(startX - t.x) > (width * 0.25) && Math.random() * 100 > 85) {
             addResourceToTile(tiles,t,"SILICON",Math.random() * 15,10,0.7);
-        } else if(Math.abs(startX - t.x) > (mapWidth * 0.3) && Math.random() * 100 > 85) {
+        } else if(Math.abs(startX - t.x) > (width * 0.3) && Math.random() * 100 > 85) {
             var ammount = Math.random() * 15;
             addResourceToTile(tiles,t,"PLUTONIUM",ammount,10,0.7);
             addHazardToTile(tiles,t,4);
