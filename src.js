@@ -22,27 +22,32 @@ var mainMenu = true;
 
 var soundFxVolume = 0;
 
-var recipes = [{product:"EXIT",items:[],energy:0}];
+var recipes = [{product:"EXIT",items:[],energy:0},{product:"RADAR",items:[{type:"IRON",price:15,ammount:25}],energy:5}];
 var prices = [{type:"EXIT",price:0,ammount:0},
               {type:"ROCK",price:1,ammount:1},{type:"ROCK",price:1,ammount:10},{type:"ROCK",price:1,ammount:50},
-              {type:"COPPER",price:25,ammount:1},{type:"COPPER",price:25,ammount:10},{type:"COPPER",price:25,ammount:50},
-              {type:"IRON",price:50,ammount:1},{type:"IRON",price:50,ammount:10},{type:"IRON",price:50,ammount:50},
+              {type:"IRON",price:15,ammount:1},{type:"IRON",price:15,ammount:10},{type:"IRON",price:15,ammount:50},
+              {type:"COPPER",price:50,ammount:1},{type:"COPPER",price:50,ammount:10},{type:"COPPER",price:50,ammount:50},
               {type:"CARBON",price:75,ammount:1},{type:"CARBON",price:75,ammount:10},{type:"CARBON",price:75,ammount:50},
-              {type:"LITHIUM",price:150,ammount:1},{type:"LITHIUM",price:150,ammount:10},{type:"LITHIUM",price:150,ammount:50},
-              {type:"SILICON",price:500,ammount:1},{type:"SILICON",price:500,ammount:10},{type:"SILICON",price:500,ammount:50},
+              {type:"LITHIUM",price:100,ammount:1},{type:"LITHIUM",price:100,ammount:10},{type:"LITHIUM",price:100,ammount:50},
+              {type:"SILICON",price:250,ammount:1},{type:"SILICON",price:250,ammount:10},{type:"SILICON",price:250,ammount:50},
               {type:"PLUTONIUM",price:1000,ammount:1},{type:"PLUTONIUM",price:1000,ammount:10},{type:"PLUTONIUM",price:1000,ammount:50}];
 var shopItems = [{type:"EXIT",item:"EXIT",cost:0,costMulti:0,desc:[]},
-                 {type:"CRAFT UPGRADES",item:"RESOURCE STORAGE",cost:300,costMulti:1.5,desc:["Increases JMC™ Craft resource capacity by 20%"]},
-                 {type:"CRAFT UPGRADES",item:"BATTERY EFFICENCY",cost:500,costMulti:1.25,desc:["Increases JMC™ Craft battery capacity by 25%"]},
-                 {type:"CRAFT UPGRADES",item:"CPU EFFICENCY",cost:250,costMulti:2,desc:["Reduces JMC™ Craft battery usage by 20%"]},
-                 {type:"CRAFT UPGRADES",item:"CRAFT SPEED",cost:800,costMulti:2,desc:["Increases JMC™ Craft speed by 5%"]},
-                 {type:"BUILDING UPGRADES",item:"RTG OUTPUT",cost:500,costMulti:1.5,desc:["Increases JMC™ RTG output by 50%"]},
-                 {type:"BUILDING UPGRADES",item:"CONSTRUCTOR SPEED",cost:300,costMulti:1.5,desc:["Increases JMC™ Constructor speed by 50%"]},
-                 {type:"BUILDING UPGRADES",item:"CONSTRUCTOR ENERGY",cost:1500,costMulti:1.2,desc:["Increases JMC™ Constructor energy storage by 100%"]},
-                 {type:"BUILDING UPGRADES",item:"CONSTRUCTOR TRANSMITTER",cost:5000,desc:["JMC™ Constructor transmits finished objects to Craft."]},
-                 {type:"RECIPES",item:"RADAR",cost:25,desc:["Adds JMC™ Radar Tower to Constructor Database.","JMC™ Radar Towers uncover surrounding tiles."]},
-                 {type:"RECIPES",item:"CONSTRUCTOR",cost:200,desc:["Adds JMC™ Constructor to Constructor Database.","Constructors manufacture other JMC™ Buildings."]},
-                 {type:"RECIPES",item:"MINER",cost:1000,desc:["Adds JMC™ Miner to Constructor Database.","JMC™ Miners use energy to gather resources."]}];
+                 {type:"CRAFT UPGRADES",item:"RESOURCE STORAGE",cost:200,costMulti:2,desc:["Increases JMC™ Craft resource","capacity by 10%"]},
+                 {type:"CRAFT UPGRADES",item:"BATTERY EFFICENCY",cost:500,costMulti:2,desc:["Increases JMC™ Craft battery capacity","by 25%"]},
+                 {type:"CRAFT UPGRADES",item:"CPU EFFICENCY",cost:250,costMulti:2,desc:["Reduces JMC™ Craft battery usage","by 20%"]},
+                 {type:"CRAFT UPGRADES",item:"CRAFT SPEED",cost:800,costMulti:2,desc:["Increases JMC™ Craft speed","by 5%"]},
+                 {type:"BUILDING UPGRADES",item:"CONSTRUCTOR SPEED",cost:300,costMulti:2,desc:["Increases JMC™ Constructor speed","by 50%"]},
+                 {type:"BUILDING UPGRADES",item:"CONSTRUCTOR ENERGY",cost:1500,costMulti:2,desc:["Increases JMC™ Constructor energy","storage by 100%"]},
+                 {type:"BUILDING UPGRADES",item:"CONSTRUCTOR TRANSMITTER",cost:5000,desc:["JMC™ Constructor transmits "," finished constructions to ","JMC™ Craft."]},
+                 {type:"BUILDING UPGRADES",item:"MINER SPEED",cost:5000,desc:["Increases JMC™ Miner speed","by 50%"]},
+                 {type:"BUILDING UPGRADES",item:"MINER TRANSMITTER",cost:5000,desc:["JMC™ Miner transmits "," mined resources to ","JMC™ Craft."]},
+                 {type:"BUILDING UPGRADES",item:"RTG OUTPUT",cost:500,costMulti:2,desc:["Increases JMC™ RTG output","by 50%"]},
+                 {type:"BUILDING UPGRADES",item:"SOLAR OUTPUT",cost:500,costMulti:2,desc:["Increases JMC™ Solar Panel output","by 50%"]},
+                 {type:"RECIPES",item:"CONSTRUCTOR",cost:500,desc:["Adds JMC™ Constructor to","Constructor Database.","Constructors manufacture other","JMC™ Buildings."]},
+                 {type:"RECIPES",item:"MINER",cost:2500,desc:["Adds JMC™ Miner to Constructor","Database.","JMC™ Miners use energy to","gather resources."]},
+                 {type:"RECIPES",item:"SOLAR",cost:4300,desc:["Adds JMC™ Solar Panel to ","Constructor Database.","JMC™ Solar Panels generate","fluctuating energy."]},
+                 {type:"RECIPES",item:"BATTERY",cost:5000,desc:["Adds JMC™ Battery to ","Constructor Database.","JMC™ Batteries store","energy and release it","periodically."]},
+                 {type:"RECIPES",item:"RTG",cost:15000,desc:["Adds JMC™ RTG to ","Constructor Database.","JMC™ RTGs generate","constant energy."]}];
 
 var playerPos = {x:0,y:0};
 var playerEnergy = 50;
@@ -70,6 +75,7 @@ var messages = [];
 var interactTiles = [];
 var selectedTile = 0;
 var selectedSell = 0;
+var selectedSellDisplayPrice = 0;
 var selectedBuy = 0;
 
 var playerResources = [];
@@ -272,7 +278,7 @@ function initGame(){
     playerBuildings = [];
     playerResources = [];
     playerBalance = 0;
-    recipes = [{product:"EXIT",items:[],energy:0}];
+    recipes = [{product:"EXIT",items:[],energy:0},{product:"RADAR",items:[{type:"IRON",value:25}],energy:5}];
 
     playerMaxEnergy = 50;
     playerEnergy = playerMaxEnergy;
@@ -448,15 +454,19 @@ function handleInput(){
         selectedBuilding = Math.max(0,Math.min(recipes.length - 1,selectedBuilding + 1));
     }
     if(inputs.up == true && prevInputs.up == false && selectingSell){
+        interactTimer = 0;
         selectedSell = Math.max(0,selectedSell - 1);
     }
     if(inputs.down == true && prevInputs.down == false && selectingSell){
+        interactTimer = 0;
         selectedSell = Math.min(prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT").length - 1,selectedSell + 1);
     }
     if(inputs.up == true && prevInputs.up == false && buyingMode){
+        interactTimer = 0;
         selectedBuy= Math.max(0,selectedBuy - 1);
     }
     if(inputs.down == true && prevInputs.down == false && buyingMode){
+        interactTimer = 0;
         selectedBuy = Math.min(shopItems.length - 1,selectedBuy + 1);
     }
 
@@ -805,12 +815,12 @@ function handleBuildingInteraction(playerTile){
                         playerBalance -= shopItems[selectedBuy].cost;
                         switch(shopItems[selectedBuy].item){
                             case "RESOURCE STORAGE":
-                                maxStorage = Math.round(maxStorage * 1.25);
-                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * 1.20);
+                                maxStorage = Math.round(maxStorage * 1.20);
+                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
                             case "BATTERY EFFICENCY":
                                 playerMaxEnergy = Math.round(playerMaxEnergy * 1.25);
-                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * 1.25);
+                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
                             case "CPU EFFICENCY":
                                 playerDrainRate = Math.round(playerDrainRate * 0.8);
@@ -821,10 +831,7 @@ function handleBuildingInteraction(playerTile){
                                 shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
 
-                            case "RTG OUTPUT":
-                                RTGOutput = Math.round(RTGOutput * 1.5);
-                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
-                                break;
+                            
                             case "CONSTRUCTOR SPEED":
                                 craftSpeed = Math.round(craftSpeed * 1.5);
                                 shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
@@ -838,11 +845,23 @@ function handleBuildingInteraction(playerTile){
                                 constructorTransmit = true;
                                 shopItems = shopItems.filter(i => i.item != "CONSTRUCTOR TRANSMITTER");
                                 break;
-
-                            case "RADAR":
-                                recipes.push({product:"RADAR",items:[{type:"IRON",value:20}],energy:4});
-                                shopItems = shopItems.filter(i => i.item != "RADAR");
+                            case "MINER SPEED":
+                                mineSpeed = Math.round(mineSpeed * 1.5);
+                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
+                            case "MINER TRANSMITTER":
+                                minerTransmit = true;
+                                shopItems = shopItems.filter(i => i.item != "MINER TRANSMITTER");
+                                break;
+                            case "RTG OUTPUT":
+                                RTGOutput = Math.round(RTGOutput * 1.5);
+                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
+                                break;
+                            case "SOALR OUTPUT":
+                                RTGOutput = Math.round(RTGOutput * 1.5);
+                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
+                                break;
+
                             case "CONSTRUCTOR":
                                 recipes.push({product:"CONSTRUCTOR",items:[{type:"IRON",value:20},{type:"COPPER",value:20}],energy:6});
                                 shopItems = shopItems.filter(i => i.item != "CONSTRUCTOR");
@@ -854,6 +873,10 @@ function handleBuildingInteraction(playerTile){
                             case "BATTERY":
                                 recipes.push({product:"BATTERY",items:[{type:"IRON",value:50},{type:"COPPER",value:25},{type:"LITHIUM",value:15}],energy:15});
                                 shopItems = shopItems.filter(i => i.item != "MINER");
+                                break;
+                            case "SOALR":
+                                recipes.push({product:"SOALR",items:[{type:"COPPER",value:15},{type:"SILICON",value:25}],energy:15});
+                                shopItems = shopItems.filter(i => i.item != "SOALR");
                                 break;
                         }
                     } else {
@@ -1010,7 +1033,6 @@ function handleHUD(){
             if(r.product == "EXIT"){
                 ctx.fillText(r.product,canvas.width*0.4,modeHeight + (canvas.width*0.01) + selectionHeight + (25 * visableOptions.indexOf(r)));
             } else {
-                
                 if(selectedBuilding == index){
                     ctx.font = "25px Tahoma";
                     r.items.forEach(i => ctx.fillText(i.value + " " + i.type, canvas.width*0.59, modeHeight + (canvas.width*0.01) + selectionHeight + (25 * r.items.indexOf(i))));
@@ -1076,21 +1098,28 @@ function handleHUD(){
             } else {
                 ctx.fillStyle = hudColourScheme.staticText;
             }
+            ctx.textAlign = "center"; 
+            ctx.textBaseline = "middle";
             if(i.type != "EXIT"){
                 ctx.font = "20px Tahoma";
                 ctx.fillText(i.item ,canvas.width * 0.36,modeHeight + 20 + selectionHeight + (25 * visableOptions.indexOf(i)));
                 if(selectedBuy == index){
-                    ctx.fillText("₿" + i.cost ,canvas.width * 0.64,canvas.height * 0.495);
-                    ctx.font = "15px Tahoma";
-                    i.desc.forEach(s => ctx.fillText(s ,canvas.width * 0.64,canvas.height * 0.3 + (25 * i.desc.indexOf(s))));
+                    ctx.fillText("₿" + Math.round(selectedSellDisplayPrice) ,canvas.width * 0.64,canvas.height * 0.495);
+                    ctx.font = "20px Tahoma";
+                    ctx.textAlign = "start"; 
+                    //ctx.textBaseline = "alphabetic";
+                    i.desc.forEach(s => ctx.fillText(s ,canvas.width * 0.51,modeHeight + 20 + selectionHeight + (25 * i.desc.indexOf(s))));
                 }
             } else {
                 ctx.font = "20px Tahoma";
                 ctx.fillText(i.type ,canvas.width * 0.36,modeHeight + 20 + selectionHeight + (25 * visableOptions.indexOf(i)));
             }
         });
+        selectedSellDisplayPrice = lerp(shopItems[selectedBuy].cost,selectedSellDisplayPrice,(frameSpeedFactor/80));
     }
 
+    ctx.textAlign = "center"; 
+    ctx.textBaseline = "middle";
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "20px Tahoma";
     ctx.fillText("JMC",canvas.width * 0.05,canvas.height * 0.14);
