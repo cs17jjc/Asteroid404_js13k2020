@@ -13,6 +13,7 @@ var rtgImg = document.getElementById("rtg");
 var brokenImg = document.getElementById("broken");
 var teledepotImg = document.getElementById("teledepot");
 var roboshopImg = document.getElementById("shop");
+var generatorImg = document.getElementById("generator");
 
 var menuItems = ["Resume","Main Menu","Save Game","Load Game","Mute Music","Mute Sound FX","Controls"];
 var selectedMenuItem = 0;
@@ -108,6 +109,7 @@ var constructorTransmit = false;
 var batteryDischarge = 1.5;
 var RTGOutput = 5;
 var constructorMaxEnergy = 10;
+var generatorOutput = 2;
 
 var time = 0;
 var sols = 0;
@@ -272,6 +274,7 @@ function initGame(){
     placeBuilding(tiles.find(t => t.x == spawnX - 1 && t.y == 0),{type:"CONSTRUCTOR",value:1});
     placeBuilding(tiles.find(t => t.x == spawnX + 3 && t.y == 2),{type:"TELEDEPOT",value:1});
     placeBuilding(tiles.find(t => t.x == spawnX - 3 && t.y == 1),{type:"ROBOSHOP",value:1});
+    placeBuilding(tiles.find(t => t.x == spawnX - 2 && t.y == 2),{type:"GENERATOR",value:1});
     updatePlayerPos(tiles,0,0);
     //Reset variables
     currentQuota = 0;
@@ -823,17 +826,17 @@ function handleBuildingInteraction(playerTile){
                                 shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
                             case "CPU EFFICENCY":
-                                playerDrainRate = Math.round(playerDrainRate * 0.8);
+                                playerDrainRate = playerDrainRate * 0.8;
                                 shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
                             case "CRAFT SPEED":
-                                playerSpeed = Math.round(playerSpeed * 1.05);
+                                playerSpeed = playerSpeed * 1.05;
                                 shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
 
                             
                             case "CONSTRUCTOR SPEED":
-                                craftSpeed = Math.round(craftSpeed * 1.5);
+                                craftSpeed = craftSpeed * 1.5;
                                 shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
                             case "CONSTRUCTOR ENERGY":
@@ -846,7 +849,7 @@ function handleBuildingInteraction(playerTile){
                                 shopItems = shopItems.filter(i => i.item != "CONSTRUCTOR TRANSMITTER");
                                 break;
                             case "MINER SPEED":
-                                mineSpeed = Math.round(mineSpeed * 1.5);
+                                mineSpeed = mineSpeed * 1.5;
                                 shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
                             case "MINER TRANSMITTER":
@@ -854,11 +857,11 @@ function handleBuildingInteraction(playerTile){
                                 shopItems = shopItems.filter(i => i.item != "MINER TRANSMITTER");
                                 break;
                             case "RTG OUTPUT":
-                                RTGOutput = Math.round(RTGOutput * 1.5);
+                                RTGOutput = RTGOutput * 1.5;
                                 shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
                             case "SOALR OUTPUT":
-                                RTGOutput = Math.round(RTGOutput * 1.5);
+                                RTGOutput = RTGOutput * 1.5;
                                 shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
 
@@ -887,6 +890,15 @@ function handleBuildingInteraction(playerTile){
                 }
             } else {
                 buyingMode = true;
+            }
+            break;
+        case "GENERATOR":
+            var carbonRes = playerResources.find(r => r.type == "CARBON");
+            if(carbonRes != null){
+                playerTile.building.coal += 1;
+                carbonRes.value -= 1;
+            } else {
+                messages.push({text:"No available carbon",time:0});
             }
             break;
     }
@@ -1302,6 +1314,21 @@ function handleTileUpdates(t) {
                         ctx.fillText("No tiles need power",infoX,infoY);
                     }
                 }
+            }
+            break;
+        case "GENERATOR":
+            if(t.building.generatingTimer >= 1){
+
+                if(t.hasPlayer && playerEnergy < playerMaxEnergy){
+                    playerEnergy = Math.min(playerMaxEnergy,playerEnergy + generatorOutput);
+                }
+
+                t.building.generatingTimer = 0;
+                t.building.generating = false;
+            } else if(t.building.generatingTimer < 1){
+                t.building.generatingTimer += (frameSpeedFactor/1000);
+            } else if(t.building.coal >= 1){
+
             }
             break;
     }

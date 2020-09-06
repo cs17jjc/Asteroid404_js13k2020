@@ -101,14 +101,17 @@ function renderMap(context,tiles,drawHeight,playerPosOffset){
                     context.drawImage(batteryImg,Math.trunc(t.screenPos.x - batteryImg.width/2),Math.trunc(t.screenPos.y - batteryImg.height*0.6));
                     break;
                 case "RTG":
-                        context.drawImage(rtgImg,Math.trunc(t.screenPos.x - rtgImg.width/2),Math.trunc(t.screenPos.y - rtgImg.height*0.6));
-                        break;
+                    context.drawImage(rtgImg,Math.trunc(t.screenPos.x - rtgImg.width/2),Math.trunc(t.screenPos.y - rtgImg.height*0.6));
+                    break;
                 case "TELEDEPOT":
-                        context.drawImage(teledepotImg,Math.trunc(t.screenPos.x - teledepotImg.width/2),Math.trunc(t.screenPos.y - teledepotImg.height*0.6));
-                        break;
+                    context.drawImage(teledepotImg,Math.trunc(t.screenPos.x - teledepotImg.width/2),Math.trunc(t.screenPos.y - teledepotImg.height*0.6));
+                    break;
                 case "ROBOSHOP":
-                        context.drawImage(roboshopImg,Math.trunc(t.screenPos.x - roboshopImg.width/2),Math.trunc(t.screenPos.y - roboshopImg.height*0.6));
-                        break;
+                    context.drawImage(roboshopImg,Math.trunc(t.screenPos.x - roboshopImg.width/2),Math.trunc(t.screenPos.y - roboshopImg.height*0.6));
+                    break;
+                case "GENERATOR":
+                    context.drawImage(generatorImg,Math.trunc(t.screenPos.x - generatorImg.width/2),Math.trunc(t.screenPos.y - generatorImg.height*0.6));
+                    break;
                 default:
                     break;
             }
@@ -252,6 +255,12 @@ function placeBuilding(tile,building){
                 tile.building.maxEnergy = 10;
                 tile.building.upgradeTimer = 0;
                 tile.building.upgrading = false;
+                break;
+            case "GENERATOR":
+                tile.building.coal = 0;
+                tile.building.speed = 1;
+                tile.building.generatingTimer = 0;
+                tile.building.generating = false;
                 break;
         }
         building.value -= 1;
@@ -545,15 +554,15 @@ function componentToHex(c) {
 
         if(Math.abs(startX - t.x) > (width * 0.005) && Math.random() * 100 > 85 + Math.min(15,Math.abs(startX - t.x)/15)){
             addResourceToTile(tiles,t,"IRON",Math.random() * 15,10,0.6);
-        } else if(Math.abs(startX - t.x) > (width * 0.05) && Math.random() * 100 > 90) {
+        } else if(Math.abs(startX - t.x) > (width * 0.01) && Math.random() * 100 > 90) {
            addResourceToTile(tiles,t,"COPPER",Math.random() * 15,10,0.5);
-        } else if(Math.abs(startX - t.x) > (width * 0.1) && Math.random() * 100 > 92) {
+        } else if(Math.abs(startX - t.x) > (width * 0.05) && Math.random() * 100 > 92) {
             addResourceToTile(tiles,t,"CARBON",Math.random() * 15,10,0.8);
-        } else if(Math.abs(startX - t.x) > (width * 0.25) && Math.random() * 100 > 96) {
+        } else if(Math.abs(startX - t.x) > (width * 0.1) && Math.random() * 100 > 96) {
             addResourceToTile(tiles,t,"LITHIUM",Math.random() * 15,10,0.7);
-        } else if(Math.abs(startX - t.x) > (width * 0.25) && Math.random() * 100 > 85) {
+        } else if(Math.abs(startX - t.x) > (width * 0.12) && Math.random() * 100 > 85) {
             addResourceToTile(tiles,t,"SILICON",Math.random() * 15,10,0.7);
-        } else if(Math.abs(startX - t.x) > (width * 0.3) && Math.random() * 100 > 85) {
+        } else if(Math.abs(startX - t.x) > (width * 0.14) && Math.random() * 100 > 85) {
             var ammount = Math.random() * 15;
             addResourceToTile(tiles,t,"PLUTONIUM",ammount,10,0.7);
             addHazardToTile(tiles,t,4);
