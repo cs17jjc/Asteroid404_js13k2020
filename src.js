@@ -305,6 +305,8 @@ function initGame(){
 
     time = 0;
     sols = 0;
+
+    failedQuota = false;
 }
 
 function runGame(){
@@ -322,7 +324,7 @@ function runGame(){
     renderMap(ctx,tiles,canvas.height * 0.71,playerPosOffset);
 
 
-    if(escMenu && !playerDeadState){
+    if(escMenu && !playerDeadState && !failedQuota){
         ctx.fillStyle = "#FFFFFF";
         ctx.textAlign = "center"; 
         ctx.textBaseline = "middle";
@@ -342,7 +344,7 @@ function runGame(){
             ctx.fillText(i,canvas.width*0.5,canvas.height * 0.15 + (50 * index));
         });
         handleMenuInput();
-    } else if(!playerDeadState) {
+    } else if(!playerDeadState && !failedQuota) {
         ctx.font = "15px Arial";
         ctx.fillStyle = "#FFFFFF";
         ctx.strokeStyle = "#000000";
@@ -387,7 +389,7 @@ function runGame(){
 
         handleHUD();
         handleInput();  
-    } else {
+    } else if(playerDeadState){
         //dead state
         playerPosOffset.y = lerp(playerPosOffset.y,10,(frameSpeedFactor/1500));
         roverImgScale = lerp(roverImgScale,0,(frameSpeedFactor/1500));
@@ -413,12 +415,38 @@ function runGame(){
             }
         }
 
+    } else if(failedQuota){
+        //Failed state
+        playerPosOffset.y = lerp(playerPosOffset.y,10,(frameSpeedFactor/1500));
+        roverImgScale = lerp(roverImgScale,0,(frameSpeedFactor/1500));
+        var textScale = Math.trunc(50 - (50 * roverImgScale));
+        ctx.font = textScale + "px Arial";
+        ctx.fillStyle = "#FFFFFF";
+        ctx.strokeStyle = "#000000";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("Quota Failed",canvas.width/2,canvas.height * 0.2);
+        tiles.forEach(t => t.hazard += (frameSpeedFactor/800));
+        if(roverImgScale < 0.4){
+            (textScale*0.3).toFixed(0) + "px Arial";
+            ctx.fillText("Press E to return to main menu",canvas.width/2,canvas.height * 0.3);
+            if(inputs.inter == true && prevInputs.inter == false){
+                mainMenu = true;
+                escMenu = false;
+                runGameBool = false;
+                failedQuota = false;
+                selectedMenuItem = 0;
+                roverImgScale = 1;
+            }
+        }
     }
 
     if(playerEnergy <= 0){
         playerDeadState = true;
     }
-    time += (frameSpeedFactor/1000);
+    if(!playerDeadState){
+        time += (frameSpeedFactor/1000);
+    }
     if(time >= 360){
         sols += 1;
         if(playerBalance >= quotas[currentQuota]){
@@ -1209,7 +1237,7 @@ function handleTileUpdates(t) {
             }
             if(t.hasPlayer && !escMenu){
                 ctx.textAlign = "center"; 
-                ctx.fillText("🗲",(infoX + 9) ,infoY + infoStep);
+                ctx.fillText("⚡",(infoX + 9) ,infoY + infoStep);
                 drawBattery(ctx,infoX,infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,totalEnergy/solarOutput));
             }
             break;
@@ -1232,7 +1260,7 @@ function handleTileUpdates(t) {
             if(t.hasPlayer && !escMenu){
                 ctx.fillText("Recipe: " + (t.building.recipe != undefined ? t.building.recipe.product : "None") ,infoX,infoY);
                 ctx.textAlign = "center"; 
-                ctx.fillText("🗲",(infoX + 9) ,infoY + infoStep);
+                ctx.fillText("⚡",(infoX + 9) ,infoY + infoStep);
                 ctx.fillText("%",(19 + infoX) + (canvas.height * 0.1) * 0.25,infoY + infoStep);
                 drawBattery(ctx,infoX,infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.energy/t.building.maxEnergy));
                 drawBattery(ctx,10 + infoX + (canvas.height * 0.1) * 0.25, infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.craftTimer));
@@ -1258,7 +1286,7 @@ function handleTileUpdates(t) {
             }
             if(t.hasPlayer && !escMenu){
                 ctx.textAlign = "center";
-                ctx.fillText("🗲",(infoX + 9) ,infoY + infoStep);
+                ctx.fillText("⚡",(infoX + 9) ,infoY + infoStep);
                 ctx.fillText("%",(19 + infoX) + (canvas.height * 0.1) * 0.25,infoY + infoStep);
                 ctx.fillText("⨆",(29 + infoX) + (canvas.height * 0.1) * 0.5,infoY + infoStep);
                 drawBattery(ctx,infoX,infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.energy/t.building.maxEnergy));
@@ -1295,7 +1323,7 @@ function handleTileUpdates(t) {
             }
             if(t.hasPlayer && !escMenu){
                 ctx.textAlign = "center"; 
-                ctx.fillText("🗲",(infoX + 9) ,infoY + infoStep);
+                ctx.fillText("⚡",(infoX + 9) ,infoY + infoStep);
                 ctx.fillText("%",(19 + infoX) + (canvas.height * 0.1) * 0.25,infoY + infoStep);
                 drawBattery(ctx,infoX,infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.energy/t.building.maxEnergy));
                 drawBattery(ctx,10 + infoX + (canvas.height * 0.1) * 0.25, infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.dischargeTimer));
