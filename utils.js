@@ -232,13 +232,15 @@ function placeBuilding(tile,building){
                 break;
             case "CONSTRUCTOR":
                 tile.building.energy = 0;
-                tile.building.maxEnergy = constructorMaxEnergy;
+                tile.building.maxEnergy = 20;
                 tile.building.crafting = false;
                 tile.building.craftTimer = 0;
                 tile.building.storedProduct = false;
                 break;
             case "MINER":
-                tile.building.storedItems = [];
+                tile.building.storedResource = 0;
+                tile.building.storedType = tile.resource.type;
+                tile.building.maxStored = 50;
                 tile.building.energy = 0;
                 tile.building.maxEnergy = 10;
                 tile.building.mining = false;
@@ -258,7 +260,7 @@ function placeBuilding(tile,building){
                 break;
             case "GENERATOR":
                 tile.building.coal = 0;
-                tile.building.speed = 1;
+                tile.building.maxCoal = 25;
                 tile.building.generatingTimer = 0;
                 tile.building.generating = false;
                 break;
@@ -306,26 +308,17 @@ function removeBuilding(tile){
 }
 
 function addToPlayerResources(type,ammount,message){
+    var addedValue = Math.min(maxStorage,ammount);
     var playerRes = playerResources.find(r => r.type == type);
     if(playerRes != null){
-        if(playerRes.value + ammount > maxStorage){
-            if(message){
-                messages.push({text:"Not enough space for " + ammount + " units of " + type,time:0});
-            }
-            return false;
+        if(playerRes.value + addedValue > maxStorage){
+            addedValue = maxStorage - playerRes.value;
         }
-        playerRes.value += ammount;
-        return true;
+        playerRes.value += addedValue;
     } else {
-        if(ammount > maxStorage){
-            if(message){
-                messages.push({text:"Not enough space for " + ammount + " units of " + type,time:0});
-            }
-            return false;
-        }
-        playerResources.push({type:type,value:ammount});
-        return true;
+        playerResources.push({type:type,value:addedValue});
     }
+    return addedValue;
 }
 function addToPlayerBuildings(type,ammount){
     var playerBuild = playerBuildings.find(r => r.type == type);
@@ -479,9 +472,23 @@ function componentToHex(c) {
   }
 
   function generateResourcePoints(value,type){
-    var points = 7;
-    if(type == "ROCK"){
-        points = 5;
+    var points = 0;
+    switch(type){
+        case "ROCK":
+            points = 12;
+            break;
+        case "SILICON":
+            points = 5;
+            break;
+        case "LITHIUM":
+            points = 9;
+            break;
+        case "CARBON":
+            points = 15;
+            break;
+        default:
+            points = 7;
+            break;
     }
     var number = 1;
     var size = value/20;
@@ -554,25 +561,23 @@ function componentToHex(c) {
 
         if(Math.abs(startX - t.x) > (width * 0.005) && Math.random() * 100 > 85 + Math.min(15,Math.abs(startX - t.x)/15)){
             addResourceToTile(tiles,t,"IRON",Math.random() * 15,10,0.6);
-        } else if(Math.abs(startX - t.x) > (width * 0.01) && Math.random() * 100 > 90) {
+        } else if(Math.abs(startX - t.x) > (width * 0.05) && Math.random() * 100 > 90) {
            addResourceToTile(tiles,t,"COPPER",Math.random() * 15,10,0.5);
-        } else if(Math.abs(startX - t.x) > (width * 0.05) && Math.random() * 100 > 92) {
-            addResourceToTile(tiles,t,"CARBON",Math.random() * 15,10,0.8);
-        } else if(Math.abs(startX - t.x) > (width * 0.1) && Math.random() * 100 > 96) {
-            addResourceToTile(tiles,t,"LITHIUM",Math.random() * 15,10,0.7);
-        } else if(Math.abs(startX - t.x) > (width * 0.12) && Math.random() * 100 > 85) {
-            addResourceToTile(tiles,t,"SILICON",Math.random() * 15,10,0.7);
+        } else if(Math.abs(startX - t.x) > (width * 0.08) && Math.random() * 100 > 92) {
+            addResourceToTile(tiles,t,"CARBON",Math.random() * 15,10,0.6);
+        } else if(Math.abs(startX - t.x) > (width * 0.12) && Math.random() * 100 > 96) {
+            addResourceToTile(tiles,t,"LITHIUM",Math.random() * 15,10,0.6);
         } else if(Math.abs(startX - t.x) > (width * 0.14) && Math.random() * 100 > 85) {
+            addResourceToTile(tiles,t,"SILICON",Math.random() * 15,10,0.5);
+        } else if(Math.abs(startX - t.x) > (width * 0.24) && Math.random() * 100 > 85) {
             var ammount = Math.random() * 15;
             addResourceToTile(tiles,t,"PLUTONIUM",ammount,10,0.7);
             addHazardToTile(tiles,t,4);
         } else if(Math.random() * 100 > 85 + Math.min(15,Math.abs(startX - t.x)/10)) {
             addResourceToTile(tiles,t,"ROCK",Math.random() * 15,10,0.9);
         }
-        if(Math.abs(startX - t.x) > 80 && Math.random() * 100 > 95){
+        if(Math.abs(startX - t.x) > (width * 0.16) && Math.random() * 100 > 95){
             addHazardToTile(tiles,t,Math.random() * 5);
-        } else if(Math.abs(startX - t.x) > 150 && Math.random() * 100 > 85){
-            addHazardToTile(tiles,t,Math.random() * 10);
         }
     });
     tiles.find(t => t.x == startX).hasPlayer = true;

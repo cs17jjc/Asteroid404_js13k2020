@@ -32,13 +32,12 @@ var prices = [{type:"EXIT",price:0,ammount:0},
               {type:"LITHIUM",price:100,ammount:1},{type:"LITHIUM",price:100,ammount:10},{type:"LITHIUM",price:100,ammount:50},
               {type:"SILICON",price:250,ammount:1},{type:"SILICON",price:250,ammount:10},{type:"SILICON",price:250,ammount:50},
               {type:"PLUTONIUM",price:1000,ammount:1},{type:"PLUTONIUM",price:1000,ammount:10},{type:"PLUTONIUM",price:1000,ammount:50}];
-var shopItems = [{type:"EXIT",item:"EXIT",cost:0,costMulti:0,desc:[]},
+var shopItemsStart = [{type:"EXIT",item:"EXIT",cost:0,costMulti:0,desc:[]},
                  {type:"CRAFT UPGRADES",item:"RESOURCE STORAGE",cost:200,costMulti:2,desc:["Increases JMC™ Craft resource","capacity by 10%"]},
                  {type:"CRAFT UPGRADES",item:"BATTERY EFFICENCY",cost:500,costMulti:2,desc:["Increases JMC™ Craft battery capacity","by 25%"]},
                  {type:"CRAFT UPGRADES",item:"CPU EFFICENCY",cost:250,costMulti:2,desc:["Reduces JMC™ Craft battery usage","by 20%"]},
                  {type:"CRAFT UPGRADES",item:"CRAFT SPEED",cost:800,costMulti:2,desc:["Increases JMC™ Craft speed","by 5%"]},
                  {type:"BUILDING UPGRADES",item:"CONSTRUCTOR SPEED",cost:300,costMulti:2,desc:["Increases JMC™ Constructor speed","by 50%"]},
-                 {type:"BUILDING UPGRADES",item:"CONSTRUCTOR ENERGY",cost:1500,costMulti:2,desc:["Increases JMC™ Constructor energy","storage by 100%"]},
                  {type:"BUILDING UPGRADES",item:"CONSTRUCTOR TRANSMITTER",cost:5000,desc:["JMC™ Constructor transmits "," finished constructions to ","JMC™ Craft."]},
                  {type:"BUILDING UPGRADES",item:"MINER SPEED",cost:5000,desc:["Increases JMC™ Miner speed","by 50%"]},
                  {type:"BUILDING UPGRADES",item:"MINER TRANSMITTER",cost:5000,desc:["JMC™ Miner transmits "," mined resources to ","JMC™ Craft."]},
@@ -46,9 +45,12 @@ var shopItems = [{type:"EXIT",item:"EXIT",cost:0,costMulti:0,desc:[]},
                  {type:"BUILDING UPGRADES",item:"SOLAR OUTPUT",cost:500,costMulti:2,desc:["Increases JMC™ Solar Panel output","by 50%"]},
                  {type:"RECIPES",item:"CONSTRUCTOR",cost:500,desc:["Adds JMC™ Constructor to","Constructor Database.","Constructors manufacture other","JMC™ Buildings."]},
                  {type:"RECIPES",item:"MINER",cost:2500,desc:["Adds JMC™ Miner to Constructor","Database.","JMC™ Miners use energy to","gather resources."]},
+                 {type:"RECIPES",item:"GENERATOR",cost:2500,desc:["Adds JMC™ Generator to Constructor","Database.","JMC™ Generators create energy from","carbon."]},
                  {type:"RECIPES",item:"SOLAR",cost:4300,desc:["Adds JMC™ Solar Panel to ","Constructor Database.","JMC™ Solar Panels generate","fluctuating energy."]},
                  {type:"RECIPES",item:"BATTERY",cost:5000,desc:["Adds JMC™ Battery to ","Constructor Database.","JMC™ Batteries store","energy and release it","periodically."]},
                  {type:"RECIPES",item:"RTG",cost:15000,desc:["Adds JMC™ RTG to ","Constructor Database.","JMC™ RTGs generate","constant energy."]}];
+
+var shopItems = shopItemsStart.slice();
 
 var playerPos = {x:0,y:0};
 var playerEnergy = 50;
@@ -57,7 +59,7 @@ var playerDeadState = false;
 var playerBalance = 0;
 var playerBalanceDisplayed = 0;
 
-var quotas = [2000,5000,10000,20000,50000,100000,500000];
+var quotas = [500,1500,3000,5000,8000,10000,20000];
 var currentQuota = 0;
 var failedQuota = false;
 
@@ -103,12 +105,11 @@ var maxStorage = 50;
 var solarOutput = 1;
 var craftSpeed = 1;
 var minerFactor = 5;
-var mineSpeed = 3;
+var mineSpeed = 1;
 var minerTransmit = false;
 var constructorTransmit = false;
 var batteryDischarge = 1.5;
 var RTGOutput = 5;
-var constructorMaxEnergy = 10;
 var generatorOutput = 2;
 
 var time = 0;
@@ -129,7 +130,7 @@ var hudColourScheme = {outline:"#FFFFFF",infill:"#000000AA",text:"#FFFFFF",stati
 let mySongData = zzfxM(...song);
 let myAudioNode = zzfxP(...mySongData);
 myAudioNode.loop = true;
-myAudioNode.start();
+//myAudioNode.start();
 
 var stars = Array.from(Array(500).keys()).map(i => {return {x:(Math.random() * 2 * canvas.width) - canvas.width,y:(Math.random() * 2 * canvas.height) - canvas.height,r:Math.random() * 3}});
 
@@ -212,14 +213,14 @@ function handleMainMenu(){
         switch(mainMenuItems[selectedMenuItem]){
             case "New Game":
                 initGame();
-                soundFxVolume = 0.5;
+                //soundFxVolume = 0.5;
                 runGameBool = true;
                 mainMenu = false;
                 selectedMenuItem = 0;
                 break;
             case "Load Game":
                 loadGame();
-                soundFxVolume = 0.5;
+                //soundFxVolume = 0.5;
                 runGameBool = true;
                 mainMenu = false;
                 selectedMenuItem = 0;
@@ -278,10 +279,11 @@ function initGame(){
     updatePlayerPos(tiles,0,0);
     //Reset variables
     currentQuota = 0;
-    playerBuildings = [];
+    playerBuildings = [{type:"MINER",value:1},{type:"SOLAR",value:1}];
     playerResources = [];
     playerBalance = 0;
     recipes = [{product:"EXIT",items:[],energy:0},{product:"RADAR",items:[{type:"IRON",value:25}],energy:5}];
+    shopItems = shopItemsStart.slice();
 
     playerMaxEnergy = 50;
     playerEnergy = playerMaxEnergy;
@@ -375,9 +377,8 @@ function runGame(){
 
         //Drain player battery
         var playerTile = tiles.find(t => t.hasPlayer);
-        if(["RTG","SOLAR"].includes(playerTile.building.type)){
+        if(["RTG","SOLAR","GENERATOR"].includes(playerTile.building.type)){
             hudFlash = false;
-            batteryStatusMessage = "Charging";
         } else if(selectingSell || buyingMode){
             batteryStatusMessage = "Paused";
         } else {
@@ -535,9 +536,11 @@ function handleInput(){
         } else {
             if(playerTile.resource.type != "NONE"){
                 var totalMined = Math.round(mineFactor);
-                if(addToPlayerResources(playerTile.resource.type,totalMined,true)){
+                if(addToPlayerResources(playerTile.resource.type,totalMined,true) > 0){
                     mineTile(playerTile);
                     zzfx(...[soundFxVolume,,320,.01,,0,4,0,,,,,,,,.1,,0,.01]).start();
+                } else {
+                    messages.push({text:"Resource full",time:0});
                 }
             }
         }
@@ -550,9 +553,11 @@ function handleInput(){
         } else {
             if(playerTile.resource.type != "NONE"){
                 var totalMined = Math.round(mineFactor);
-                if(addToPlayerResources(playerTile.resource.type,totalMined,true)){
+                if(addToPlayerResources(playerTile.resource.type,totalMined,true) > 0){
                     mineTile(playerTile);
                     zzfx(...[soundFxVolume,,320,.01,,0,4,0,,,,,,,,.1,,0,.01]).start();
+                } else {
+                    messages.push({text:"Resource full",time:0});
                 }
             }
         }
@@ -648,6 +653,7 @@ function handleMenuInput(){
                 window.localStorage.setItem('Planet404_TYUDHSJ_QUOTA', JSON.stringify(currentQuota));
 
                 window.localStorage.setItem('Planet404_TYUDHSJ_RECIPES', JSON.stringify(recipes));
+                window.localStorage.setItem('Planet404_TYUDHSJ_SHOP', JSON.stringify(shopItems));
 
                 window.localStorage.setItem('Planet404_TYUDHSJ_playerMaxEnergy', JSON.stringify(playerMaxEnergy));
                 window.localStorage.setItem('Planet404_TYUDHSJ_playerDrainRate', JSON.stringify(playerDrainRate));
@@ -713,6 +719,7 @@ function loadGame(){
     currentQuota = JSON.parse(ls.getItem('Planet404_TYUDHSJ_QUOTA'));
 
     recipes = JSON.parse(ls.getItem('Planet404_TYUDHSJ_RECIPES'));
+    shopItems = JSON.parse(ls.getItem('Planet404_TYUDHSJ_SHOP'));
 
     playerMaxEnergy = JSON.parse(ls.getItem('Planet404_TYUDHSJ_playerMaxEnergy'));
     playerDrainRate = JSON.parse(ls.getItem('Planet404_TYUDHSJ_playerDrainRate'));
@@ -776,6 +783,7 @@ function handleBuildingInteraction(playerTile){
                 playerTile.building.storedProduct = false;
                 playerTile.building.recipe = null;
                 zzfx(...[soundFxVolume,,521,,.01,.01,1,1.1,61.9,-94.8,-2250,.02,.1,.1,3,,.01,,.08]).start();
+                playerTile.building.craftTimer = 0;
             } else if(playerTile.building.recipe == null){
                 settingRecipe = true;
                 selectedBuilding = 0;
@@ -783,11 +791,7 @@ function handleBuildingInteraction(playerTile){
             break;
         case "MINER":
             if(!minerTransmit){
-                playerTile.building.storedItems.forEach(i => {
-                    addToPlayerResources(i.type,i.value,false);
-                    i.value = 0;
-                });
-                playerTile.building.storedItems = [];
+                    playerTile.building.storedResource -= addToPlayerResources(playerTile.building.storedType,playerTile.building.storedResource,false);
             }
             break;
         case "TELEDEPOT":
@@ -839,11 +843,6 @@ function handleBuildingInteraction(playerTile){
                                 craftSpeed = craftSpeed * 1.5;
                                 shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
-                            case "CONSTRUCTOR ENERGY":
-                                constructorMaxEnergy = Math.round(constructorMaxEnergy * 2);
-                                tiles.filter(t => t.building.type == "CONSTRUCTOR").forEach(t => t.building.maxEnergy = constructorMaxEnergy);
-                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
-                                break;
                             case "CONSTRUCTOR TRANSMITTER":
                                 constructorTransmit = true;
                                 shopItems = shopItems.filter(i => i.item != "CONSTRUCTOR TRANSMITTER");
@@ -870,8 +869,12 @@ function handleBuildingInteraction(playerTile){
                                 shopItems = shopItems.filter(i => i.item != "CONSTRUCTOR");
                                 break;
                             case "MINER":
-                                recipes.push({product:"MINER",items:[{type:"IRON",value:35},{type:"COPPER",value:10},{type:"CARBON",value:15}],energy:10});
+                                recipes.push({product:"MINER",items:[{type:"IRON",value:35},{type:"COPPER",value:10},{type:"CARBON",value:15}],energy:8});
                                 shopItems = shopItems.filter(i => i.item != "MINER");
+                                break;
+                            case "GENERATOR":
+                                recipes.push({product:"GENERATOR",items:[{type:"IRON",value:30},{type:"COPPER",value:30},{type:"ROCK",value:15}],energy:10});
+                                shopItems = shopItems.filter(i => i.item != "GENERATOR");
                                 break;
                             case "BATTERY":
                                 recipes.push({product:"BATTERY",items:[{type:"IRON",value:50},{type:"COPPER",value:25},{type:"LITHIUM",value:15}],energy:15});
@@ -895,8 +898,12 @@ function handleBuildingInteraction(playerTile){
         case "GENERATOR":
             var carbonRes = playerResources.find(r => r.type == "CARBON");
             if(carbonRes != null){
-                playerTile.building.coal += 1;
-                carbonRes.value -= 1;
+                if(playerTile.building.coal < playerTile.building.maxCoal){
+                    playerTile.building.coal += 1;
+                    carbonRes.value -= 1;
+                } else {
+                    messages.push({text:"Generator is full",time:0});
+                }
             } else {
                 messages.push({text:"No available carbon",time:0});
             }
@@ -1116,6 +1123,7 @@ function handleHUD(){
                 ctx.font = "20px Tahoma";
                 ctx.fillText(i.item ,canvas.width * 0.36,modeHeight + 20 + selectionHeight + (25 * visableOptions.indexOf(i)));
                 if(selectedBuy == index){
+                    ctx.fillText(i.type ,canvas.width * 0.65,modeHeight + 20);
                     ctx.fillText("₿" + Math.round(selectedSellDisplayPrice) ,canvas.width * 0.64,canvas.height * 0.495);
                     ctx.font = "20px Tahoma";
                     ctx.textAlign = "start"; 
@@ -1147,6 +1155,10 @@ function handleHUD(){
     var percentEnergy = playerEnergy/playerMaxEnergy;
     ctx.font = "12px Tahoma";
     ctx.fillText(batteryStatusMessage,canvas.width * 0.07,canvas.height * (batteryStatusHeight + 0.09));
+    if(tiles.find(t => t.hasPlayer).hazard > 0){
+        ctx.font = "50px Tahoma";
+        ctx.fillText("☢",canvas.width * 0.07,canvas.height * (batteryStatusHeight + 0.14));
+    }
     if(percentEnergy > 0.6){
         batteryStatusMessage = "Nominal";
         hudFlash = false;
@@ -1157,7 +1169,7 @@ function handleHUD(){
         batteryStatusMessage = "Low";
         hudFlash = false;
         hudFlashTimer = 0;
-    } else if(percentEnergy > 0.15) {
+    } else if(percentEnergy > 0.1) {
         batteryStatusMessage = "Very Low";
         hudFlash = true;
         hudFlashTimer += (frameSpeedFactor/400);
@@ -1173,17 +1185,19 @@ function handleHUD(){
 }
 
 function handleTileUpdates(t) {
-    var infoX = canvas.width * 0.6;
+    var infoX = canvas.width * 0.85;
     var infoY = canvas.height * 0.45;
     var infoStep = 20;
+    ctx.lineWidth = 2;
+    ctx.textAlign = "start"; 
+    ctx.textBaseline = "alphabetic";
     switch(t.building.type){
         case "SOLAR":
+            var totalEnergy = solarOutput * Math.max(0.1,Math.sin(time * Math.PI/180));
             if(t.hasPlayer && playerEnergy < playerMaxEnergy){
-                playerEnergy = Math.min(playerMaxEnergy,playerEnergy + (solarOutput * Math.max(0.1,Math.sin(time * Math.PI/180))));
-                ctx.fillText("Charging Player",infoX,infoY);
+                playerEnergy = Math.min(playerMaxEnergy,playerEnergy + totalEnergy);
             } else {
             var surrounding = getSurroundingTiles(tiles,t).filter(tt => tt.building.energy != null).filter(tt => tt.building.energy != tt.building.maxEnergy);
-            var totalEnergy = solarOutput * Math.max(0.1,Math.sin(time * Math.PI/180));
             var induvidualEnergy = (totalEnergy / surrounding.length) * (frameSpeedFactor/1000);
             surrounding.forEach(tt => {
                 if(tt.building.energy + induvidualEnergy >= tt.building.maxEnergy){
@@ -1192,9 +1206,11 @@ function handleTileUpdates(t) {
                     tt.building.energy += induvidualEnergy;
                 }
             });
-            if(t.hasPlayer && !escMenu){
-                ctx.fillText("Energy Output: " + totalEnergy.toFixed(2),infoX,infoY);
             }
+            if(t.hasPlayer && !escMenu){
+                ctx.textAlign = "center"; 
+                ctx.fillText("🗲",(infoX + 9) ,infoY + infoStep);
+                drawBattery(ctx,infoX,infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,totalEnergy/solarOutput));
             }
             break;
         case "CONSTRUCTOR":
@@ -1205,60 +1221,49 @@ function handleTileUpdates(t) {
                         if(constructorTransmit){
                             addToPlayerBuildings(t.building.recipe.product,t.building.recipe.storedProduct);
                             t.building.storedProduct = false;
+                            t.building.craftTimer = 0;
                         } else {
                             t.building.storedProduct = true;
                         }
                         t.building.crafting = false;
-                        t.building.craftTimer = 0;
                     }
                 }
             }
             if(t.hasPlayer && !escMenu){
                 ctx.fillText("Recipe: " + (t.building.recipe != undefined ? t.building.recipe.product : "None") ,infoX,infoY);
-                ctx.fillText("Energy: " + Math.trunc(t.building.energy),infoX,infoY + infoStep);
-                if(t.building.crafting){
-                    ctx.fillText("Progress: " + Math.trunc(t.building.craftTimer * 100) + "%",infoX,infoY + infoStep*2);
-                } else if (t.building.storedProduct){
-                    ctx.fillText("Finished Construction",infoX,infoY + infoStep*2);
-                }
+                ctx.textAlign = "center"; 
+                ctx.fillText("🗲",(infoX + 9) ,infoY + infoStep);
+                ctx.fillText("%",(19 + infoX) + (canvas.height * 0.1) * 0.25,infoY + infoStep);
+                drawBattery(ctx,infoX,infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.energy/t.building.maxEnergy));
+                drawBattery(ctx,10 + infoX + (canvas.height * 0.1) * 0.25, infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.craftTimer));
             }
             break;
         case "MINER":
             if(!t.building.mining){
-                if(t.building.energy >= minerFactor && t.resource.type != "NONE"){
-                    t.building.energy -= minerFactor;
+                if(t.building.energy >= 1 && t.resource.type != "NONE" && t.building.storedResource < t.building.maxStored){
+                    t.building.energy -= 1;
                     t.building.mining = true;
                 }
             } else{
-                t.building.mineTimer += (frameSpeedFactor/50000) * mineSpeed;
+                t.building.mineTimer += (frameSpeedFactor/25000) * mineSpeed;
                 if(t.building.mineTimer >= 1){
-                    addToBuildingStorage(t.building.storedItems,t.resource.type,minerFactor);
+                    t.building.storedResource = Math.min(t.building.maxStored, t.building.storedResource + minerFactor);
                     mineTile(t);
                     t.building.mining = false;
                     t.building.mineTimer = 0;
                 }
             }
             if(minerTransmit){
-                t.building.storedItems.forEach(i => {
-                    addToPlayerResources(i.type,i.value,false);
-                    i.value = 0;
-                });
-                t.building.storedItems = [];
+                t.building.storedResource -= addToPlayerResources(tile.building.storedType,t.building.storedResource,false);
             }
             if(t.hasPlayer && !escMenu){
-                ctx.fillText("Energy: " + Math.trunc(t.building.energy),infoX,infoY);
-                ctx.fillText("Progress: " + Math.trunc(t.building.mineTimer * 100) + "%",infoX,infoY + infoStep);
-                if(minerTransmit){
-                    ctx.fillText("Transmiting resources",infoX,infoY + infoStep*2);
-                } else {
-                    ctx.fillText("Contains: ",infoX,infoY + infoStep*2);
-                    t.building.storedItems.forEach(i =>ctx.fillText(i.value + " units of " + i.type,infoX,infoY + infoStep*3));
-                }
-            }
-            break;
-        case "RADAR":
-            if(t.hasPlayer && !escMenu){
-                ctx.fillText("Total Coverage: " + (100 * tiles.filter(tt => tt.isVisible).length / tiles.length).toFixed(2) + "%",infoX,infoY);
+                ctx.textAlign = "center";
+                ctx.fillText("🗲",(infoX + 9) ,infoY + infoStep);
+                ctx.fillText("%",(19 + infoX) + (canvas.height * 0.1) * 0.25,infoY + infoStep);
+                ctx.fillText("⨆",(29 + infoX) + (canvas.height * 0.1) * 0.5,infoY + infoStep);
+                drawBattery(ctx,infoX,infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.energy/t.building.maxEnergy));
+                drawBattery(ctx,10 + infoX + (canvas.height * 0.1) * 0.25, infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.mineTimer));
+                drawBattery(ctx,20 + infoX + (canvas.height * 0.1) * 0.5, infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.storedResource/t.building.maxStored));
             }
             break;
         case "BATTERY":
@@ -1289,14 +1294,16 @@ function handleTileUpdates(t) {
                 }
             }
             if(t.hasPlayer && !escMenu){
-                ctx.fillText("Energy: " + Math.trunc(t.building.energy),infoX,infoY);
-                ctx.fillText("Progress: " + Math.trunc(t.building.dischargeTimer * 100) + "%",infoX,infoY + infoStep);
+                ctx.textAlign = "center"; 
+                ctx.fillText("🗲",(infoX + 9) ,infoY + infoStep);
+                ctx.fillText("%",(19 + infoX) + (canvas.height * 0.1) * 0.25,infoY + infoStep);
+                drawBattery(ctx,infoX,infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.energy/t.building.maxEnergy));
+                drawBattery(ctx,10 + infoX + (canvas.height * 0.1) * 0.25, infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.dischargeTimer));
             }
             break;
         case "RTG":
             if(t.hasPlayer && playerEnergy < playerMaxEnergy){
                 playerEnergy = Math.min(playerMaxEnergy,playerEnergy + RTGOutput * (frameSpeedFactor/1000));
-                ctx.fillText("Charging Player",infoX,infoY);
             } else {
                 var surrounding = getSurroundingTiles(tiles,t).filter(tt => tt.building.energy != null).filter(tt => tt.building.energy != tt.building.maxEnergy);
                 var induvidualEnergy = (RTGOutput / surrounding.length) * (frameSpeedFactor/1000);
@@ -1307,28 +1314,38 @@ function handleTileUpdates(t) {
                         tt.building.energy += induvidualEnergy;
                     }
                 });
-                if(t.hasPlayer && !escMenu){
-                    if(surrounding.length > 0){
-                        ctx.fillText("Energy Output Per Tile: " + induvidualEnergy.toFixed(2),infoX,infoY);
-                    } else {
-                        ctx.fillText("No tiles need power",infoX,infoY);
-                    }
-                }
             }
             break;
         case "GENERATOR":
             if(t.building.generatingTimer >= 1){
-
                 if(t.hasPlayer && playerEnergy < playerMaxEnergy){
                     playerEnergy = Math.min(playerMaxEnergy,playerEnergy + generatorOutput);
+                } else {
+                    var surrounding = getSurroundingTiles(tiles,t).filter(tt => tt.building.energy != null).filter(tt => tt.building.energy != tt.building.maxEnergy);
+                    var induvidualEnergy = (generatorOutput / surrounding.length);
+                    surrounding.forEach(tt => {
+                        if(tt.building.energy + induvidualEnergy >= tt.building.maxEnergy){
+                            tt.building.energy = tt.building.maxEnergy;
+                        } else {
+                            tt.building.energy += induvidualEnergy;
+                        }
+                    });
                 }
-
                 t.building.generatingTimer = 0;
                 t.building.generating = false;
-            } else if(t.building.generatingTimer < 1){
-                t.building.generatingTimer += (frameSpeedFactor/1000);
-            } else if(t.building.coal >= 1){
-
+            } else if(t.building.generatingTimer < 1 && t.building.generating){
+                t.building.generatingTimer += (frameSpeedFactor/800);
+            } else if(t.building.coal >= 1 && ((t.hasPlayer && playerEnergy < playerMaxEnergy) || (getSurroundingTiles(tiles,t).filter(tt => tt.building.energy != null).filter(tt => tt.building.energy != tt.building.maxEnergy).length > 0))){
+                t.building.coal -= 1;
+                t.building.generatingTimer = 0;
+                t.building.generating = true;
+            }
+            if(t.hasPlayer){
+                ctx.textAlign = "center"; 
+                ctx.fillText("⨆",(infoX + 9) ,infoY + infoStep);
+                ctx.fillText("%",(19 + infoX) + (canvas.height * 0.1) * 0.25,infoY + infoStep);
+                drawBattery(ctx,infoX,infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.coal/t.building.maxCoal));
+                drawBattery(ctx,10 + infoX + (canvas.height * 0.1) * 0.25, infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.generatingTimer));
             }
             break;
     }
