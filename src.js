@@ -205,15 +205,17 @@ function handleMainMenu(){
 
     if(inputs.up == true && prevInputs.up == false){
         selectedMenuItem = Math.max(0,selectedMenuItem - 1);
+        zzfx().start();
     }
     if(inputs.down == true && prevInputs.down == false){
         selectedMenuItem = Math.min(mainMenuItems.length - 1,selectedMenuItem + 1);
+        zzfx().start();
     }
     if(inputs.inter == true && prevInputs.inter == false){
         switch(mainMenuItems[selectedMenuItem]){
             case "New Game":
                 initGame();
-                //soundFxVolume = 0.5;
+                soundFxVolume = 0.5;
                 runGameBool = true;
                 mainMenu = false;
                 selectedMenuItem = 0;
@@ -242,6 +244,7 @@ function handleMainMenu(){
                 mainMenuItems[selectedMenuItem] = "Mute Sound FX";
                 break;
         }
+        zzfx().start();
     }
 
     ctx.font = "40px Tahoma";
@@ -475,37 +478,46 @@ function handleInput(){
     }
     if(inputs.up == true && prevInputs.up == false && buildMode){
         selectedBuilding = Math.max(0,selectedBuilding - 1);
+        zzfx().start();
     }
     if(inputs.down == true && prevInputs.down == false && buildMode){
         selectedBuilding = Math.max(0,Math.min(playerBuildings.length - 1,selectedBuilding + 1));
+        zzfx().start();
     }
     if(inputs.up == true && prevInputs.up == false && settingRecipe){
         selectedBuilding = Math.max(0,selectedBuilding - 1);
+        zzfx().start();
     }
     if(inputs.down == true && prevInputs.down == false && settingRecipe){
         selectedBuilding = Math.max(0,Math.min(recipes.length - 1,selectedBuilding + 1));
+        zzfx().start();
     }
     if(inputs.up == true && prevInputs.up == false && selectingSell){
         interactTimer = 0;
         selectedSell = Math.max(0,selectedSell - 1);
+        zzfx().start();
     }
     if(inputs.down == true && prevInputs.down == false && selectingSell){
         interactTimer = 0;
         selectedSell = Math.min(prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT").length - 1,selectedSell + 1);
+        zzfx().start();
     }
     if(inputs.up == true && prevInputs.up == false && buyingMode){
         interactTimer = 0;
         selectedBuy= Math.max(0,selectedBuy - 1);
+        zzfx().start();
     }
     if(inputs.down == true && prevInputs.down == false && buyingMode){
         interactTimer = 0;
         selectedBuy = Math.min(shopItems.length - 1,selectedBuy + 1);
+        zzfx().start();
     }
 
     if(inputs.up == true && prevInputs.up == true && selectingSell){
         if(interactTimer >= 1){
             selectedSell = Math.max(0,selectedSell - 1);
             interactTimer = 0;
+            zzfx().start();
         } else {
             interactTimer += (frameSpeedFactor/100);
         }
@@ -514,6 +526,7 @@ function handleInput(){
         if(interactTimer >= 1){
             selectedSell = Math.min(prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT").length - 1,selectedSell + 1);
             interactTimer = 0;
+            zzfx().start();
         } else {
             interactTimer += (frameSpeedFactor/100);
         }
@@ -522,6 +535,7 @@ function handleInput(){
         if(interactTimer >= 1){
             selectedBuy= Math.max(0,selectedBuy - 1);
             interactTimer = 0;
+            zzfx().start();
         } else {
             interactTimer += (frameSpeedFactor/100);
         }
@@ -530,6 +544,7 @@ function handleInput(){
         if(interactTimer >= 1){
             selectedBuy = Math.min(shopItems.length - 1,selectedBuy + 1);
             interactTimer = 0;
+            zzfx().start();
         } else {
             interactTimer += (frameSpeedFactor/100);
         }
@@ -651,9 +666,11 @@ function handleInput(){
 function handleMenuInput(){
     if(inputs.up == false && prevInputs.up == true){
         selectedMenuItem = Math.max(0,selectedMenuItem - 1);
+        zzfx().start();
     }
     if(inputs.down == false && prevInputs.down == true){
         selectedMenuItem = Math.min(menuItems.length - 1, selectedMenuItem + 1);
+        zzfx().start();
     }
     if (inputs.esc == true && prevInputs.esc == false){
         escMenu = false;
@@ -720,6 +737,7 @@ function handleMenuInput(){
                 menuItems[selectedMenuItem] = "Mute Sound FX";
                 break;
         }
+        zzfx().start();
     }
 }
 
@@ -788,7 +806,7 @@ function handleBuildingInteraction(playerTile){
                             playerTile.building.craftTimer = 0;
                             playerTile.building.crafting = true;
                             playerTile.building.energy -= selectedRecipe.energy;
-                            zzfx(...[soundFxVolume,,542,,.01,.01,1,1.1,61.9,-94.8,-1e3,.02,.1,.1,3,,.01,,.08]).start();
+                            zzfx(...[soundFxVolume,,405,.01,,.14,,1.1,-0.1,-0.1,-250,.01,-0.03,-0.1,-0.4,.1,.01,1.2,.06]).start();
                         } else {
                             recipeItems.forEach(i => {
                                 var missingItem = playerResources.find(ii => ii.type == i.type && ii.value < i.value);
@@ -810,7 +828,7 @@ function handleBuildingInteraction(playerTile){
                 messages.push({text:"Gained " + playerTile.building.recipe.product,time:0});
                 playerTile.building.storedProduct = false;
                 playerTile.building.recipe = null;
-                zzfx(...[soundFxVolume,,521,,.01,.01,1,1.1,61.9,-94.8,-2250,.02,.1,.1,3,,.01,,.08]).start();
+                zzfx(...[soundFxVolume,,405,.01,,.14,,1.1,-0.1,-0.1,-250,.01,-0.03,-0.1,-0.4,.1,.01,1.2,.06]).start();
                 playerTile.building.craftTimer = 0;
             } else if(playerTile.building.recipe == null){
                 settingRecipe = true;
@@ -913,6 +931,7 @@ function handleBuildingInteraction(playerTile){
                                 shopItems = shopItems.filter(i => i.item != "SOALR");
                                 break;
                         }
+                        zzfx(...[soundFxVolume,,405,.01,,.14,,1.1,-0.1,-0.1,-250,.01,-0.03,-0.1,-0.4,.1,.01,1.2,.06]).start();
                     } else {
                         messages.push({text:"Cannot afford " + shopItems[selectedBuy].item,time:0});
                     }
@@ -929,18 +948,19 @@ function handleBuildingInteraction(playerTile){
                 if(playerTile.building.coal < playerTile.building.maxCoal){
                     playerTile.building.coal += 1;
                     carbonRes.value -= 1;
+                    zzfx(...[soundFxVolume,,405,.01,,.14,,1.1,-0.1,-0.1,-250,.01,-0.03,-0.1,-0.4,.1,.01,1.2,.06]).start();
                 } else {
                     messages.push({text:"Generator is full",time:0});
                 }
             } else {
                 messages.push({text:"No available carbon",time:0});
+                zzfx(...[soundFxVolume,0,604,,,.13,4,2.01,-0.1,.2,50,,.01,,,.4,.05,.68,.05]).start();
             }
             break;
     }
 }
 
 function handleHUD(){
-
     var modeHeight = canvas.height * 0.12;
     var selectionHeight = 40;
     var rightInfoHeight = 55;
@@ -983,10 +1003,10 @@ function handleHUD(){
     ctx.strokeStyle = "#000000";
     ctx.textAlign = "start"; 
     ctx.textBaseline = "alphabetic";
-    while(messages.length >= 5){
+    while(messages.length > 3){
         messages.shift();
     }
-    messages = messages.filter(m => m.time < 4000);
+    messages = messages.filter(m => m.time < 2000);
     var topHeight = messages.length * 25;
     messages.forEach(message => {
         ctx.fillText(message.text,canvas.width * 0.01,canvas.height * 0.42 + (6 * 25) - topHeight + (messages.indexOf(message) * 25));
@@ -1013,12 +1033,8 @@ function handleHUD(){
     });
     
 
-    if(playerBalance >= quotas[currentQuota]){
-        ctx.fillStyle = "#00FF00";
-    } else {
-        ctx.fillStyle = hudColourScheme.text;
-    }
-    ctx.fillText("Sol: " + sols + " Planet Rotation: " + time.toFixed(0) + "°" + " Current Quota: ₿" + quotas[currentQuota],canvas.width/2,15);
+    ctx.fillStyle = hudColourScheme.text;
+    ctx.fillText("Sol: " + sols + " Planet Rotation: " + time.toFixed(0) + "°", canvas.width/2,15);
 
 
     if(buildMode){
@@ -1172,20 +1188,27 @@ function handleHUD(){
     ctx.font = "20px Tahoma";
     ctx.fillText("JMC",canvas.width * 0.05,canvas.height * 0.14);
     drawLogo(ctx,canvas.width * 0.05,canvas.height * 0.070,50);
+    ctx.fillText("Daily Quota:",canvas.width * 0.05,canvas.height * 0.22);
     ctx.font = "25px Tahoma";
-    ctx.fillText("₿" + playerBalanceDisplayed.toLocaleString('en-US', {maximumFractionDigits: 0}) ,canvas.width * 0.05,canvas.height * 0.19);
+    ctx.fillText("₿" + playerBalanceDisplayed.toLocaleString('en-US', {maximumFractionDigits: 0}) ,canvas.width * 0.05,canvas.height * 0.18);
     playerBalanceDisplayed = lerp(playerBalance,playerBalanceDisplayed,(frameSpeedFactor/100));
+    if(playerBalance >= quotas[currentQuota]){
+        ctx.fillStyle = "#00FF00";
+    }
+    ctx.fillText("₿" + quotas[currentQuota].toLocaleString('en-US', {maximumFractionDigits: 0}) ,canvas.width * 0.05,canvas.height * 0.26);
+
+    ctx.fillStyle = "#FFFFFF";
     ctx.font = "15px Tahoma";
-    drawBattery(ctx,canvas.width * 0.02,canvas.height * 0.40,100,playerEnergy/playerMaxEnergy);
-    var batteryStatusHeight = 0.24;
-    ctx.fillText("Battery",canvas.width * 0.07,canvas.height * (batteryStatusHeight + 0.05));
-    ctx.fillText("Status:",canvas.width * 0.07,canvas.height * (batteryStatusHeight + 0.07));
+    var batteryStatusHeight = 0.45;
+    drawBattery(ctx,canvas.width * 0.02,canvas.height * batteryStatusHeight,100,playerEnergy/playerMaxEnergy);
+    ctx.fillText("Battery",canvas.width * 0.07,canvas.height * (batteryStatusHeight - 0.13));
+    ctx.fillText("Status:",canvas.width * 0.07,canvas.height * (batteryStatusHeight - 0.11));
     var percentEnergy = playerEnergy/playerMaxEnergy;
     ctx.font = "12px Tahoma";
-    ctx.fillText(batteryStatusMessage,canvas.width * 0.07,canvas.height * (batteryStatusHeight + 0.09));
+    ctx.fillText(batteryStatusMessage,canvas.width * 0.07,canvas.height * (batteryStatusHeight - 0.09));
     if(tiles.find(t => t.hasPlayer).hazard > 0){
         ctx.font = "50px Tahoma";
-        ctx.fillText("☢",canvas.width * 0.07,canvas.height * (batteryStatusHeight + 0.14));
+        ctx.fillText("☢",canvas.width * 0.07,canvas.height * (batteryStatusHeight - 0.032));
     }
     if(percentEnergy > 0.6){
         batteryStatusMessage = "Nominal";
@@ -1223,7 +1246,7 @@ function handleTileUpdates(t) {
         case "SOLAR":
             var totalEnergy = solarOutput * Math.max(0.1,Math.sin(time * Math.PI/180));
             if(t.hasPlayer && playerEnergy < playerMaxEnergy){
-                playerEnergy = Math.min(playerMaxEnergy,playerEnergy + totalEnergy);
+                playerEnergy = Math.min(playerMaxEnergy,playerEnergy + totalEnergy * (frameSpeedFactor/1000));
             } else {
             var surrounding = getSurroundingTiles(tiles,t).filter(tt => tt.building.energy != null).filter(tt => tt.building.energy != tt.building.maxEnergy);
             var induvidualEnergy = (totalEnergy / surrounding.length) * (frameSpeedFactor/1000);

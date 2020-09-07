@@ -382,8 +382,8 @@ function componentToHex(c) {
   }
 
   function generateHudOverlay(rightHeight){
-      var leftHeight = 0.23;
-      var leftHeight2 = 0.43;
+      var leftHeight = 0.28;
+      var leftHeight2 = 0.48;
     var bottomY = canvas.height * 0.55;
     var points = [];
 
@@ -400,7 +400,7 @@ function componentToHex(c) {
     points.unshift({x:0,y:canvas.height * leftHeight});
     points.unshift({x:0,y:0});
 
-    var topLength = 0.2;
+    var topLength = 0.08;
     points.unshift({x:canvas.width * (0.5 - topLength - 0.03),y:0});
     points.unshift({x:canvas.width * (0.5 - topLength),y:canvas.height * 0.04});
     points.unshift({x:canvas.width * (0.5 + topLength),y:canvas.height * 0.04});
