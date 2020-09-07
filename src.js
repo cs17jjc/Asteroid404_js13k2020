@@ -54,6 +54,7 @@ var shopItems = shopItemsStart.slice();
 
 var playerPos = {x:0,y:0};
 var playerEnergy = 50;
+var prevPlayerEnergy = 50;
 var playerDeadState = false;
 
 var playerBalance = 0;
@@ -382,7 +383,7 @@ function runGame(){
 
         //Drain player battery
         var playerTile = tiles.find(t => t.hasPlayer);
-        if(["RTG","SOLAR","GENERATOR"].includes(playerTile.building.type)){
+        if(prevPlayerEnergy < playerEnergy){
             hudFlash = false;
         } else if(selectingSell || buyingMode){
             batteryStatusMessage = "Paused";
@@ -447,6 +448,7 @@ function runGame(){
     if(playerEnergy <= 0){
         playerDeadState = true;
     }
+    prevPlayerEnergy = playerEnergy;
     if(!playerDeadState){
         time += (frameSpeedFactor/1000);
     }
@@ -1194,6 +1196,8 @@ function handleHUD(){
     playerBalanceDisplayed = lerp(playerBalance,playerBalanceDisplayed,(frameSpeedFactor/100));
     if(playerBalance >= quotas[currentQuota]){
         ctx.fillStyle = "#00FF00";
+    } else if(time > 300 && Math.trunc(time) % 2 == 0){
+        ctx.fillStyle = "#FF0000";
     }
     ctx.fillText("₿" + quotas[currentQuota].toLocaleString('en-US', {maximumFractionDigits: 0}) ,canvas.width * 0.05,canvas.height * 0.26);
 
