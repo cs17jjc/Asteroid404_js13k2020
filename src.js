@@ -41,7 +41,7 @@ var shopItemsStart = [{type:"EXIT",item:"EXIT",cost:0,costMulti:0,desc:[]},
                  {type:"CRAFT UPGRADES",item:"CRAFT SPEED",cost:800,costMulti:1.6,desc:["Increases JMC™ Craft speed","by 10%"]},
                  {type:"CRAFT UPGRADES",item:"CRAFT HEIGHT TOLERANCE",cost:1000,costMulti:1.5,desc:["Allows JMC™ Craft to","move between tiles"," with a larger height"," difference."]},
 
-                 {type:"BUILDING UPGRADES",item:"RADAR RADIUS",cost:1000,costMulti:1.5,desc:["Increases JMC™ Radar uncover distance","by 1 tile."]},
+                 {type:"BUILDING UPGRADES",item:"RADAR RADIUS",cost:1000,costMulti:1.5,desc:["Increases JMC™ Radar uncover distance","by 3 tiles."]},
                  {type:"BUILDING UPGRADES",item:"CONSTRUCTOR SPEED",cost:300,costMulti:2,desc:["Increases JMC™ Constructor speed","by 50%"]},
                  {type:"BUILDING UPGRADES",item:"CONSTRUCTOR TRANSMITTER",cost:5000,desc:["JMC™ Constructor transmits","finished constructions to","JMC™ Craft."]},
                  {type:"BUILDING UPGRADES",item:"MINER SPEED",cost:1000,desc:["Increases JMC™ Miner speed","by 50%"]},
@@ -119,7 +119,7 @@ var constructorTransmit = false;
 var batteryDischarge = 1.5;
 var RTGOutput = 5;
 var generatorOutput = 2;
-var radarRange = 5;
+var radarRange = 8;
 
 var time = 0;
 var sols = 0;
@@ -302,7 +302,7 @@ function initGame(){
     batteryDischarge = 1.5;
     RTGOutput = 5;
     constructorMaxEnergy = 10;
-    radarRange = 5;
+    radarRange = 8;
 
     time = 0;
     sols = 0;
@@ -940,7 +940,7 @@ function handleBuildingInteraction(playerTile){
                                 shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
                             case "RADAR RADIUS":
-                                radarRange += 1;
+                                radarRange += 3;
                                 updateRadarVisableTiles(tiles);
                                 shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
