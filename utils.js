@@ -4,7 +4,6 @@ let offsets = [{x:1,y:0},{x:0.5,y:0.8660254037844386},{x:-0.5,y:0.86602540378443
 let tileViewRadius = 11;
 let tileStepHeight = 5;
 let roverImgScale = 1;
-let radarRange = 8;
 
 
 function drawHexTile(context, tile){
@@ -137,6 +136,16 @@ function renderMap(context,tiles,drawHeight,playerPosOffset){
     }
     
 }
+function updateRadarVisableTiles(tiles){
+    var radarTiles = tiles.filter(t => t.building.type == "RADAR");
+    tiles.forEach(t => {
+        if(radarTiles.some(r => Math.abs(r.x - t.x) <= radarRange)){
+            t.isVisible = true;
+        } else {
+            t.isVisible = false;
+        }
+    });
+}
 function drawLogo(context,x,y,size){
     var topY = -size/2;
     var bottomY = size/2;
@@ -228,7 +237,7 @@ function placeBuilding(tile,building){
         tile.building.type = building.type;
         switch(building.type){
             case "RADAR":
-                tiles.filter(t => Math.abs(t.x - tile.x) < radarRange).forEach(t => t.isVisible = true);
+                updateRadarVisableTiles(tiles);
                 break;
             case "CONSTRUCTOR":
                 tile.building.energy = 0;
@@ -289,8 +298,7 @@ function removeBuilding(tile){
                 if(radarsInPlayerRange.length >= 1){
                     addToPlayerBuildings(tile.building.type,1);
                     tile.building = {type:"NONE"};
-                    tiles.filter(t => Math.abs(t.x - tile.x) < radarRange).forEach(t => t.isVisible = false);
-                    tiles.filter(t => radarsInPlayerRange.some(t2 => Math.abs(t.x - t2.x) < radarRange)).forEach(t => t.isVisible = true);
+                    updateRadarVisableTiles(tiles);
                     zzfx(...[soundFxVolume,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]).start();
                 } else {
                     messages.push({text:"No other radar in range",time:0});
@@ -555,7 +563,6 @@ function componentToHex(c) {
                 break;
         }
         heightNumber = Math.max(0,Math.trunc(heightNumber));
-        console.log(heightNumber);
         t.height = tileStepHeight * heightNumber;
         t.colour = colours.find(c => c.levels.includes(heightNumber)).colour;
 
@@ -581,6 +588,9 @@ function componentToHex(c) {
         }
     });
     tiles.find(t => t.x == startX).hasPlayer = true;
+    while(tiles.filter( t => Math.abs(t.x-startX) < 5 && t.resource.type == "IRON").length < 5){
+        tiles.filter(t => Math.abs(t.x-startX)).filter(Math.random() > 0.5).forEach(addResourceToTile(tiles,t,"IRON",Math.random() * 15,10,0.9))
+    }
     tiles.filter(t => t.resource.type != "NONE").forEach(t => t.resource.lines = generateResourcePoints(t.resource.value,t.resource.type));
     
     return tiles;
