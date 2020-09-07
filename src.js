@@ -22,6 +22,8 @@ var mainMenuItems = ["New Game","Load Game","Mute Music","Mute Sound FX"];
 var mainMenu = true;
 
 var soundFxVolume = 0;
+var confirmSound = () => zzfx(...[soundFxVolume,.01,593,,.03,0,1,2.04,.1,.1,50,.01,,-0.1,,,.06,.96,.08]).start();
+var denySound = () => zzfx(...[soundFxVolume,0,604,,,.13,4,2.01,-0.1,.2,50,,.01,,,.4,.05,.68,.05]).start();
 
 var recipes = [{product:"EXIT",items:[],energy:0},{product:"RADAR",items:[{type:"IRON",value:25}],energy:5}];
 var prices = [{type:"EXIT",price:0,ammount:0},
@@ -153,18 +155,6 @@ var introCounter = 0;
 var textScroll = false;
 var sentanceCounter = 0;
 
-var introText = ["Welcome, valued AI employee, to the JMC™ Autonomous Mining Initiative.",
-                 "If you're reading this then you have been selected to transfer to Planet JMC™-227 in order to pioneer experimental mining operations.",
-                 "You will be given a financial quota to meet by the end of every sol, this will be automatically removed from your account.",
-                 "This quota can be met by selling resources in the JMC™ Teledeopt.",
-                 "If this quota is not met, JMC™ Operations & Managment will terminate the mission to protect investments and a JMC™ Nuclear Device will be detonated to steralise the surface.",
-                 "The JMC™ Ethical AI Treatment Committe would like to apologise for the use of JMC™ Nuclear Sterilisation techquies on a JMC™ Conscience AI Employee.",
-                 "A JMC™ Roboshop has been placed on the surface in order for upgrades and constructor recipes to be purchased.",
-                 "The JMC™ Constructor can be used to craft buidings to aid with mining operations. Buildings can be placed using (B) or removed using (R)",
-                 "After 7 sols JMC™ Operations & Managment will asses the effectiveness of operations and you will be transfered back to base.",
-                 "Good Luck."
-];
-
 var millisOnLastFrame = new Date().getTime();
 var frameSpeedFactor = 0;
 function gameloop(){
@@ -253,7 +243,7 @@ function handleMainMenu(){
                 mainMenuItems[selectedMenuItem] = "Mute Sound FX";
                 break;
         }
-        zzfx().start();
+        confirmSound();
     }
 
     ctx.font = "40px Tahoma";
@@ -757,7 +747,7 @@ function handleMenuInput(){
                 menuItems[selectedMenuItem] = "Mute Sound FX";
                 break;
         }
-        zzfx().start();
+        confirmSound();
     }
 }
 
@@ -827,7 +817,7 @@ function handleBuildingInteraction(playerTile){
                             playerTile.building.craftTimer = 0;
                             playerTile.building.crafting = true;
                             playerTile.building.energy -= selectedRecipe.energy;
-                            zzfx(...[soundFxVolume,,405,.01,,.14,,1.1,-0.1,-0.1,-250,.01,-0.03,-0.1,-0.4,.1,.01,1.2,.06]).start();
+                            confirmSound();
                         } else {
                             recipeItems.forEach(i => {
                                 var missingItem = playerResources.find(ii => ii.type == i.type && ii.value < i.value);
@@ -837,7 +827,7 @@ function handleBuildingInteraction(playerTile){
                                     messages.push({text:i.value + " more " + i.type + " needed",time:0});
                                 }
                             });
-                            zzfx(...[soundFxVolume,0,604,,,.13,4,2.01,-0.1,.2,50,,.01,,,.4,.05,.68,.05]).start();
+                            denySound();
                         }
                     } else {
                         messages.push({text:"Not enough energy",time:0});
@@ -849,7 +839,7 @@ function handleBuildingInteraction(playerTile){
                 messages.push({text:"Gained " + playerTile.building.recipe.product,time:0});
                 playerTile.building.storedProduct = false;
                 playerTile.building.recipe = null;
-                zzfx(...[soundFxVolume,,405,.01,,.14,,1.1,-0.1,-0.1,-250,.01,-0.03,-0.1,-0.4,.1,.01,1.2,.06]).start();
+                confirmSound();
                 playerTile.building.craftTimer = 0;
             } else if(playerTile.building.recipe == null){
                 settingRecipe = true;
@@ -863,11 +853,12 @@ function handleBuildingInteraction(playerTile){
                 } else {
                     var added = addToPlayerResources(playerTile.building.storedType,playerTile.building.storedResource,false);
                     if(added == 0){
-                        zzfx(...[soundFxVolume,0,604,,,.13,4,2.01,-0.1,.2,50,,.01,,,.4,.05,.68,.05]).start();
+                        denySound();
+                        messages.push({text:"Resource full" + added + playerTile.building.storedType,time:0});
                     } else {
                         playerTile.building.storedResource -= addToPlayerResources(playerTile.building.storedType,playerTile.building.storedResource,false);
-                        messages.push({text:"Gained " + added + " playerTile.building.storedType",time:0});
-                        zzfx(...[soundFxVolume,,405,.01,,.14,,1.1,-0.1,-0.1,-250,.01,-0.03,-0.1,-0.4,.1,.01,1.2,.06]).start();
+                        messages.push({text:"Gained " + added + playerTile.building.storedType,time:0});
+                        confirmSound();
                     }
                 }
             }
@@ -979,10 +970,10 @@ function handleBuildingInteraction(playerTile){
                                 shopItems = shopItems.filter(i => i.item != "RTG");
                                 break;
                         }
-                        zzfx(...[soundFxVolume,,405,.01,,.14,,1.1,-0.1,-0.1,-250,.01,-0.03,-0.1,-0.4,.1,.01,1.2,.06]).start();
+                        confirmSound();
                     } else {
                         messages.push({text:"Cannot afford " + shopItems[selectedBuy].item,time:0});
-                        zzfx(...[soundFxVolume,0,604,,,.13,4,2.01,-0.1,.2,50,,.01,,,.4,.05,.68,.05]).start();
+                        denySound();
                     }
                 } else {
                     buyingMode = false;
@@ -997,13 +988,13 @@ function handleBuildingInteraction(playerTile){
                 if(playerTile.building.coal < playerTile.building.maxCoal){
                     playerTile.building.coal += 1;
                     carbonRes.value -= 1;
-                    zzfx(...[soundFxVolume,,405,.01,,.14,,1.1,-0.1,-0.1,-250,.01,-0.03,-0.1,-0.4,.1,.01,1.2,.06]).start();
+                    confirmSound();
                 } else {
                     messages.push({text:"Generator is full",time:0});
                 }
             } else {
                 messages.push({text:"No available carbon",time:0});
-                zzfx(...[soundFxVolume,0,604,,,.13,4,2.01,-0.1,.2,50,,.01,,,.4,.05,.68,.05]).start();
+                denySound();
             }
             break;
     }
