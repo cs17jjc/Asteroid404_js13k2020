@@ -137,7 +137,7 @@ var hudColourScheme = {outline:"#FFFFFF",infill:"#000000AA",text:"#FFFFFF",stati
 let mySongData = zzfxM(...song);
 let myAudioNode = zzfxP(...mySongData);
 myAudioNode.loop = true;
-//myAudioNode.start();
+myAudioNode.start();
 
 var stars = Array.from(Array(500).keys()).map(i => {return {x:(Math.random() * 2 * canvas.width) - canvas.width,y:(Math.random() * 2 * canvas.height) - canvas.height,r:Math.random() * 3}});
 

@@ -287,8 +287,8 @@ function removeBuilding(tile){
                 messages.push({text:"Discarded overflow items",time:0});
             }
         }
-        if(tile.building.storedProduct != null && tile.building.storedProduct > 0){
-            addToPlayerBuildings(tile.building.recipe.product,tile.building.storedProduct);
+        if(tile.building.storedProduct == true){
+            addToPlayerBuildings(tile.building.recipe.product,1);
         }
         switch(tile.building.type){
             case "RADAR":
