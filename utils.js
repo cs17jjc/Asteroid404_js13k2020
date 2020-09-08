@@ -256,12 +256,6 @@ function placeBuilding(tile,building){
                 tile.building.dischargeTimer = 0;
                 tile.building.discharging = false;
                 break;
-            case "LAB":
-                tile.building.energy = 0;
-                tile.building.maxEnergy = 10;
-                tile.building.upgradeTimer = 0;
-                tile.building.upgrading = false;
-                break;
             case "GENERATOR":
                 tile.building.coal = 0;
                 tile.building.maxCoal = 25;
@@ -277,14 +271,6 @@ function placeBuilding(tile,building){
 }
 function removeBuilding(tile){
     if(tile.building.type != "NONE"){
-        if(tile.building.storedItems != null){
-            if(tile.building.storedItems.map(i => addToPlayerResources(i.type,i.value,true)).some(b => !b)){
-                messages.push({text:"Discarded overflow items",time:0});
-            }
-        }
-        if(tile.building.storedProduct == true){
-            addToPlayerBuildings(tile.building.recipe.product,1);
-        }
         switch(tile.building.type){
             case "RADAR":
                 var playerTile = tiles.find(t => t.hasPlayer);
@@ -298,6 +284,20 @@ function removeBuilding(tile){
                 } else {
                     messages.push({text:"No other radar in range",time:0});
                 }
+                break;
+            case "CONSTRUCTOR":
+                if(tile.building.storedProduct == true){
+                    addToPlayerBuildings(tile.building.recipe.product,1);
+                }
+                addToPlayerBuildings(tile.building.type,1);
+                tile.building = {type:"NONE"};
+                zzfx(...[soundFxVolume,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]).start();
+                break;
+            case "GENERATOR":
+                addToPlayerResources("CARBON",tile.building.coal);
+                addToPlayerBuildings(tile.building.type,1);
+                tile.building = {type:"NONE"};
+                zzfx(...[soundFxVolume,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]).start();
                 break;
             default:
                 addToPlayerBuildings(tile.building.type,1);

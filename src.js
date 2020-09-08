@@ -74,8 +74,8 @@ canvas.height = 720;
 canvas.style.width = canvas.width + "px";
 canvas.style.height = canvas.height + "px";
 
-var prevInputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,info:false,esc:false,speve:false};
-var inputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,info:false,esc:false,speve:false};
+var prevInputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,esc:false,speve:false};
+var inputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,esc:false,speve:false};
 
 var playerPosOffset = {x:0,y:0};
 
@@ -490,6 +490,16 @@ function runGame(){
                 roverImgScale = 1;
             }
         }
+        if(roverImgScale > 0.8){
+            ctx.fillStyle = "#FFFFFF" + componentToHex(255 - (255 * ((1 - roverImgScale)/0.2)));
+            ctx.beginPath();
+            ctx.arc(canvas.width/2, canvas.height/2, canvas.width * ((1 - roverImgScale)/0.2), 0, 2 * Math.PI);
+            ctx.fill();
+        } else {
+            ctx.fillStyle = "#FFFFFF" + componentToHex((255 * (roverImgScale/0.8)));
+            ctx.fillRect(0,0,canvas.width, canvas.height);
+        }
+        
     } else if(finishedQuotas){
         ctx.strokeStyle = hudColourScheme.outline;
         ctx.fillStyle = hudColourScheme.infill;
@@ -518,8 +528,9 @@ function runGame(){
         }
     }
 
-    if(playerEnergy <= 0){
+    if(playerEnergy <= 0 && !playerDeadState){
         playerDeadState = true;
+        zzfx(...[soundFxVolume,,160,.01,.2,.04,2,,-0.1,.1,-100,.1]).start();
     }
     prevPlayerEnergy = playerEnergy;
     if(!playerDeadState){
@@ -530,9 +541,14 @@ function runGame(){
             playerBalance -= quotas[sols];
             if(sols == quotas.length - 1){
                 finishedQuotas = true;
+                zzfx(...[soundFxVolume,0,220,,2,.08,1.5,,,,50,.07,.1,,,,.01]).start();
+            } else {
+                zzfx(...[soundFxVolume,0,160,,1,.04,2,,,,25,.07,.03,,,,.01]).start();
             }
-        } else {
+        } else if(!(finishedQuotas || endlessMode || failedQuota)){
             failedQuota = true;
+            zzfx(...[,,299,.01,.03,1.95,3,.1,.9,.6,,,,.5,.9,.6,,.52,.06]).start();
+            zzfx(...[,0,160,,1.25,.04,2,,,,-25,.25,.01,,,,.01]).start();
         }
         sols += 1;
     }
@@ -665,7 +681,7 @@ function handleInput(){
                 var totalMined = Math.round(mineFactor);
                 if(addToPlayerResources(playerTile.resource.type,totalMined,true) > 0){
                     mineTile(playerTile);
-                    zzfx(...[soundFxVolume,,320,.01,,0,4,0,,,,,,,,.1,,0,.01]).start();
+                    zzfx(...[soundFxVolume,0,320,.02 - (playerTile.resource.value/1000),,0,4,.1,,,,,,,,.2,.01,0,.01]).start();
                 } else {
                     messages.push({text:"Resource full",time:0});
                 }
@@ -683,7 +699,7 @@ function handleInput(){
                 var totalMined = Math.round(mineFactor);
                 if(addToPlayerResources(playerTile.resource.type,totalMined,true) > 0){
                     mineTile(playerTile);
-                    zzfx(...[soundFxVolume,,320,.01,,0,4,0,,,,,,,,.1,,0,.01]).start();
+                    zzfx(...[soundFxVolume,0,320,.02 - (playerTile.resource.value/1000),,0,4,.1,,,,,,,,.2,.01,0,.01]).start();
                 } else {
                     messages.push({text:"Resource full",time:0});
                 }
@@ -1369,15 +1385,15 @@ function handleHUD(){
         batteryStatusMessage = "Low";
         hudFlash = false;
         hudFlashTimer = 0;
-    } else if(playerEnergy > 10) {
+    } else if(playerEnergy <= 15 && playerEnergy > 10) {
         batteryStatusMessage = "Very Low";
         hudFlash = true;
         hudFlashTimer += (frameSpeedFactor/400);
-    } else if(playerEnergy > 5) {
+    } else if(playerEnergy <= 10 && playerEnergy > 5) {
         batteryStatusMessage = "Critical";
         hudFlash = true;
         hudFlashTimer += (frameSpeedFactor/150);
-    } else if(playerEnergy < 5) {
+    } else if(playerEnergy <= 5) {
         batteryStatusMessage = "Deadly";
         hudFlash = true;
         hudFlashTimer += (frameSpeedFactor/50);
@@ -1591,9 +1607,6 @@ document.addEventListener('keydown', (event) => {
         case 27:
             inputs.esc = true;
             break;
-        case 73:
-            inputs.info = true;
-            break;
         case 16:
             inputs.speve = true;
             break;
@@ -1627,9 +1640,6 @@ document.addEventListener('keyup', (event) => {
             break;
         case 27:
             inputs.esc = false;
-            break;
-        case 73:
-            inputs.info = false;
             break;
         case 16:
             inputs.speve = false;
