@@ -589,7 +589,7 @@ function componentToHex(c) {
     });
     tiles.find(t => t.x == startX).hasPlayer = true;
     while(tiles.filter( t => Math.abs(t.x-startX) < 5 && t.resource.type == "IRON").length < 5){
-        tiles.filter(t => Math.abs(t.x-startX)).filter(Math.random() > 0.5).forEach(addResourceToTile(tiles,t,"IRON",Math.random() * 15,10,0.9))
+        tiles.filter(t => Math.abs(t.x-startX) < 5).filter(t => Math.random() > 0.5).forEach(t => addResourceToTile(tiles,t,"IRON",Math.random() * 15,10,0.9));
     }
     tiles.filter(t => t.resource.type != "NONE").forEach(t => t.resource.lines = generateResourcePoints(t.resource.value,t.resource.type));
     
