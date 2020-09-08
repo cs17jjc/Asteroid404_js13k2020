@@ -33,30 +33,9 @@ var kickDrum1 = [
     0,
     0
   ];
-var kickDrum2 = [
-    0,
-    0,
+var kickDrum2 = kickDrum1.slice();
+kickDrum2[14] = 15;
 
-    15,
-    0,
-    0,
-    0,
-
-    0,
-    0,
-    0,
-    0,
-
-    0,
-    0,
-    0,
-    0,
-
-    15,
-    0,
-    0,
-    0
-  ];
 var snare = [
     1,
     0,
@@ -331,7 +310,7 @@ var messages = [];
 //Utils
 let tileRadius = 60;
 let perspRatio = 0.4;
-let offsets = [{x:1,y:0},{x:0.5,y:0.8660254037844386},{x:-0.5,y:0.8660254037844387},{x:-1,y:0},{x:-0.5,y:-0.8660254037844387},{x:0.5,y:-0.8660254037844387}];
+let offsets = [{x:1,y:0},{x:0.5,y:0.866025},{x:-0.5,y:0.866025},{x:-1,y:0},{x:-0.5,y:-0.866025},{x:0.5,y:-0.866025}];
 let tileViewRadius = 11;
 let tileStepHeight = 5;
 var roverImgScale = 1;
@@ -528,7 +507,7 @@ function updatePlayerPos(deltaX,deltaY){
                     newTile.hasPlayer = true;
                     playerPos = {x:newTile.x,y:newTile.y};
                     playerPosOffset = {x:playerTile.screenPos.x - newTile.screenPos.x,y:playerTile.screenPos.y - newTile.screenPos.y};
-                    zzfx(...[soundFxVolume,.1,440,,,.07,,,,,50,.07]).start();
+                    s([soundFxVolume,.1,440,,,.07,,,,,50,.07]);
                 } else {
                     messages.push({text:"Incline too steep",time:0});
                 }
@@ -593,7 +572,7 @@ function placeBuilding(tile,building){
                 break;
         }
         building.value -= 1;
-        zzfx(...[soundFxVolume,,191,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]).start();
+        s([soundFxVolume,,191,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
     } else {
         messages.push({text:"Cannot place building",time:0});
     }
@@ -609,7 +588,7 @@ function removeBuilding(tile){
                     addToPlayerBuildings(tile.building.type,1);
                     tile.building = {type:"NONE"};
                     updateRadarVisableTiles();
-                    zzfx(...[soundFxVolume,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]).start();
+                    s([soundFxVolume,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
                 } else {
                     messages.push({text:"No other radar in range",time:0});
                 }
@@ -620,18 +599,18 @@ function removeBuilding(tile){
                 }
                 addToPlayerBuildings(tile.building.type,1);
                 tile.building = {type:"NONE"};
-                zzfx(...[soundFxVolume,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]).start();
+                s([soundFxVolume,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
                 break;
             case "GENERATOR":
                 addToPlayerResources("CARBON",tile.building.coal);
                 addToPlayerBuildings(tile.building.type,1);
                 tile.building = {type:"NONE"};
-                zzfx(...[soundFxVolume,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]).start();
+                s([soundFxVolume,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
                 break;
             default:
                 addToPlayerBuildings(tile.building.type,1);
                 tile.building = {type:"NONE"};
-                zzfx(...[soundFxVolume,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]).start();
+                s([soundFxVolume,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
                 break;
         }
     } else {
@@ -1169,11 +1148,11 @@ function handleMainMenu(){
 
     if(inputs.up == true && prevInputs.up == false){
         selectedMenuItem = Math.max(0,selectedMenuItem - 1);
-        zzfx().start();
+        s([]);
     }
     if(inputs.down == true && prevInputs.down == false){
         selectedMenuItem = Math.min(mainMenuItems.length - 1,selectedMenuItem + 1);
-        zzfx().start();
+        s([]);
     }
     if(inputs.inter == true && prevInputs.inter == false){
         switch(mainMenuItems[selectedMenuItem]){
@@ -1454,7 +1433,7 @@ function runGame(){
 
     if(playerEnergy <= 0 && !playerDeadState){
         playerDeadState = true;
-        zzfx(...[soundFxVolume,,160,.01,.2,.04,2,,-0.1,.1,-100,.1]).start();
+        s([soundFxVolume,,160,.01,.2,.04,2,,-0.1,.1,-100,.1]);
     }
     prevPlayerEnergy = playerEnergy;
     if(!playerDeadState){
@@ -1465,14 +1444,14 @@ function runGame(){
             playerBalance -= quotas[sols];
             if(sols == quotas.length - 1){
                 finishedQuotas = true;
-                zzfx(...[soundFxVolume,0,220,,2,.08,1.5,,,,50,.07,.1,,,,.01]).start();
+                s([soundFxVolume,0,220,,2,.08,1.5,,,,50,.07,.1,,,,.01]);
             } else {
-                zzfx(...[soundFxVolume,0,160,,1,.04,2,,,,25,.07,.03,,,,.01]).start();
+                s([soundFxVolume,0,160,,1,.04,2,,,,25,.07,.03,,,,.01]);
             }
         } else if(!(finishedQuotas || endlessMode || failedQuota)){
             failedQuota = true;
-            zzfx(...[,,299,.01,.03,1.95,3,.1,.9,.6,,,,.5,.9,.6,,.52,.06]).start();
-            zzfx(...[,0,160,,1.25,.04,2,,,,-25,.25,.01,,,,.01]).start();
+            s([,,299,.01,.03,1.95,3,.1,.9,.6,,,,.5,.9,.6,,.52,.06]);
+            s([,0,160,,1.25,.04,2,,,,-25,.25,.01,,,,.01]);
         }
         sols += 1;
     }
@@ -1494,46 +1473,46 @@ function handleInput(){
     }
     if(inputs.up == true && prevInputs.up == false && buildMode){
         selectedBuilding = Math.max(0,selectedBuilding - 1);
-        zzfx().start();
+        s([]);
     }
     if(inputs.down == true && prevInputs.down == false && buildMode){
         selectedBuilding = Math.max(0,Math.min(playerBuildings.length - 1,selectedBuilding + 1));
-        zzfx().start();
+        s([]);
     }
     if(inputs.up == true && prevInputs.up == false && settingRecipe){
         selectedBuilding = Math.max(0,selectedBuilding - 1);
-        zzfx().start();
+        s([]);
     }
     if(inputs.down == true && prevInputs.down == false && settingRecipe){
         selectedBuilding = Math.max(0,Math.min(recipes.length - 1,selectedBuilding + 1));
-        zzfx().start();
+        s([]);
     }
     if(inputs.up == true && prevInputs.up == false && selectingSell){
         interactTimer = 0;
         selectedSell = Math.max(0,selectedSell - 1);
-        zzfx().start();
+        s([]);
     }
     if(inputs.down == true && prevInputs.down == false && selectingSell){
         interactTimer = 0;
         selectedSell = Math.min(prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT").length - 1,selectedSell + 1);
-        zzfx().start();
+        s([]);
     }
     if(inputs.up == true && prevInputs.up == false && buyingMode){
         interactTimer = 0;
         selectedBuy= Math.max(0,selectedBuy - 1);
-        zzfx().start();
+        s([]);
     }
     if(inputs.down == true && prevInputs.down == false && buyingMode){
         interactTimer = 0;
         selectedBuy = Math.min(shopItems.length - 1,selectedBuy + 1);
-        zzfx().start();
+        s([]);
     }
 
     if(inputs.up == true && prevInputs.up == true && selectingSell){
         if(interactTimer >= 1){
             selectedSell = Math.max(0,selectedSell - 1);
             interactTimer = 0;
-            zzfx().start();
+            s([]);
         } else {
             interactTimer += (frameSpeedFactor/100);
         }
@@ -1542,7 +1521,7 @@ function handleInput(){
         if(interactTimer >= 1){
             selectedSell = Math.min(prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT").length - 1,selectedSell + 1);
             interactTimer = 0;
-            zzfx().start();
+            s([]);
         } else {
             interactTimer += (frameSpeedFactor/100);
         }
@@ -1551,7 +1530,7 @@ function handleInput(){
         if(interactTimer >= 1){
             selectedBuy= Math.max(0,selectedBuy - 1);
             interactTimer = 0;
-            zzfx().start();
+            s([]);
         } else {
             interactTimer += (frameSpeedFactor/100);
         }
@@ -1560,7 +1539,7 @@ function handleInput(){
         if(interactTimer >= 1){
             selectedBuy = Math.min(shopItems.length - 1,selectedBuy + 1);
             interactTimer = 0;
-            zzfx().start();
+            s([]);
         } else {
             interactTimer += (frameSpeedFactor/100);
         }
@@ -1605,7 +1584,7 @@ function handleInput(){
                 var totalMined = Math.round(mineFactor);
                 if(addToPlayerResources(playerTile.resource.type,totalMined,true) > 0){
                     mineTile(playerTile);
-                    zzfx(...[soundFxVolume,0,320,.02 - (playerTile.resource.value/1000),,0,4,.1,,,,,,,,.2,.01,0,.01]).start();
+                    s([soundFxVolume,0,320,.02 - (playerTile.resource.value/1000),,0,4,.1,,,,,,,,.2,.01,0,.01]);
                 } else {
                     messages.push({text:"Resource full",time:0});
                 }
@@ -1623,7 +1602,7 @@ function handleInput(){
                 var totalMined = Math.round(mineFactor);
                 if(addToPlayerResources(playerTile.resource.type,totalMined,true) > 0){
                     mineTile(playerTile);
-                    zzfx(...[soundFxVolume,0,320,.02 - (playerTile.resource.value/1000),,0,4,.1,,,,,,,,.2,.01,0,.01]).start();
+                    s([soundFxVolume,0,320,.02 - (playerTile.resource.value/1000),,0,4,.1,,,,,,,,.2,.01,0,.01]);
                 } else {
                     messages.push({text:"Resource full",time:0});
                 }
@@ -1695,11 +1674,11 @@ function handleInput(){
 function handleMenuInput(){
     if(inputs.up == false && prevInputs.up == true){
         selectedMenuItem = Math.max(0,selectedMenuItem - 1);
-        zzfx().start();
+        s([]);
     }
     if(inputs.down == false && prevInputs.down == true){
         selectedMenuItem = Math.min(menuItems.length - 1, selectedMenuItem + 1);
-        zzfx().start();
+        s([]);
     }
     if (inputs.esc == true && prevInputs.esc == false){
         escMenu = false;
@@ -1894,7 +1873,7 @@ function handleBuildingInteraction(playerTile){
                     if(playerResource.value >= price.ammount){
                         playerResource.value -= price.ammount;
                         playerBalance += price.ammount * price.price;
-                        zzfx(...[soundFxVolume,.01,287,.11,,0,3,.01,,,198,.09,,,,,.06,.5]).start();
+                        s([soundFxVolume,.01,287,.11,,0,3,.01,,,198,.09,,,,,.06,.5]);
                     } else {
                         messages.push({text:"Cannot sell " + price.ammount + " of " + price.type,time:0});
                     }
@@ -2017,7 +1996,7 @@ function handleHUD(){
 
     if(hudFlash){
         if(hudFlashTimer >= 1){
-            zzfx(...[soundFxVolume,0,500,.2,,0,1,.5,,,50,.12,,,,,,,.01]).start();
+            s([soundFxVolume,0,500,.2,,0,1,.5,,,50,.12,,,,,,,.01]);
             hudSwap = !hudSwap;
             hudFlashTimer = 0;
         }
@@ -2571,5 +2550,6 @@ document.addEventListener('keyup', (event) => {
     }
 });
 
+let s = (snd) => zzfx(...snd).start();
+
 setInterval(gameloop,50);
-document.onmousemove = (e) => mousePosition = {x:e.clientX - canvas.getBoundingClientRect().left,y:e.clientY - canvas.getBoundingClientRect().top};
