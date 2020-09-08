@@ -25,7 +25,7 @@ var soundFxVolume = 0;
 var confirmSound = () => zzfx(...[soundFxVolume,.01,593,,.03,0,1,2.04,.1,.1,50,.01,,-0.1,,,.06,.96,.08]).start();
 var denySound = () => zzfx(...[soundFxVolume,0,604,,,.13,4,2.01,-0.1,.2,50,,.01,,,.4,.05,.68,.05]).start();
 
-var recipes = [{product:"EXIT",items:[],energy:0},{product:"RADAR",items:[{type:"IRON",value:20}],energy:8}];
+var startRecipes = [{product:"EXIT",items:[],energy:0},{product:"RADAR",items:[{type:"IRON",value:18}],energy:8}];
 var prices = [{type:"EXIT",price:0,ammount:0},
               {type:"ROCK",price:1,ammount:1},{type:"ROCK",price:1,ammount:10},{type:"ROCK",price:1,ammount:50},
               {type:"IRON",price:10,ammount:1},{type:"IRON",price:10,ammount:10},{type:"IRON",price:10,ammount:50},
@@ -57,6 +57,7 @@ var shopItemsStart = [{type:"EXIT",item:"EXIT",cost:0,costMulti:0,desc:[]},
                  {type:"RECIPES",item:"RTG",cost:2500,desc:["Adds JMC™ RTG to ","Constructor Database.","JMC™ RTGs generate","constant energy."]}];
 
 var shopItems = shopItemsStart.slice();
+var recipes = startRecipes.slice();
 
 var playerPos = {x:0,y:0};
 var playerSpeed = 1;
@@ -172,22 +173,18 @@ function gameloop(){
         runGame();
     }
     prevInputs = Object.assign({},inputs);
+    millisOnLastFrame = new Date().getTime();
 }
 
 function intro(){
-    var charCounter = 0;
 
-
-    if(textScroll){
-        introCounter += (frameSpeedFactor/500);
-    }
 }
 
 function handleMainMenu(){
     ctx.fillStyle = "#FFFFF0";
     ctx.save();
     ctx.translate(canvas.width/2,canvas.height/2);
-    ctx.rotate(Math.PI * Math.sin(frameSpeedFactor/200000));
+    ctx.rotate(Math.PI * Math.sin(-new Date().getTime()/200000));
     stars.forEach(s => {
         ctx.beginPath();
         ctx.arc(s.x,s.y,s.r,0, 2 * Math.PI);
@@ -217,7 +214,6 @@ function handleMainMenu(){
                 runGameBool = true;
                 mainMenu = false;
                 selectedMenuItem = 0;
-                millisOnLastFrame = new Date().getTime();
                 break;
             case "Load Game":
                 loadGame();
@@ -225,7 +221,6 @@ function handleMainMenu(){
                 runGameBool = true;
                 mainMenu = false;
                 selectedMenuItem = 0;
-                millisOnLastFrame = new Date().getTime();
                 break;
             case "Mute Music":
                 myAudioNode.disconnect();
@@ -282,7 +277,7 @@ function initGame(){
     playerBuildings = [{type:"RADAR",value:1}];
     playerResources = [];
     playerBalance = 0;
-    recipes = [{product:"EXIT",items:[],energy:0},{product:"RADAR",items:[{type:"IRON",value:25}],energy:5}];
+    recipes = startRecipes.slice();
     shopItems = shopItemsStart.slice();
     endlessMode = false;
 
@@ -481,7 +476,7 @@ function runGame(){
     if(!playerDeadState){
         time += (frameSpeedFactor/1200);
     }
-    if(time >= 360){
+    if(time >= 359){
         if(playerBalance >= quotas[sols] && !(finishedQuotas || endlessMode)){
             playerBalance -= quotas[sols];
             if(sols == quotas.length - 1){
@@ -492,8 +487,7 @@ function runGame(){
         }
         sols += 1;
     }
-    time = time >= 360 ? 0 : time;
-    millisOnLastFrame = new Date().getTime();
+    time = time >= 359 ? 0 : time;
 }
 
 function handleInput(){
@@ -724,34 +718,7 @@ function handleMenuInput(){
                 selectedMenuItem = 0;
                 break;
             case "Save Game":
-                var ls = window.localStorage;
-                ls.setItem('Planet404_TYUDHSJ_TILES', JSON.stringify(tiles));
-                ls.setItem('Planet404_TYUDHSJ_TIME', JSON.stringify(time));
-                ls.setItem('Planet404_TYUDHSJ_SOLS', JSON.stringify(sols));
-
-                ls.setItem('Planet404_TYUDHSJ_RESOURCES', JSON.stringify(playerResources));
-                ls.setItem('Planet404_TYUDHSJ_BUILDINGS', JSON.stringify(playerBuildings));
-                ls.setItem('Planet404_TYUDHSJ_BALANCE', JSON.stringify(playerBalance));
-                ls.setItem('Planet404_TYUDHSJ_PLAYERENERGY', JSON.stringify(playerEnergy));
-
-                ls.setItem('Planet404_TYUDHSJ_RECIPES', JSON.stringify(recipes));
-                ls.setItem('Planet404_TYUDHSJ_SHOP', JSON.stringify(shopItems));
-
-                ls.setItem('Planet404_TYUDHSJ_playerMaxEnergy', JSON.stringify(playerMaxEnergy));
-                ls.setItem('Planet404_TYUDHSJ_playerDrainRate', JSON.stringify(playerDrainRate));
-                ls.setItem('Planet404_TYUDHSJ_maxStepHeight', JSON.stringify(maxStepHeight));
-                ls.setItem('Planet404_TYUDHSJ_mineFactor', JSON.stringify(mineFactor));
-                ls.setItem('Planet404_TYUDHSJ_maxStorage', JSON.stringify(maxStorage));
-                ls.setItem('Planet404_TYUDHSJ_radarRange', JSON.stringify(radarRange));
-
-                ls.setItem('Planet404_TYUDHSJ_solarOutput', JSON.stringify(solarOutput));
-                ls.setItem('Planet404_TYUDHSJ_craftSpeed', JSON.stringify(craftSpeed));
-                ls.setItem('Planet404_TYUDHSJ_minerFactor', JSON.stringify(minerFactor));
-                ls.setItem('Planet404_TYUDHSJ_mineSpeed', JSON.stringify(mineSpeed));
-                ls.setItem('Planet404_TYUDHSJ_minerTransmit', JSON.stringify(minerTransmit));
-                ls.setItem('Planet404_TYUDHSJ_constructorTransmit', JSON.stringify(constructorTransmit));
-                ls.setItem('Planet404_TYUDHSJ_batteryDischarge', JSON.stringify(batteryDischarge));
-                ls.setItem('Planet404_TYUDHSJ_RTGOutput', JSON.stringify(RTGOutput));
+                saveGame();
                 messages.push({text:"Game Saved",time:0});
                 escMenu = false;
                 break;
@@ -778,6 +745,38 @@ function handleMenuInput(){
         }
         confirmSound();
     }
+}
+
+function saveGame(){
+    var ls = window.localStorage;
+    ls.setItem('Planet404_TYUDHSJ_TILES', JSON.stringify(tiles));
+    ls.setItem('Planet404_TYUDHSJ_TIME', JSON.stringify(time));
+    ls.setItem('Planet404_TYUDHSJ_SOLS', JSON.stringify(sols));
+
+    ls.setItem('Planet404_TYUDHSJ_RESOURCES', JSON.stringify(playerResources));
+    ls.setItem('Planet404_TYUDHSJ_BUILDINGS', JSON.stringify(playerBuildings));
+    ls.setItem('Planet404_TYUDHSJ_BALANCE', JSON.stringify(playerBalance));
+    ls.setItem('Planet404_TYUDHSJ_PLAYERENERGY', JSON.stringify(playerEnergy));
+
+    ls.setItem('Planet404_TYUDHSJ_RECIPES', JSON.stringify(recipes));
+    ls.setItem('Planet404_TYUDHSJ_SHOP', JSON.stringify(shopItems));
+
+    ls.setItem('Planet404_TYUDHSJ_playerMaxEnergy', JSON.stringify(playerMaxEnergy));
+    ls.setItem('Planet404_TYUDHSJ_playerDrainRate', JSON.stringify(playerDrainRate));
+    ls.setItem('Planet404_TYUDHSJ_maxStepHeight', JSON.stringify(maxStepHeight));
+    ls.setItem('Planet404_TYUDHSJ_mineFactor', JSON.stringify(mineFactor));
+    ls.setItem('Planet404_TYUDHSJ_maxStorage', JSON.stringify(maxStorage));
+    ls.setItem('Planet404_TYUDHSJ_radarRange', JSON.stringify(radarRange));
+
+    ls.setItem('Planet404_TYUDHSJ_solarOutput', JSON.stringify(solarOutput));
+    ls.setItem('Planet404_TYUDHSJ_craftSpeed', JSON.stringify(craftSpeed));
+    ls.setItem('Planet404_TYUDHSJ_minerFactor', JSON.stringify(minerFactor));
+    ls.setItem('Planet404_TYUDHSJ_mineSpeed', JSON.stringify(mineSpeed));
+    ls.setItem('Planet404_TYUDHSJ_minerTransmit', JSON.stringify(minerTransmit));
+    ls.setItem('Planet404_TYUDHSJ_constructorTransmit', JSON.stringify(constructorTransmit));
+    ls.setItem('Planet404_TYUDHSJ_batteryDischarge', JSON.stringify(batteryDischarge));
+    ls.setItem('Planet404_TYUDHSJ_RTGOutput', JSON.stringify(RTGOutput));
+    ls.setItem('Planet404_TYUDHSJ_ENDLESS', JSON.stringify(endlessMode));
 }
 
 function loadGame(){
@@ -820,6 +819,7 @@ function loadGame(){
     constructorTransmit = JSON.parse(ls.getItem('Planet404_TYUDHSJ_constructorTransmit'));
     batteryDischarge = JSON.parse(ls.getItem('Planet404_TYUDHSJ_batteryDischarge'));
     RTGOutput = JSON.parse(ls.getItem('Planet404_TYUDHSJ_RTGOutput'));
+    endlessMode = JSON.parse(ls.getItem('Planet404_TYUDHSJ_ENDLESS'));
     updatePlayerPos(tiles,0,0);
 }
 
@@ -840,7 +840,6 @@ function handleBuildingInteraction(playerTile){
                                     messages.push({text:"Used " + recipeItem.value + " units of " + i.type,time:0});
                                 }
                             });
-                            playerTile.building.craftTimer = 0;
                             playerTile.building.crafting = true;
                             playerTile.building.energy -= selectedRecipe.energy;
                             confirmSound();
@@ -865,8 +864,8 @@ function handleBuildingInteraction(playerTile){
                 messages.push({text:"Gained " + playerTile.building.recipe.product,time:0});
                 playerTile.building.storedProduct = false;
                 playerTile.building.recipe = null;
-                confirmSound();
                 playerTile.building.craftTimer = 0;
+                confirmSound();
             } else if(playerTile.building.recipe == null){
                 settingRecipe = true;
                 selectedBuilding = 0;
@@ -1322,15 +1321,15 @@ function handleHUD(){
         batteryStatusMessage = "Low";
         hudFlash = false;
         hudFlashTimer = 0;
-    } else if(percentEnergy > 0.1) {
+    } else if(playerEnergy > 10) {
         batteryStatusMessage = "Very Low";
         hudFlash = true;
         hudFlashTimer += (frameSpeedFactor/400);
-    } else if(percentEnergy > 0.05) {
+    } else if(playerEnergy > 5) {
         batteryStatusMessage = "Critical";
         hudFlash = true;
         hudFlashTimer += (frameSpeedFactor/150);
-    } else if(percentEnergy < 0.05) {
+    } else if(playerEnergy < 5) {
         batteryStatusMessage = "Deadly";
         hudFlash = true;
         hudFlashTimer += (frameSpeedFactor/50);
@@ -1372,9 +1371,9 @@ function handleTileUpdates(t) {
                     t.building.craftTimer += (frameSpeedFactor/10000) * craftSpeed;
                     if(t.building.craftTimer >= 1){
                         if(constructorTransmit){
-                            addToPlayerBuildings(t.building.recipe.product,t.building.recipe.storedProduct);
-                            t.building.storedProduct = false;
-                            t.building.craftTimer = 0;
+                            addToPlayerBuildings(t.building.recipe.product,1);
+                            t.building.recipe = null;
+                            playerTile.building.craftTimer = 0;
                         } else {
                             t.building.storedProduct = true;
                         }
