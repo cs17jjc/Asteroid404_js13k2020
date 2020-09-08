@@ -28,7 +28,7 @@ var denySound = () => zzfx(...[soundFxVolume,0,604,,,.13,4,2.01,-0.1,.2,50,,.01,
 var startRecipes = [{product:"EXIT",items:[],energy:0},{product:"RADAR",items:[{type:"IRON",value:18}],energy:8}];
 var prices = [{type:"EXIT",price:0,ammount:0},
               {type:"ROCK",price:1,ammount:1},{type:"ROCK",price:1,ammount:10},{type:"ROCK",price:1,ammount:50},
-              {type:"IRON",price:10,ammount:1},{type:"IRON",price:10,ammount:10},{type:"IRON",price:10,ammount:50},
+              {type:"IRON",price:5,ammount:1},{type:"IRON",price:5,ammount:10},{type:"IRON",price:5,ammount:50},
               {type:"COPPER",price:25,ammount:1},{type:"COPPER",price:25,ammount:10},{type:"COPPER",price:25,ammount:50},
               {type:"CARBON",price:50,ammount:1},{type:"CARBON",price:50,ammount:10},{type:"CARBON",price:50,ammount:50},
               {type:"LITHIUM",price:75,ammount:1},{type:"LITHIUM",price:75,ammount:10},{type:"LITHIUM",price:75,ammount:50},
@@ -36,8 +36,7 @@ var prices = [{type:"EXIT",price:0,ammount:0},
               {type:"PLUTONIUM",price:200,ammount:1},{type:"PLUTONIUM",price:200,ammount:10},{type:"PLUTONIUM",price:200,ammount:50}];
 var shopItemsStart = [{type:"EXIT",item:"EXIT",cost:0,costMulti:0,desc:[]},
                  {type:"CRAFT UPGRADES",item:"RESOURCE STORAGE",cost:350,costMulti:2,desc:["Increases JMC™ Craft resource","capacity by 20%"]},
-                 {type:"CRAFT UPGRADES",item:"BATTERY EFFICENCY",cost:450,costMulti:1.2,desc:["Increases JMC™ Craft battery capacity","by 25%"]},
-                 {type:"CRAFT UPGRADES",item:"CPU EFFICENCY",cost:60,costMulti:2.5,desc:["Reduces JMC™ Craft battery usage","by 20%"]},
+                 {type:"CRAFT UPGRADES",item:"BATTERY EFFICENCY",cost:200,costMulti:1.6,desc:["Increases JMC™ Craft battery capacity","by 25%"]},
                  {type:"CRAFT UPGRADES",item:"CRAFT HEIGHT TOLERANCE",cost:350,costMulti:1.5,desc:["Allows JMC™ Craft to","move between tiles"," with a larger height"," difference."]},
 
                  {type:"RECIPES",item:"CONSTRUCTOR",cost:500,desc:["Adds JMC™ Constructor to","Constructor Database.","Constructors manufacture other","JMC™ Buildings."]},
@@ -48,7 +47,7 @@ var shopItemsStart = [{type:"EXIT",item:"EXIT",cost:0,costMulti:0,desc:[]},
                  {type:"RECIPES",item:"RTG",cost:2500,desc:["Adds JMC™ RTG to ","Constructor Database.","JMC™ RTGs generate","constant energy."]},
 
                  {type:"BUILDING UPGRADES",item:"RADAR RADIUS",cost:1000,costMulti:1.5,desc:["Increases JMC™ Radar uncover distance","by 3 tiles."]},
-                 {type:"BUILDING UPGRADES",item:"CONSTRUCTOR SPEED",cost:250,costMulti:2,desc:["Increases JMC™ Constructor speed","by 50%"]},
+                 {type:"BUILDING UPGRADES",item:"CONSTRUCTOR SPEED",cost:200,costMulti:1.8,desc:["Increases JMC™ Constructor speed","by 30%"]},
                  {type:"BUILDING UPGRADES",item:"CONSTRUCTOR TRANSMITTER",cost:1850,desc:["JMC™ Constructor transmits","finished constructions to","JMC™ Craft."]},
                  {type:"BUILDING UPGRADES",item:"MINER SPEED",cost:750,desc:["Increases JMC™ Miner speed","by 50%"]},
                  {type:"BUILDING UPGRADES",item:"MINER TRANSMITTER",cost:1985,desc:["JMC™ Miner transmits","mined resources to","JMC™ Craft."]},
@@ -201,18 +200,18 @@ function intro(){
     ctx.fillText(" and selling resources to the TELEDEPOT.", textX+xOff,100 + textY);
 
     ctx.fillText("Failure to complete these quotas will result in immediate nuclear vapourisation.", textX,150 + textY);
-    ctx.fillText("JMC™ Operations & Managment regret to inform you that terrain maps", textX,200 + textY);
-    ctx.fillText("for JMC™ Planet 404 have been lost, and so you are required to use your", textX,225 + textY);
+    ctx.fillText("JMC™ Operations & Managment regrets to inform you that terrain maps", textX,200 + textY);
+    ctx.fillText("for JMC™ Planet 404 have been lost, you are required to use your", textX,225 + textY);
 
     ctx.fillText("JMC™ Craft's ", textX,250 + textY);
-    xOff = ctx.measureText("JMC™ Craft's").width;
+    xOff = ctx.measureText("JMC™ Craft's ").width;
     ctx.fillStyle = "#00FF00";
     ctx.fillText("Build Mode (B) & Remove Mode (R)", textX + xOff,250 + textY);
     xOff = xOff + ctx.measureText("Build Mode (B) & Remove Mode (R)").width;
     ctx.fillStyle = "#FFFFFF";
     ctx.fillText(" to place RADARs and uncover more terrain.", textX+xOff,250 + textY);
 
-    ctx.fillText("The CONSTRUCTOR creates buildings, such as extra RADARS, from resources and energy.", textX,300 + textY);
+    ctx.fillText("The CONSTRUCTOR creates buildings, such as extra RADARs, from resources and energy.", textX,300 + textY);
     ctx.fillText("Your JMC™ Craft has a limited battery capacity, failure to charge the battery", textX,325 + textY);
     ctx.fillText("will result in loss of resources and buildings in possesion.", textX,350 + textY);
     ctx.fillText("An RTG has been made available to provide energy and charge your JMC™ Craft.", textX,375 + textY);
@@ -233,7 +232,6 @@ function handleMainMenu(){
     ctx.fillStyle = "#FFFFF0";
     ctx.save();
     ctx.translate(canvas.width/2,canvas.height/2);
-    ctx.rotate(Math.PI * Math.sin(-new Date().getTime()/200000));
     stars.forEach(s => {
         ctx.beginPath();
         ctx.arc(s.x,s.y,s.r,0, 2 * Math.PI);
@@ -463,6 +461,7 @@ function runGame(){
                 playerBuildings = [];
                 tiles.find(t => t.hasPlayer).hasPlayer = false;
                 tiles.find(t => t.x == spawnX).hasPlayer = true;
+                updatePlayerPos(tiles,0,0);
                 playerDeadState = false;
                 roverImgScale = 1;
                 playerPosOffset = {x:0,y:0};
@@ -526,7 +525,7 @@ function runGame(){
     }
     prevPlayerEnergy = playerEnergy;
     if(!playerDeadState){
-        time += (frameSpeedFactor/1200);
+        time += (frameSpeedFactor/800);
     }
     if(time >= 359){
         if(playerBalance >= quotas[sols] && !(finishedQuotas || endlessMode)){
@@ -643,10 +642,18 @@ function handleInput(){
         updatePlayerPos(tiles,-1,0);
     }
     if(inputs.right == true && prevInputs.right == false && (buildMode || removeMode)){
-        selectedTile = Math.min(interactTiles.length - 1,selectedTile + 1);
+        if(selectedTile == interactTiles.length - 1){
+            selectedTile = 0;
+        } else {
+            selectedTile += 1;
+        }
     }
     if(inputs.left == true && prevInputs.left == false && (buildMode || removeMode)){
-        selectedTile = Math.max(0,selectedTile - 1);
+        if(selectedTile == 0){
+            selectedTile = interactTiles.length - 1;
+        } else {
+            selectedTile -= 1;
+        }
     }
 
     if(inputs.inter == true && prevInputs.inter == false && !buildMode && !removeMode && !escMenu){
@@ -667,6 +674,7 @@ function handleInput(){
             }
         }
     }
+    var playerTile = tiles.find(t => t.hasPlayer);
     if(inputs.inter == true && prevInputs.inter == true && !buildMode && !removeMode && !escMenu && interactTimer >= 1){
         interactTimer = 0;
         var playerTile = tiles.find(t => t.hasPlayer);
@@ -684,7 +692,7 @@ function handleInput(){
             }
         }
     } else if(inputs.inter == true && prevInputs.inter == true && !buildMode && !removeMode && !escMenu){
-        interactTimer += (frameSpeedFactor/100) * interactTimerSpeed;
+            interactTimer += (frameSpeedFactor/100) * interactTimerSpeed;
     }
 
     //If B is pressed and not in any modes and player has buildings
@@ -692,7 +700,7 @@ function handleInput(){
         if(playerBuildings.length > 0){
             selectedBuilding = 0;
             buildMode = true;
-            interactTiles = getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type == "NONE");
+            interactTiles = getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type == "NONE").sort((a,b) => a.y - b.y).sort((a,b) => a.x - b.x);
             interactTiles.forEach(t => t.highlighted = true);
         } else {
             messages.push({text:"No Buildings",time:0});
@@ -706,7 +714,7 @@ function handleInput(){
     //If R is pressed and not in any modes and player has buildings
     if(inputs.remove == true && prevInputs.remove == false && !buildMode && !removeMode && !settingRecipe && !selectingSell && !buyingMode && !escMenu){
         removeMode = true;
-        interactTiles = getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type != "NONE");
+        interactTiles = getSurroundingTiles(tiles,tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type != "NONE").sort((a,b) => a.y - b.y).sort((a,b) => a.x - b.x);
         interactTiles.forEach(t => t.highlighted = true);
     } else if(inputs.remove == true && prevInputs.remove == false && removeMode){
         selectedTile = 0;
@@ -969,24 +977,16 @@ function handleBuildingInteraction(playerTile){
                         switch(shopItems[selectedBuy].item){
                             case "RESOURCE STORAGE":
                                 maxStorage = Math.round(maxStorage * 1.20);
-                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
                             case "BATTERY EFFICENCY":
                                 playerMaxEnergy = Math.round(playerMaxEnergy * 1.25);
-                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
-                                break;
-                            case "CPU EFFICENCY":
-                                playerDrainRate = playerDrainRate * 0.8;
-                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
                             case "CRAFT HEIGHT TOLERANCE":
                                 maxStepHeight += 1;
-                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
 
                             case "CONSTRUCTOR SPEED":
-                                craftSpeed = craftSpeed * 1.5;
-                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
+                                craftSpeed = craftSpeed * 1.3;
                                 break;
                             case "CONSTRUCTOR TRANSMITTER":
                                 constructorTransmit = true;
@@ -994,7 +994,6 @@ function handleBuildingInteraction(playerTile){
                                 break;
                             case "MINER SPEED":
                                 mineSpeed = mineSpeed * 1.5;
-                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
                             case "MINER TRANSMITTER":
                                 minerTransmit = true;
@@ -1002,20 +1001,16 @@ function handleBuildingInteraction(playerTile){
                                 break;
                             case "RTG OUTPUT":
                                 RTGOutput += 1;
-                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
                             case "SOALR OUTPUT":
                                 solarOutput += 1;
-                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
                             case "GENERATOR OUTPUT":
                                 generatorOutput += 1;
-                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
                             case "RADAR RADIUS":
                                 radarRange += 3;
                                 updateRadarVisableTiles(tiles);
-                                shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                                 break;
 
                             case "CONSTRUCTOR":
@@ -1042,6 +1037,9 @@ function handleBuildingInteraction(playerTile){
                                 recipes.push({product:"RTG",items:[{type:"IRON",value:25},{type:"COPPER",value:25},{type:"PLUTONIUM",value:10}],energy:10});
                                 shopItems = shopItems.filter(i => i.item != "RTG");
                                 break;
+                        }
+                        if(shopItems[selectedBuy].costMulti != null){
+                            shopItems[selectedBuy].cost = Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti);
                         }
                         confirmSound();
                     } else {
@@ -1420,7 +1418,7 @@ function handleTileUpdates(t) {
         case "CONSTRUCTOR":
             if(t.building.recipe != null){
                 if(t.building.crafting){
-                    t.building.craftTimer += (frameSpeedFactor/10000) * craftSpeed;
+                    t.building.craftTimer += (frameSpeedFactor/12000) * craftSpeed;
                     if(t.building.craftTimer >= 1){
                         if(constructorTransmit){
                             addToPlayerBuildings(t.building.recipe.product,1);
@@ -1437,6 +1435,9 @@ function handleTileUpdates(t) {
                 ctx.fillText("Recipe: " + (t.building.recipe != undefined ? t.building.recipe.product : "None") ,infoX,infoY);
                 ctx.textAlign = "center"; 
                 ctx.fillText("⚡",(infoX + 9) ,infoY + infoStep);
+                if(t.building.storedProduct){
+                    ctx.fillStyle = "#00FF00";
+                }
                 ctx.fillText("%",(19 + infoX) + (canvas.height * 0.1) * 0.25,infoY + infoStep);
                 drawBattery(ctx,infoX,infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.energy/t.building.maxEnergy));
                 drawBattery(ctx,10 + infoX + (canvas.height * 0.1) * 0.25, infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.craftTimer));

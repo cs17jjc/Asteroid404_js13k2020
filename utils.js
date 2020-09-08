@@ -293,7 +293,7 @@ function removeBuilding(tile){
         switch(tile.building.type){
             case "RADAR":
                 var playerTile = tiles.find(t => t.hasPlayer);
-                var tilesInPlayerRange = tiles.filter(t => Math.abs(t.x - playerTile.x) < radarRange);
+                var tilesInPlayerRange = tiles.filter(t => Math.abs(t.x - playerTile.x) <= radarRange);
                 var radarsInPlayerRange = tilesInPlayerRange.filter(t => t.building.type == "RADAR" && t != tile);
                 if(radarsInPlayerRange.length >= 1){
                     addToPlayerBuildings(tile.building.type,1);
