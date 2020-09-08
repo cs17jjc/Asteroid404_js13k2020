@@ -93,9 +93,6 @@ function renderMap(context,tiles,drawHeight,playerPosOffset){
                 case "MINER":
                     context.drawImage(minerImg,Math.trunc(t.screenPos.x - minerImg.width/2),Math.trunc(t.screenPos.y - minerImg.height*0.8));
                     break;
-                case "LAB":
-                    context.drawImage(labImg,Math.trunc(t.screenPos.x - labImg.width/2),Math.trunc(t.screenPos.y - labImg.height*0.6));
-                    break;
                 case "BATTERY":
                     context.drawImage(batteryImg,Math.trunc(t.screenPos.x - batteryImg.width/2),Math.trunc(t.screenPos.y - batteryImg.height*0.6));
                     break;
@@ -110,8 +107,6 @@ function renderMap(context,tiles,drawHeight,playerPosOffset){
                     break;
                 case "GENERATOR":
                     context.drawImage(generatorImg,Math.trunc(t.screenPos.x - generatorImg.width/2),Math.trunc(t.screenPos.y - generatorImg.height*0.6));
-                    break;
-                default:
                     break;
             }
         } else {
