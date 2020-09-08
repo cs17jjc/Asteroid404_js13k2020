@@ -31,30 +31,30 @@ var prices = [{type:"EXIT",price:0,ammount:0},
               {type:"IRON",price:10,ammount:1},{type:"IRON",price:10,ammount:10},{type:"IRON",price:10,ammount:50},
               {type:"COPPER",price:25,ammount:1},{type:"COPPER",price:25,ammount:10},{type:"COPPER",price:25,ammount:50},
               {type:"CARBON",price:50,ammount:1},{type:"CARBON",price:50,ammount:10},{type:"CARBON",price:50,ammount:50},
-              {type:"LITHIUM",price:100,ammount:1},{type:"LITHIUM",price:100,ammount:10},{type:"LITHIUM",price:100,ammount:50},
-              {type:"SILICON",price:250,ammount:1},{type:"SILICON",price:250,ammount:10},{type:"SILICON",price:250,ammount:50},
-              {type:"PLUTONIUM",price:1000,ammount:1},{type:"PLUTONIUM",price:1000,ammount:10},{type:"PLUTONIUM",price:1000,ammount:50}];
+              {type:"LITHIUM",price:75,ammount:1},{type:"LITHIUM",price:75,ammount:10},{type:"LITHIUM",price:75,ammount:50},
+              {type:"SILICON",price:100,ammount:1},{type:"SILICON",price:100,ammount:10},{type:"SILICON",price:100,ammount:50},
+              {type:"PLUTONIUM",price:200,ammount:1},{type:"PLUTONIUM",price:200,ammount:10},{type:"PLUTONIUM",price:200,ammount:50}];
 var shopItemsStart = [{type:"EXIT",item:"EXIT",cost:0,costMulti:0,desc:[]},
-                 {type:"CRAFT UPGRADES",item:"RESOURCE STORAGE",cost:150,costMulti:1.5,desc:["Increases JMC™ Craft resource","capacity by 20%"]},
+                 {type:"CRAFT UPGRADES",item:"RESOURCE STORAGE",cost:350,costMulti:2,desc:["Increases JMC™ Craft resource","capacity by 20%"]},
                  {type:"CRAFT UPGRADES",item:"BATTERY EFFICENCY",cost:450,costMulti:1.2,desc:["Increases JMC™ Craft battery capacity","by 25%"]},
-                 {type:"CRAFT UPGRADES",item:"CPU EFFICENCY",cost:60,costMulti:1.8,desc:["Reduces JMC™ Craft battery usage","by 20%"]},
+                 {type:"CRAFT UPGRADES",item:"CPU EFFICENCY",cost:60,costMulti:2.5,desc:["Reduces JMC™ Craft battery usage","by 20%"]},
                  {type:"CRAFT UPGRADES",item:"CRAFT HEIGHT TOLERANCE",cost:350,costMulti:1.5,desc:["Allows JMC™ Craft to","move between tiles"," with a larger height"," difference."]},
-
-                 {type:"BUILDING UPGRADES",item:"RADAR RADIUS",cost:1000,costMulti:1.5,desc:["Increases JMC™ Radar uncover distance","by 3 tiles."]},
-                 {type:"BUILDING UPGRADES",item:"CONSTRUCTOR SPEED",cost:150,costMulti:2,desc:["Increases JMC™ Constructor speed","by 50%"]},
-                 {type:"BUILDING UPGRADES",item:"CONSTRUCTOR TRANSMITTER",cost:1850,desc:["JMC™ Constructor transmits","finished constructions to","JMC™ Craft."]},
-                 {type:"BUILDING UPGRADES",item:"MINER SPEED",cost:750,desc:["Increases JMC™ Miner speed","by 50%"]},
-                 {type:"BUILDING UPGRADES",item:"MINER TRANSMITTER",cost:1985,desc:["JMC™ Miner transmits","mined resources to","JMC™ Craft."]},
-                 {type:"BUILDING UPGRADES",item:"RTG OUTPUT",cost:250,costMulti:1.8,desc:["Increases JMC™ RTG output","by 1."]},
-                 {type:"BUILDING UPGRADES",item:"SOLAR OUTPUT",cost:750,costMulti:1.2,desc:["Increases JMC™ Solar Panel output","by 1."]},
-                 {type:"BUILDING UPGRADES",item:"GENERATOR OUTPUT",cost:500,costMulti:2,desc:["Increases JMC™ Generator output","by 1."]},
 
                  {type:"RECIPES",item:"CONSTRUCTOR",cost:500,desc:["Adds JMC™ Constructor to","Constructor Database.","Constructors manufacture other","JMC™ Buildings."]},
                  {type:"RECIPES",item:"MINER",cost:750,desc:["Adds JMC™ Miner to Constructor","Database.","JMC™ Miners use energy to","gather resources 5 times"," more efficent than","the JMC™ Craft"]},
                  {type:"RECIPES",item:"GENERATOR",cost:1025,desc:["Adds JMC™ Generator to Constructor","Database.","JMC™ Generators create energy from","carbon."]},
                  {type:"RECIPES",item:"SOLAR",cost:1250,desc:["Adds JMC™ Solar Panel to ","Constructor Database.","JMC™ Solar Panels generate","fluctuating energy."]},
                  {type:"RECIPES",item:"BATTERY",cost:1650,desc:["Adds JMC™ Battery to ","Constructor Database.","JMC™ Batteries store","energy and release it","periodically."]},
-                 {type:"RECIPES",item:"RTG",cost:2500,desc:["Adds JMC™ RTG to ","Constructor Database.","JMC™ RTGs generate","constant energy."]}];
+                 {type:"RECIPES",item:"RTG",cost:2500,desc:["Adds JMC™ RTG to ","Constructor Database.","JMC™ RTGs generate","constant energy."]},
+
+                 {type:"BUILDING UPGRADES",item:"RADAR RADIUS",cost:1000,costMulti:1.5,desc:["Increases JMC™ Radar uncover distance","by 3 tiles."]},
+                 {type:"BUILDING UPGRADES",item:"CONSTRUCTOR SPEED",cost:250,costMulti:2,desc:["Increases JMC™ Constructor speed","by 50%"]},
+                 {type:"BUILDING UPGRADES",item:"CONSTRUCTOR TRANSMITTER",cost:1850,desc:["JMC™ Constructor transmits","finished constructions to","JMC™ Craft."]},
+                 {type:"BUILDING UPGRADES",item:"MINER SPEED",cost:750,desc:["Increases JMC™ Miner speed","by 50%"]},
+                 {type:"BUILDING UPGRADES",item:"MINER TRANSMITTER",cost:1985,desc:["JMC™ Miner transmits","mined resources to","JMC™ Craft."]},
+                 {type:"BUILDING UPGRADES",item:"RTG OUTPUT",cost:250,costMulti:1.8,desc:["Increases JMC™ RTG output","by 1."]},
+                 {type:"BUILDING UPGRADES",item:"SOLAR OUTPUT",cost:750,costMulti:1.4,desc:["Increases JMC™ Solar Panel output","by 1."]},
+                 {type:"BUILDING UPGRADES",item:"GENERATOR OUTPUT",cost:500,costMulti:2,desc:["Increases JMC™ Generator output","by 1."]}];
 
 var shopItems = shopItemsStart.slice();
 var recipes = startRecipes.slice();
@@ -177,7 +177,56 @@ function gameloop(){
 }
 
 function intro(){
+    ctx.strokeStyle = hudColourScheme.outline;
+    ctx.fillStyle = hudColourScheme.infill;
+    generateUIOverlay(ctx,0.02,0.9,0.1);
 
+    var textX = canvas.width * 0.13;
+    var textY = canvas.height * 0.11;
+    ctx.font = "22px Arial";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.strokeStyle = "#000000";
+    ctx.textAlign = "start"; 
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText("Welcome, valued Roboemployee, to the JMC™ Autonomous Mining Initative.", textX,textY);
+    ctx.fillText("Over the course of the next 7 solar rotations your mining effectiveness will be assesed by", textX,50 + textY);
+    ctx.fillText("your ability to meet daily monetary quotas.", textX,75 + textY);
+
+    ctx.fillText("Quotas can be met by ", textX,100 + textY);
+    var xOff = ctx.measureText("Quotas can be met by ").width;
+    ctx.fillStyle = "#00FF00";
+    ctx.fillText("Mining (E/Space)", textX + xOff,100 + textY);
+    xOff = xOff + ctx.measureText("Mining (E/Space)").width;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText(" and selling resources to the TELEDEPOT.", textX+xOff,100 + textY);
+
+    ctx.fillText("Failure to complete these quotas will result in immediate nuclear vapourisation.", textX,150 + textY);
+    ctx.fillText("JMC™ Operations & Managment regret to inform you that terrain maps", textX,200 + textY);
+    ctx.fillText("for JMC™ Planet 404 have been lost, and so you are required to use your", textX,225 + textY);
+
+    ctx.fillText("JMC™ Craft's ", textX,250 + textY);
+    xOff = ctx.measureText("JMC™ Craft's").width;
+    ctx.fillStyle = "#00FF00";
+    ctx.fillText("Build Mode (B) & Remove Mode (R)", textX + xOff,250 + textY);
+    xOff = xOff + ctx.measureText("Build Mode (B) & Remove Mode (R)").width;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText(" to place RADARs and uncover more terrain.", textX+xOff,250 + textY);
+
+    ctx.fillText("The CONSTRUCTOR creates buildings, such as extra RADARS, from resources and energy.", textX,300 + textY);
+    ctx.fillText("Your JMC™ Craft has a limited battery capacity, failure to charge the battery", textX,325 + textY);
+    ctx.fillText("will result in loss of resources and buildings in possesion.", textX,350 + textY);
+    ctx.fillText("An RTG has been made available to provide energy and charge your JMC™ Craft.", textX,375 + textY);
+    ctx.fillText("A ROBOSHOP has been made available for you to purchase upgrades to aid effectiveness.", textX,400 + textY);
+
+    ctx.textAlign = "center";
+    ctx.fillText("WASD to move, left shift to sprint, E/Space to interact.", canvas.width/2,450 + textY);
+
+    ctx.fillText("Good Luck.", canvas.width/2,canvas.height * 0.82);
+    ctx.fillText("Press E/Space to start",canvas.width/2,25 + canvas.height * 0.85);
+    if(inputs.inter == true && prevInputs.inter == false){
+        runIntro = false;
+        runGameBool = true;
+    }
 }
 
 function handleMainMenu(){
@@ -211,9 +260,9 @@ function handleMainMenu(){
             case "New Game":
                 initGame();
                 soundFxVolume = 0.5;
-                runGameBool = true;
                 mainMenu = false;
                 selectedMenuItem = 0;
+                runIntro = true;
                 break;
             case "Load Game":
                 loadGame();
@@ -302,6 +351,9 @@ function initGame(){
     sols = 0;
 
     failedQuota = false;
+
+    prevInputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,info:false,esc:false,speve:false};
+    inputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,info:false,esc:false,speve:false};
 }
 
 function runGame(){
@@ -404,7 +456,7 @@ function runGame(){
         ctx.fillText("You Died",canvas.width/2,canvas.height * 0.2);
         if(roverImgScale < 0.4){
             (textScale*0.3).toFixed(0) + "px Arial";
-            ctx.fillText("Press E to respawn",canvas.width/2,canvas.height * 0.3);
+            ctx.fillText("Press E/Space to respawn",canvas.width/2,canvas.height * 0.3);
             if(inputs.inter == true && prevInputs.inter == false){
                 playerEnergy = playerMaxEnergy;
                 playerResources = [];
