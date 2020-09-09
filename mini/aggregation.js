@@ -45,19 +45,7 @@ var song = [
     var grad3 = [new Grad(1,1,0),new Grad(-1,1,0),new Grad(1,-1,0),new Grad(-1,-1,0),
                  new Grad(1,0,1),new Grad(-1,0,1),new Grad(1,0,-1),new Grad(-1,0,-1),
                  new Grad(0,1,1),new Grad(0,-1,1),new Grad(0,1,-1),new Grad(0,-1,-1)];
-    var p = [151,160,137,91,90,15,
-    131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,
-    190, 6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,
-    88,237,149,56,87,174,20,125,136,171,168, 68,175,74,165,71,134,139,48,27,166,
-    77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245,40,244,
-    102,143,54, 65,25,63,161, 1,216,80,73,209,76,132,187,208, 89,18,169,200,196,
-    135,130,116,188,159,86,164,100,109,198,173,186, 3,64,52,217,226,250,124,123,
-    5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189,28,42,
-    223,183,170,213,119,248,152, 2,44,154,163, 70,221,153,101,155,167, 43,172,9,
-    129,22,39,253, 19,98,108,110,79,113,224,232,178,185, 112,104,218,246,97,228,
-    251,34,242,193,238,210,144,12,191,179,162,241, 81,51,145,235,249,14,239,107,
-    49,192,214, 31,181,199,106,157,184, 84,204,176,115,121,50,45,127, 4,150,254,
-    138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180];
+    var p = Array.from(new Array(256).keys()).map(i => Math.trunc(Math.random() * 255));
     var perm = new Array(512);
     var gradP = new Array(512);
     function seed(seed) {
@@ -428,14 +416,9 @@ function addToPlayerBuildings(type,ammount){
 }
 
 function drawHexagon(pos){
-    var calcPos = (ofs) => {return {x:pos.x + tileRadius * offsets[ofs].x,y:pos.y + tileRadius * offsets[ofs].y * perspRatio}};
     ctx.beginPath();
-    var pPos = calcPos(0);
-    ctx.moveTo(pPos.x,pPos.y);
-    for(var offset = 1; offset < offsets.length;offset++){
-        pPos = {x:pos.x + tileRadius * offsets[offset].x,y:pos.y + tileRadius * offsets[offset].y * perspRatio};
-        ctx.lineTo(pPos.x,pPos.y);
-    }
+    ctx.moveTo(pos.x + tileRadius * offsets[0].x,pos.y + tileRadius * offsets[0].y * perspRatio);
+    offsets.slice(1, offsets.length).forEach(o => ctx.lineTo(pos.x + tileRadius * o.x,pos.y + tileRadius * o.y * perspRatio))
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
@@ -520,22 +503,7 @@ function componentToHex(c) {
       return tiles.filter(t => {
         var yDelta = t.y - tile.y;
         var xDelta = t.x - tile.x;
-        if(Math.abs(yDelta) == 1 && xDelta == 0){
-            return true;
-        }
-        if(yDelta == 0 && Math.abs(xDelta) == 1){
-            return true;
-        }
-        if(tile.x % 2 == 0) {
-            if(yDelta == -1 && Math.abs(xDelta) == 1){
-                return true;
-            }
-        } else {
-            if(yDelta == 1 && Math.abs(xDelta) == 1){
-                return true;
-            }
-        }
-        return false;
+        return (Math.abs(yDelta) == 1 && xDelta == 0) || (yDelta == 0 && Math.abs(xDelta) == 1) || (tile.x % 2 == 0 && yDelta == -1 && Math.abs(xDelta) == 1) || (tile.x % 2 != 0 && yDelta == 1 && Math.abs(xDelta) == 1);
       });
   }
 
@@ -1775,7 +1743,7 @@ function handleHUD(){
     }
 
     if(removeMode){
-        ctx.fillStyle = "000000AA";
+        ctx.fillStyle = "#000000AA";
         generateUIOverlay(0.05,0.14,0.39);
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "30px Tahoma";
