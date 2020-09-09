@@ -9,177 +9,17 @@ zzfxX=new(top.AudioContext||webkitAudioContext);
 zzfxM=(n,f,t,e=125)=>{let l,o,z,r,g,h,x,a,u,c,d,i,m,p,G,M=0,R=[],b=[],j=[],k=0,q=0,s=1,v={},w=zzfxR/e*60>>2;for(;s;k++)R=[s=a=d=m=0],t.map((e,d)=>{for(x=f[e][k]||[0,0,0],s|=!!f[e][k],G=m+(f[e][0].length-2-!a)*w,p=d==t.length-1,o=2,r=m;o<x.length+p;a=++o){for(g=x[o],u=o==x.length+p-1&&p||c!=(x[0]||0)|g|0,z=0;z<w&&a;z++>w-99&&u?i+=(i<1)/99:0)h=(1-i)*R[M++]/2||0,b[r]=(b[r]||0)-h*q+h,j[r]=(j[r++]||0)+h*q+h;g&&(i=g%1,q=x[1]||0,(g|=0)&&(R=v[[c=x[M=0]||0,g]]=v[[c,g]]||(l=[...n[c]],l[2]*=2**((g-12)/12),g>0?zzfxG(...l):[])))}m=G});return[b,j]}
 //Music
 
-var kickDrum1 = [
-    0,
-    0,
-
-    15,
-    0,
-    0,
-    0,
-
-    0,
-    0,
-    0,
-    0,
-
-    0,
-    0,
-    0,
-    0,
-
-    0,
-    0,
-    0,
-    0
-  ];
+var kickDrum1 = Array.from(new Array(18).keys()).map(i => i == 2 ? 15 : 0);
 var kickDrum2 = kickDrum1.slice();
 kickDrum2[14] = 15;
-
-var snare = [
-    1,
-    0,
-
-    0,
-    0,
-    0,
-    0,
-
-    0,
-    0,
-    0,
-    0,
-
-    15,
-    0,
-    0,
-    0,
-
-    0,
-    0,
-    0,
-    0
-  ];
-var hihat = [
-    2,
-    0,
-
-    0,
-    0,
-    15,
-    0,
-
-    0,
-    0,
-    15,
-    0,
-
-    0,
-    0,
-    0,
-    0,
-
-    0,
-    0,
-    15,
-    0
-  ];
-var Ech1 = [
-    3,
-    -0.1,
-
-    18,
-    0,
-    0,
-    0,
-
-    18.1,
-    0,
-    0,
-    0,
-
-    18.5,
-    0,
-    0,
-    0,
-
-    18.7,
-    0,
-    0,
-    0
-  ];
-var Ech2 = [
-    3,
-    -0.1,
-
-    22,
-    0,
-    0,
-    0,
-
-    22.1,
-    0,
-    0,
-    0,
-
-    22.5,
-    0,
-    0,
-    0,
-
-    22.7,
-    0,
-    0,
-    0
-  ];
-var Ech3 = [
-    3,
-    -0.1,
-
-    24,
-    0,
-    0,
-    0,
-
-    24.1,
-    0,
-    0,
-    0,
-
-    24.5,
-    0,
-    0,
-    0,
-
-    24.7,
-    0,
-    0,
-    0
-  ];
-var Ech4 = [
-    3,
-    -0.1,
-
-    30,
-    0,
-    0,
-    0,
-
-    30.1,
-    0,
-    0,
-    0,
-
-    30.5,
-    0,
-    0,
-    0,
-
-    30.7,
-    0,
-    0,
-    0
-  ];
+var getArr = () => Array.from(new Array(18).keys());
+var snare = getArr().map(i => i == 10 ? 15 : i == 0 ? 1 : 0);
+var hihat = getArr().map(i => i == 0 ? 2 : (i % 4 == 0 && i != 12) ? 15 : 0);
+var mkEch = (n) => getArr().map(i => i == 0 ? 3 : [2,6,10,14].includes(i) ? n + [0.1,0.5,0.7][[2,6,10,14].indexOf(i)] : i == 1 ? -0.1 : 0);
+var Ech1 = mkEch(18);
+var Ech2 = mkEch(22);
+var Ech3 = mkEch(24);
+var Ech4 = mkEch(30);
 var mainLoop = [8,9,10,11,8,9,10,11];
 var song = [
 [
@@ -192,8 +32,6 @@ var song = [
 [0,1,2,3,0,1,2,3,4,5,6,7,4,5,6,7].concat(mainLoop).concat(mainLoop).concat(mainLoop).concat(mainLoop),120,{title: "",author: ""}];
 
 //Perlin
-(function(global){
-    var module = global.noise = {};
     function Grad(x, y, z) {
       this.x = x; this.y = y; this.z = z;
     }
@@ -222,7 +60,7 @@ var song = [
     138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180];
     var perm = new Array(512);
     var gradP = new Array(512);
-    module.seed = function(seed) {
+    function seed(seed) {
       if(seed > 0 && seed < 1) {
         seed *= 65536;
       }
@@ -242,14 +80,14 @@ var song = [
         gradP[i] = gradP[i + 256] = grad3[v % 12];
       }
     };
-    module.seed(0);
+    seed(0);
     function fade(t) {
       return t*t*t*(t*(t*6-15)+10);
     }
     function lerp(a, b, t) {
       return (1-t)*a + t*b;
     }
-    module.perlin2 = function(x, y) {
+    function perlin2(x, y) {
       var X = Math.floor(x), Y = Math.floor(y);
       x = x - X; y = y - Y;
       X = X & 255; Y = Y & 255;
@@ -263,7 +101,6 @@ var song = [
           lerp(n01, n11, u),
          fade(y));
     };
-  })(this);
 
 //Classes
 class Tile {
@@ -315,6 +152,27 @@ let tileViewRadius = 11;
 let tileStepHeight = 5;
 var roverImgScale = 1;
 
+var resColMap = new Map();
+resColMap.set("ROCK",new Colour(100,100,100,255));
+resColMap.set("IRON",new Colour(165,42,42,255));
+resColMap.set("COPPER",new Colour(184,115,51,255));
+resColMap.set("CARBON",new Colour(18,18,18,255));
+resColMap.set("LITHIUM",new Colour(169,169,169,255));
+resColMap.set("SILICON",new Colour(0,153,204,255));
+resColMap.set("PLUTONIUM",new Colour(0,255,0,255));
+
+var roverImg = document.getElementById("rover");
+
+var imgMap = new Map();
+imgMap.set("RADAR",document.getElementById("tower"));
+imgMap.set("CONSTRUCTOR",document.getElementById("constructor"));
+imgMap.set("SOLAR",document.getElementById("solar"));
+imgMap.set("MINER",document.getElementById("miner"));
+imgMap.set("BATTERY",document.getElementById("battery"));
+imgMap.set("RTG",document.getElementById("rtg"));
+imgMap.set("TELEDEPOT",document.getElementById("teledepot"));
+imgMap.set("ROBOSHOP",document.getElementById("shop"));
+imgMap.set("GENERATOR",document.getElementById("generator"));
 
 function drawHexTile(tile){
 
@@ -322,43 +180,19 @@ function drawHexTile(tile){
     drawHexagon(scrPos);
 
     if(tile.isVisible && tile.resource.type != "NONE"){
-        var resourceColour = null;
-        switch(tile.resource.type){
-            case "IRON":
-                resourceColour = new Colour(165,42,42,255);
-                break;
-            case "COPPER":
-                resourceColour = new Colour(184,115,51,255);
-                break;
-            case "CARBON":
-                resourceColour = new Colour(18,18,18,255);
-                break;
-            case "LITHIUM":
-                resourceColour = new Colour(169,169,169,255);
-                break;
-            case "SILICON":
-                resourceColour = new Colour(0,153,204,255);
-                break;
-            case "ROCK":
-                resourceColour = new Colour(100,100,100,255);
-                break;
-            case "PLUTONIUM":
-                resourceColour = new Colour(0,255,0,255);
-                break;
-        }
+        var rCol = resColMap.get(tile.resource.type);
         ctx.lineWidth = 3;
-        ctx.fillStyle = resourceColour.toHex();
-        ctx.strokeStyle = resourceColour.darkend(0.4).toHex();
-        tile.resource.lines.forEach(l => {
-            ctx.beginPath();
-            ctx.moveTo(l[0].x + scrPos.x,l[0].y + scrPos.y);
-            for(var ll = 1; ll < l.length;ll++){
-                ctx.lineTo(l[ll].x + scrPos.x,l[ll].y + scrPos.y);
-            }
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-        });
+        ctx.fillStyle = rCol.toHex();
+        ctx.strokeStyle = rCol.darkend(0.4).toHex();
+        var l = tile.resource.lines;
+        ctx.beginPath();
+        ctx.moveTo(l[0].x + scrPos.x,l[0].y + scrPos.y);
+        for(var ll = 1; ll < l.length;ll++){
+            ctx.lineTo(l[ll].x + scrPos.x,l[ll].y + scrPos.y);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
     }
 }
 
@@ -366,12 +200,8 @@ function renderMap(drawHeight,playerPosOffset){
     var tileWithPlayer = tiles.find(t => t.hasPlayer);
     var visableTiles = tiles.filter(t => Math.abs(t.x - tileWithPlayer.x) <= tileViewRadius).sort((a,b) => a.height - b.height).sort((a,b) => a.y - b.y).sort((a,b) => a.isVisible - b.isVisible);
     visableTiles.forEach(t => {
-        t.screenPos.x = t.x * tileRadius * 1.5 + canvas.width/2 - tileWithPlayer.x * tileRadius * 1.5;
-        t.screenPos.y = t.y * tileRadius * 2 * 0.8660254037844387 * perspRatio + drawHeight;
-    
-        if(t.x % 2 != 0){
-            t.screenPos.y += 0.8660254037844387 * tileRadius * perspRatio;
-        }
+        t.screenPos.x = t.x * tileRadius * 1.5 + canW/2 - tileWithPlayer.x * tileRadius * 1.5;
+        t.screenPos.y = t.y * tileRadius * 2 * 0.8660254037844387 * perspRatio + drawHeight + (t.x % 2 != 0 ? 0.8660254037844387 * tileRadius * perspRatio : 0);
 
         if(t.isVisible){
             t.screenPos.y -= t.height;
@@ -390,35 +220,8 @@ function renderMap(drawHeight,playerPosOffset){
             }
             ctx.lineWidth = 3;
             drawHexTile(t);
-            switch(t.building.type){
-                case "RADAR":
-                    ctx.drawImage(towerImg,Math.trunc(t.screenPos.x - towerImg.width/2),Math.trunc(t.screenPos.y - towerImg.height*0.9));
-                    break;
-                case "CONSTRUCTOR":
-                    ctx.drawImage(constructorImg,Math.trunc(t.screenPos.x - constructorImg.width/2),Math.trunc(t.screenPos.y - constructorImg.height*0.6));
-                    break;
-                case "SOLAR":
-                    ctx.drawImage(solarImg,Math.trunc(t.screenPos.x - solarImg.width/2),Math.trunc(t.screenPos.y - solarImg.height*0.5));
-                    break;
-                case "MINER":
-                    ctx.drawImage(minerImg,Math.trunc(t.screenPos.x - minerImg.width/2),Math.trunc(t.screenPos.y - minerImg.height*0.8));
-                    break;
-                case "BATTERY":
-                    ctx.drawImage(batteryImg,Math.trunc(t.screenPos.x - batteryImg.width/2),Math.trunc(t.screenPos.y - batteryImg.height*0.6));
-                    break;
-                case "RTG":
-                    ctx.drawImage(rtgImg,Math.trunc(t.screenPos.x - rtgImg.width/2),Math.trunc(t.screenPos.y - rtgImg.height*0.6));
-                    break;
-                case "TELEDEPOT":
-                    ctx.drawImage(teledepotImg,Math.trunc(t.screenPos.x - teledepotImg.width/2),Math.trunc(t.screenPos.y - teledepotImg.height*0.6));
-                    break;
-                case "ROBOSHOP":
-                    ctx.drawImage(roboshopImg,Math.trunc(t.screenPos.x - roboshopImg.width/2),Math.trunc(t.screenPos.y - roboshopImg.height*0.6));
-                    break;
-                case "GENERATOR":
-                    ctx.drawImage(generatorImg,Math.trunc(t.screenPos.x - generatorImg.width/2),Math.trunc(t.screenPos.y - generatorImg.height*0.6));
-                    break;
-            }
+            var img = imgMap.get(t.building.type);
+            img != undefined ? ctx.drawImage(img,Math.trunc(t.screenPos.x - img.width/2),Math.trunc(t.screenPos.y - img.height*0.6)) : null;
         } else {
             ctx.strokeStyle = "#000000";
             ctx.fillStyle = "#AAAAAA";
@@ -429,7 +232,7 @@ function renderMap(drawHeight,playerPosOffset){
             ctx.font = fontSize + "px Arial";
             ctx.textAlign = "center"; 
             ctx.textBaseline = "middle"; 
-            ctx.fillText("404",t.screenPos.x ,t.screenPos.y);
+            fT("404",t.screenPos.x ,t.screenPos.y);
         }
     });
     var playerTile = visableTiles.find(t => t.hasPlayer);
@@ -443,6 +246,7 @@ function renderMap(drawHeight,playerPosOffset){
 }
 function updateRadarVisableTiles(){
     var radarTiles = tiles.filter(t => t.building.type == "RADAR");
+    console.log(radarTiles.length);
     tiles.forEach(t => {
         if(radarTiles.some(r => Math.abs(r.x - t.x) <= radarRange)){
             t.isVisible = true;
@@ -516,10 +320,6 @@ function updatePlayerPos(deltaX,deltaY){
             }
         }
 }
-function lerp(value1, value2, amount) {
-    amount = Math.min(1,Math.max(0,amount));
-    return value1 + (value2 - value1) * amount;
-}
 function mineTile(tile){
     if(tile.resource.type != "NONE"){
         var type = tile.resource.type;
@@ -536,55 +336,49 @@ function mineTile(tile){
     }
 }
 function placeBuilding(tile,building){
-    if(tile.building.type == "NONE"){
         tile.building.type = building.type;
+        var tb = tile.building;
         switch(building.type){
             case "RADAR":
                 updateRadarVisableTiles();
                 break;
             case "CONSTRUCTOR":
-                tile.building.energy = 0;
-                tile.building.maxEnergy = 20;
-                tile.building.crafting = false;
-                tile.building.craftTimer = 0;
-                tile.building.storedProduct = false;
+                tb.energy = 0;
+                tb.maxEnergy = 20;
+                tb.crafting = false;
+                tb.craftTimer = 0;
+                tb.storedProduct = false;
                 break;
             case "MINER":
-                tile.building.storedResource = 0;
-                tile.building.storedType = tile.resource.type;
-                tile.building.maxStored = 50;
-                tile.building.energy = 0;
-                tile.building.maxEnergy = 10;
-                tile.building.mining = false;
-                tile.building.mineTimer = 0;
+                tb.storedResource = 0;
+                tb.storedType = tile.resource.type;
+                tb.maxStored = 50;
+                tb.energy = 0;
+                tb.maxEnergy = 10;
+                tb.mining = false;
+                tb.mineTimer = 0;
                 break;
             case "BATTERY":
-                tile.building.energy = 0;
-                tile.building.maxEnergy = 20;
-                tile.building.dischargeTimer = 0;
-                tile.building.discharging = false;
+                tb.energy = 0;
+                tb.maxEnergy = 20;
+                tb.dischargeTimer = 0;
+                tb.discharging = false;
                 break;
             case "GENERATOR":
-                tile.building.coal = 0;
-                tile.building.maxCoal = 25;
-                tile.building.generatingTimer = 0;
-                tile.building.generating = false;
+                tb.coal = 0;
+                tb.maxCoal = 25;
+                tb.generatingTimer = 0;
+                tb.generating = false;
                 break;
         }
         building.value -= 1;
         s([soundFxVolume,,191,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
-    } else {
-        messages.push({text:"Cannot place building",time:0});
-    }
 }
 function removeBuilding(tile){
-    if(tile.building.type != "NONE"){
         switch(tile.building.type){
             case "RADAR":
                 var playerTile = tiles.find(t => t.hasPlayer);
-                var tilesInPlayerRange = tiles.filter(t => Math.abs(t.x - playerTile.x) <= radarRange);
-                var radarsInPlayerRange = tilesInPlayerRange.filter(t => t.building.type == "RADAR" && t != tile);
-                if(radarsInPlayerRange.length >= 1){
+                if(tiles.filter(t => Math.abs(t.x - playerTile.x) <= radarRange).filter(t => t.building.type == "RADAR" && t != tile).length >= 1){
                     addToPlayerBuildings(tile.building.type,1);
                     tile.building = {type:"NONE"};
                     updateRadarVisableTiles();
@@ -613,9 +407,6 @@ function removeBuilding(tile){
                 s([soundFxVolume,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
                 break;
         }
-    } else {
-        messages.push({text:"Tile has no building",time:0});
-    }
 }
 
 function addToPlayerResources(type,ammount){
@@ -633,50 +424,17 @@ function addToPlayerResources(type,ammount){
 }
 function addToPlayerBuildings(type,ammount){
     var playerBuild = playerBuildings.find(r => r.type == type);
-    if(playerBuild != null){
-        playerBuild.value += ammount;
-    } else {
-        playerBuildings.push({type:type,value:ammount});
-    }
-}
-function addToBuildingStorage(buildingStorage,type,ammount){
-    var buildRes = buildingStorage.find(r => r.type == type);
-    if(buildRes != null){
-        buildRes.value += ammount;
-    } else {
-        buildingStorage.push({type:type,value:ammount});
-    }
+    playerBuild != null ? playerBuild.value += ammount : playerBuildings.push({type:type,value:ammount});
 }
 
 function drawHexagon(pos){
-    var screenPoints = []
-    for(var offset = 0; offset < offsets.length;offset++){
-        screenPoints.unshift({x:pos.x + tileRadius * offsets[offset].x,y:pos.y + tileRadius * offsets[offset].y * perspRatio});
-    }
-
+    var calcPos = (ofs) => {return {x:pos.x + tileRadius * offsets[ofs].x,y:pos.y + tileRadius * offsets[ofs].y * perspRatio}};
     ctx.beginPath();
-    ctx.moveTo(screenPoints[0].x,screenPoints[0].y);
-    for(var points = 1; points < screenPoints.length;points++){
-            ctx.lineTo(screenPoints[points].x,screenPoints[points].y);
-    }
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-}
-
-function drawHexHeight(scrX,scrY,height){
-    var screenPoints = []
-    for(var offset = 0; offset < offsets.length-2;offset++){
-        screenPoints.unshift({x:scrX + tileRadius * offsets[offset].x,y:scrY + tileRadius * offsets[offset].y * perspRatio});
-    }
-    for(var offset = offsets.length-3; offset >= 0;offset--){
-        screenPoints.unshift({x:scrX + tileRadius * offsets[offset].x,y:(scrY + height) + tileRadius * offsets[offset].y * perspRatio});
-    }
-
-    ctx.beginPath();
-    ctx.moveTo(screenPoints[0].x,screenPoints[0].y);
-    for(var points = 1; points < screenPoints.length;points++){
-        ctx.lineTo(screenPoints[points].x,screenPoints[points].y);
+    var pPos = calcPos(0);
+    ctx.moveTo(pPos.x,pPos.y);
+    for(var offset = 1; offset < offsets.length;offset++){
+        pPos = {x:pos.x + tileRadius * offsets[offset].x,y:pos.y + tileRadius * offsets[offset].y * perspRatio};
+        ctx.lineTo(pPos.x,pPos.y);
     }
     ctx.closePath();
     ctx.fill();
@@ -697,30 +455,30 @@ function componentToHex(c) {
     var leftHeight2 = 0.48;
     var points = [];
 
-    points.unshift({x:0,y:canvas.height * leftHeight});
-    points.unshift({x:canvas.width * 0.09,y:canvas.height * leftHeight});
-    points.unshift({x:canvas.width * 0.1,y:canvas.height * (leftHeight - 0.02)});
-    points.unshift({x:canvas.width * 0.1,y:0});
+    points.unshift({x:0,y:canH * leftHeight});
+    points.unshift({x:canW * 0.09,y:canH * leftHeight});
+    points.unshift({x:canW * 0.1,y:canH * (leftHeight - 0.02)});
+    points.unshift({x:canW * 0.1,y:0});
     points.unshift({x:0,y:0});
 
-    points.unshift({x:0,y:canvas.height * leftHeight2});
-    points.unshift({x:canvas.width * 0.09,y:canvas.height * leftHeight2});
-    points.unshift({x:canvas.width * 0.1,y:canvas.height * (leftHeight2 - 0.02)});
-    points.unshift({x:canvas.width * 0.1,y:canvas.height * leftHeight});
-    points.unshift({x:0,y:canvas.height * leftHeight});
+    points.unshift({x:0,y:canH * leftHeight2});
+    points.unshift({x:canW * 0.09,y:canH * leftHeight2});
+    points.unshift({x:canW * 0.1,y:canH * (leftHeight2 - 0.02)});
+    points.unshift({x:canW * 0.1,y:canH * leftHeight});
+    points.unshift({x:0,y:canH * leftHeight});
     points.unshift({x:0,y:0});
 
     var topLength = 0.08;
-    points.unshift({x:canvas.width * (0.5 - topLength - 0.03),y:0});
-    points.unshift({x:canvas.width * (0.5 - topLength),y:canvas.height * 0.04});
-    points.unshift({x:canvas.width * (0.5 + topLength),y:canvas.height * 0.04});
-    points.unshift({x:canvas.width * (0.5 + topLength + 0.03),y:0});
+    points.unshift({x:canW * (0.5 - topLength - 0.03),y:0});
+    points.unshift({x:canW * (0.5 - topLength),y:canH * 0.04});
+    points.unshift({x:canW * (0.5 + topLength),y:canH * 0.04});
+    points.unshift({x:canW * (0.5 + topLength + 0.03),y:0});
 
-    points.unshift({x:canvas.width * 0.83,y:0});
-    points.unshift({x:canvas.width * 0.83,y:rightHeight - canvas.height * 0.02});
-    points.unshift({x:canvas.width * 0.85,y:rightHeight});
-    points.unshift({x:canvas.width,y:rightHeight});
-    points.unshift({x:canvas.width,y:0});
+    points.unshift({x:canW * 0.83,y:0});
+    points.unshift({x:canW * 0.83,y:rightHeight - canH * 0.02});
+    points.unshift({x:canW * 0.85,y:rightHeight});
+    points.unshift({x:canW,y:rightHeight});
+    points.unshift({x:canW,y:0});
     points.unshift({x:0,y:0});
     return points;
   }
@@ -729,14 +487,14 @@ function componentToHex(c) {
       var cornerLength = 0.04;
       var rightX = 1 - width;
       ctx.beginPath();
-      ctx.moveTo(canvas.width * (width + cornerLength),canvas.height * height);
-      ctx.lineTo(canvas.width * (rightX - cornerLength),canvas.height * height);
-      ctx.lineTo(canvas.width * (rightX),canvas.height * (height + cornerLength));
-      ctx.lineTo(canvas.width * (rightX),canvas.height * ((height + length) - cornerLength));
-      ctx.lineTo(canvas.width * (rightX - cornerLength),canvas.height * (height + length));
-      ctx.lineTo(canvas.width * (width + cornerLength),canvas.height * (height + length));
-      ctx.lineTo(canvas.width * (width),canvas.height * (height + length - cornerLength));
-      ctx.lineTo(canvas.width * (width),canvas.height * (height + cornerLength));
+      ctx.moveTo(canW * (width + cornerLength),canH * height);
+      ctx.lineTo(canW * (rightX - cornerLength),canH * height);
+      ctx.lineTo(canW * (rightX),canH * (height + cornerLength));
+      ctx.lineTo(canW * (rightX),canH * ((height + length) - cornerLength));
+      ctx.lineTo(canW * (rightX - cornerLength),canH * (height + length));
+      ctx.lineTo(canW * (width + cornerLength),canH * (height + length));
+      ctx.lineTo(canW * (width),canH * (height + length - cornerLength));
+      ctx.lineTo(canW * (width),canH * (height + cornerLength));
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
@@ -745,14 +503,14 @@ function componentToHex(c) {
       var height2 = height + sizeOffset;
       var length2 = length - sizeOffset * 2;
       ctx.beginPath();
-      ctx.moveTo(canvas.width * (width + sizeOffset + cornerLength),canvas.height * height2);
-      ctx.lineTo(canvas.width * (rightX - sizeOffset - cornerLength),canvas.height * height2);
-      ctx.lineTo(canvas.width * (rightX - sizeOffset),canvas.height * (height2 + cornerLength));
-      ctx.lineTo(canvas.width * (rightX - sizeOffset),canvas.height * ((height2 + length2) - cornerLength));
-      ctx.lineTo(canvas.width * (rightX - sizeOffset - cornerLength),canvas.height * (height2 + length2));
-      ctx.lineTo(canvas.width * (width + sizeOffset + cornerLength),canvas.height * (height2 + length2));
-      ctx.lineTo(canvas.width * (width + sizeOffset),canvas.height * (height2 + length2 - cornerLength));
-      ctx.lineTo(canvas.width * (width + sizeOffset),canvas.height * (height2 + cornerLength));
+      ctx.moveTo(canW * (width + sizeOffset + cornerLength),canH * height2);
+      ctx.lineTo(canW * (rightX - sizeOffset - cornerLength),canH * height2);
+      ctx.lineTo(canW * (rightX - sizeOffset),canH * (height2 + cornerLength));
+      ctx.lineTo(canW * (rightX - sizeOffset),canH * ((height2 + length2) - cornerLength));
+      ctx.lineTo(canW * (rightX - sizeOffset - cornerLength),canH * (height2 + length2));
+      ctx.lineTo(canW * (width + sizeOffset + cornerLength),canH * (height2 + length2));
+      ctx.lineTo(canW * (width + sizeOffset),canH * (height2 + length2 - cornerLength));
+      ctx.lineTo(canW * (width + sizeOffset),canH * (height2 + cornerLength));
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
@@ -802,30 +560,23 @@ function componentToHex(c) {
     }
     var number = 1;
     var size = value/20;
+    var xOffset = ((Math.random() - 0.5) * (tileRadius*0.2) * size);
+    var yOffset = (Math.random() - 0.5) * (tileRadius*0.2) * size;
     var lines = [];
-    for(var n = 0; n < number;n++){
-        var xOffset = (Math.random() - 0.5) * (tileRadius*0.2) * size;
-        var yOffset = (Math.random() - 0.5) * (tileRadius*0.2) * size;
-        lines.unshift(generateBlob(points,size,yOffset,xOffset));
+    for(var i = 0; i < points;i++){
+        var a = (i * ((Math.PI*2)/points));
+        lines.unshift({x:Math.max(-tileRadius * 0.6 + 5,Math.min(tileRadius * 0.6 - 5,xOffset + (Math.cos(a) * size * tileRadius + (Math.random() * 15 * size)))),y:Math.max(-tileRadius * perspRatio + 5,Math.min(tileRadius * perspRatio - 5,yOffset + (Math.sin(a) * size * (tileRadius*perspRatio) + (Math.random() * 15 * size * perspRatio))))});
     }
-      return lines;
+    return lines;
   }
 
   function generateBlob(points,size,xOffset,yOffset){
     var curLines = []
     var angles = [];
     for(var i = 0; i < points;i++){
-        angles.unshift(i * ((Math.PI*2)/points));
+        var a = (i * ((Math.PI*2)/points));
+        curLines.unshift({x:Math.max(-tileRadius * 0.6 + 5,Math.min(tileRadius * 0.6 - 5,xOffset + (Math.cos(a) * size * tileRadius + (Math.random() * 15 * size)))),y:Math.max(-tileRadius * perspRatio + 5,Math.min(tileRadius * perspRatio - 5,yOffset + (Math.sin(a) * size * (tileRadius*perspRatio) + (Math.random() * 15 * size * perspRatio))))});
     }
-    angles.forEach(a => {
-        var x = xOffset + (Math.cos(a) * size * tileRadius + (Math.random() * 15 * size));
-        var y = yOffset + (Math.sin(a) * size * (tileRadius*perspRatio) + (Math.random() * 15 * size * perspRatio));
-        x = Math.min(tileRadius * 0.6 - 5,x);
-        x = Math.max(-tileRadius * 0.6 + 5,x);
-        y = Math.min(tileRadius * perspRatio - 5,y);
-        y = Math.max(-tileRadius * perspRatio + 5,y);
-        curLines.unshift({x:x,y:y});
-    });
     return curLines;
   }
 
@@ -840,52 +591,28 @@ function componentToHex(c) {
     }
 
     tiles.forEach(t => {
-
-        var heightNumber = 0;
-        switch(t.biome){
-            case 0:
-                //Lowlands
-                heightNumber = Math.abs((noise.perlin2(t.x/10, t.y/10)+1)/2 * 3);
-                break;
-            case 1:
-                //Flatlands
-                heightNumber = Math.abs((noise.perlin2(t.x/10, t.y/10)+1)/2 * 4);
-                break;
-            case 2:
-                //Bumpy
-                heightNumber = Math.abs((noise.perlin2(t.x/10, t.y/10)+1)/2 * 6);
-                break;
-            case 3:
-                //Moutains
-                heightNumber = Math.abs((noise.perlin2(t.x/10, t.y/10)+1)/2 * 8);
-                break;
-            case 4:
-                //Peak
-                heightNumber = Math.abs((noise.perlin2(t.x/10, t.y/10)+1)/2 * 10);
-                break;
-        }
-        heightNumber = Math.max(0,Math.trunc(heightNumber));
+        var heightNumber = Math.trunc(Math.abs((perlin2(t.x/10, t.y/10)+1)/2 * (3 + t.biome * 2)));
         t.height = tileStepHeight * heightNumber;
         t.colour = colours.find(c => c.levels.includes(heightNumber)).colour;
 
-        if(Math.abs(startX - t.x) > (width * 0.005) && Math.random() * 100 > 85 + Math.min(15,Math.abs(startX - t.x)/15)){
+        if(Math.abs(startX - t.x) > (width * 0.005) && Math.random() > 0.85){
             addResourceToTile(t,"IRON",Math.random() * 15,10,0.6);
-        } else if(Math.abs(startX - t.x) > (width * 0.05) && Math.random() * 100 > 90) {
+        } else if(Math.abs(startX - t.x) > (width * 0.05) && Math.random() > 0.90) {
            addResourceToTile(t,"COPPER",Math.random() * 15,10,0.5);
-        } else if(Math.abs(startX - t.x) > (width * 0.08) && Math.random() * 100 > 92) {
+        } else if(Math.abs(startX - t.x) > (width * 0.08) && Math.random() > 0.92) {
             addResourceToTile(t,"CARBON",Math.random() * 15,10,0.6);
-        } else if(Math.abs(startX - t.x) > (width * 0.12) && Math.random() * 100 > 96) {
+        } else if(Math.abs(startX - t.x) > (width * 0.12) && Math.random() > 0.96) {
             addResourceToTile(t,"LITHIUM",Math.random() * 15,10,0.6);
-        } else if(Math.abs(startX - t.x) > (width * 0.14) && Math.random() * 100 > 85) {
+        } else if(Math.abs(startX - t.x) > (width * 0.14) && Math.random() > 0.85) {
             addResourceToTile(t,"SILICON",Math.random() * 15,10,0.5);
-        } else if(Math.abs(startX - t.x) > (width * 0.24) && Math.random() * 100 > 85) {
+        } else if(Math.abs(startX - t.x) > (width * 0.24) && Math.random() > 0.85) {
             var ammount = Math.random() * 15;
             addResourceToTile(t,"PLUTONIUM",ammount,10,0.7);
             addHazardToTile(t,4);
-        } else if(Math.random() * 100 > 85 + Math.min(15,Math.abs(startX - t.x)/10)) {
+        } else if(Math.random() > 0.88) {
             addResourceToTile(t,"ROCK",Math.random() * 15,10,0.9);
         }
-        if(Math.abs(startX - t.x) > (width * 0.16) && Math.random() * 100 > 95){
+        if(Math.abs(startX - t.x) > (width * 0.16) && Math.random() > 0.95){
             addHazardToTile(t,Math.random() * 5);
         }
     });
@@ -905,19 +632,7 @@ function componentToHex(c) {
   }
 
 //Source
-
-var roverImg = document.getElementById("rover");
-var towerImg = document.getElementById("tower");
-var constructorImg = document.getElementById("constructor");
-var solarImg = document.getElementById("solar");
-var minerImg = document.getElementById("miner");
-var batteryImg = document.getElementById("battery");
-var rtgImg = document.getElementById("rtg");
-var teledepotImg = document.getElementById("teledepot");
-var roboshopImg = document.getElementById("shop");
-var generatorImg = document.getElementById("generator");
-
-var menuItems = ["Resume","Main Menu","Save Game","Load Game","Mute Music","Mute Sound FX","Controls"];
+var menuItems = ["Resume","Main Menu","Save Game","Load Game","Mute Music","Mute Sound FX"];
 var selectedMenuItem = 0;
 
 var mainMenuItems = ["New Game","Load Game","Mute Music","Mute Sound FX"];
@@ -928,27 +643,34 @@ var confirmSound = () => zzfx(...[soundFxVolume,.01,593,,.03,0,1,2.04,.1,.1,50,.
 var denySound = () => zzfx(...[soundFxVolume,0,604,,,.13,4,2.01,-0.1,.2,50,,.01,,,.4,.05,.68,.05]).start();
 
 var startRecipes = [{product:"EXIT",items:[],energy:0},{product:"RADAR",items:[{type:"IRON",value:18}],energy:8}];
-var prices = [{type:"EXIT",price:0,ammount:0},
-              {type:"ROCK",price:1,ammount:1},{type:"ROCK",price:1,ammount:10},{type:"ROCK",price:1,ammount:50},
-              {type:"IRON",price:5,ammount:1},{type:"IRON",price:5,ammount:10},{type:"IRON",price:5,ammount:50},
-              {type:"COPPER",price:25,ammount:1},{type:"COPPER",price:25,ammount:10},{type:"COPPER",price:25,ammount:50},
-              {type:"CARBON",price:50,ammount:1},{type:"CARBON",price:50,ammount:10},{type:"CARBON",price:50,ammount:50},
-              {type:"LITHIUM",price:75,ammount:1},{type:"LITHIUM",price:75,ammount:10},{type:"LITHIUM",price:75,ammount:50},
-              {type:"SILICON",price:100,ammount:1},{type:"SILICON",price:100,ammount:10},{type:"SILICON",price:100,ammount:50},
-              {type:"PLUTONIUM",price:200,ammount:1},{type:"PLUTONIUM",price:200,ammount:10},{type:"PLUTONIUM",price:200,ammount:50}];
+var resPrices = [{type:"ROCK",price:1,},
+                 {type:"IRON",price:5,},
+                 {type:"COPPER",price:25,},
+                 {type:"CARBON",price:50,},
+                 {type:"LITHIUM",price:75},
+                 {type:"SILICON",price:100},
+                 {type:"PLUTONIUM",price:200}];
+
+var prices = Array.from(new Array(21).keys()).map(i => {
+    var thirds = Math.trunc(i/3);
+    var p = resPrices[thirds];
+    return {type:p.type,price:p.price,ammount:[1,10,50][i - thirds*3]};
+});
+prices.unshift({type:"EXIT",price:0,ammount:0});
+
 var shopItemsStart = [{type:"EXIT",item:"EXIT",cost:0,costMulti:0,desc:[]},
                  {type:"CRAFT UPGRADES",item:"RESOURCE STORAGE",cost:350,costMulti:2,desc:["Increases JMC™ Craft resource","capacity by 20%"]},
                  {type:"CRAFT UPGRADES",item:"BATTERY EFFICENCY",cost:200,costMulti:1.6,desc:["Increases JMC™ Craft battery capacity","by 25%"]},
-                 {type:"CRAFT UPGRADES",item:"CRAFT HEIGHT TOLERANCE",cost:350,costMulti:1.5,desc:["Allows JMC™ Craft to","move between tiles"," with a larger height"," difference."]},
+                 {type:"CRAFT UPGRADES",item:"CRAFT HEIGHT TOLERANCE",cost:350,costMulti:1.5,desc:["Allows JMC™ Craft to","move between tiles","with a larger height","difference."]},
 
                  {type:"RECIPES",item:"CONSTRUCTOR",cost:500,desc:["Adds JMC™ Constructor to","Constructor Database.","Constructors manufacture other","JMC™ Buildings."]},
-                 {type:"RECIPES",item:"MINER",cost:750,desc:["Adds JMC™ Miner to Constructor","Database.","JMC™ Miners use energy to","gather resources 5 times"," more efficent than","the JMC™ Craft"]},
+                 {type:"RECIPES",item:"MINER",cost:750,desc:["Adds JMC™ Miner to Constructor","Database.","JMC™ Miners use energy to","gather resources 5 times","more efficent than","the JMC™ Craft"]},
                  {type:"RECIPES",item:"GENERATOR",cost:1025,desc:["Adds JMC™ Generator to Constructor","Database.","JMC™ Generators create energy from","carbon."]},
-                 {type:"RECIPES",item:"SOLAR",cost:1250,desc:["Adds JMC™ Solar Panel to ","Constructor Database.","JMC™ Solar Panels generate","fluctuating energy."]},
-                 {type:"RECIPES",item:"BATTERY",cost:1650,desc:["Adds JMC™ Battery to ","Constructor Database.","JMC™ Batteries store","energy and release it","periodically."]},
-                 {type:"RECIPES",item:"RTG",cost:2500,desc:["Adds JMC™ RTG to ","Constructor Database.","JMC™ RTGs generate","constant energy."]},
+                 {type:"RECIPES",item:"SOLAR",cost:1250,desc:["Adds JMC™ Solar Panel to","Constructor Database.","JMC™ Solar Panels generate","fluctuating energy."]},
+                 {type:"RECIPES",item:"BATTERY",cost:1650,desc:["Adds JMC™ Battery to","Constructor Database.","JMC™ Batteries store","energy and release it","periodically."]},
+                 {type:"RECIPES",item:"RTG",cost:2500,desc:["Adds JMC™ RTG to","Constructor Database.","JMC™ RTGs generate","constant energy."]},
 
-                 {type:"BUILDING UPGRADES",item:"RADAR RADIUS",cost:1000,costMulti:1.5,desc:["Increases JMC™ Radar uncover distance","by 3 tiles."]},
+                 {type:"BUILDING UPGRADES",item:"RADAR RADIUS",cost:1000,costMulti:1.5,desc:["Increases JMC™ Radar uncover","distance by 3 tiles."]},
                  {type:"BUILDING UPGRADES",item:"CONSTRUCTOR SPEED",cost:200,costMulti:1.8,desc:["Increases JMC™ Constructor speed","by 30%"]},
                  {type:"BUILDING UPGRADES",item:"CONSTRUCTOR TRANSMITTER",cost:1850,desc:["JMC™ Constructor transmits","finished constructions to","JMC™ Craft."]},
                  {type:"BUILDING UPGRADES",item:"MINER SPEED",cost:750,desc:["Increases JMC™ Miner speed","by 50%"]},
@@ -966,15 +688,18 @@ var playerEnergy = 50;
 var prevPlayerEnergy = 50;
 var playerDeadState = false;
 
-var playerBalance = 0;
+var playerBalance;
 var playerBalanceDisplayed = 0;
 
 var quotas = [800,1500,2500,5000,10000,20000,50000];
 var failedQuota = false;
 var finishedQuotas = false;
 
-canvas.width = 1280;
-canvas.height = 720;
+var canW = 1280;
+var canH = 720;
+
+canvas.width = canW;
+canvas.height = canH;
 canvas.style.width = canvas.width + "px";
 canvas.style.height = canvas.height + "px";
 
@@ -991,8 +716,8 @@ var selectedSell = 0;
 var selectedSellDisplayPrice = 0;
 var selectedBuy = 0;
 
-var playerResources = [];
-var playerBuildings = [{type:"RADAR",value:1}];
+var playerResources;
+var playerBuildings;
 var selectedBuilding = 0;
 
 //Modes
@@ -1006,26 +731,23 @@ var buyingMode = false;
 var endlessMode = false;
 
 //Player Upgrades:
-var playerMaxEnergy = 50;
-var playerDrainRate = 1;
-var maxStepHeight = 1;
-var mineFactor = 1;
-var maxStorage = 50;
+var playerMaxEnergy;
+var maxStepHeight;
+var maxStorage;
 
 //Building Upgrades:
-var solarOutput = 2;
-var craftSpeed = 1;
-var minerFactor = 5;
-var mineSpeed = 1;
-var minerTransmit = false;
-var constructorTransmit = false;
-var batteryDischarge = 5;
-var RTGOutput = 5;
-var generatorOutput = 2;
-var radarRange = 6;
+var solarOutput;
+var craftSpeed;
+var mineSpeed;
+var minerTransmit;
+var constructorTransmit;
+var batteryDischarge;
+var RTGOutput;
+var generatorOutput;
+var radarRange;
 
-var time = 0;
-var sols = 0;
+var time;
+var sols;
 
 var hudFlashTimer = 0;
 var hudFlash = false;
@@ -1036,17 +758,14 @@ var interactTimerSpeed = 1;
 
 var batteryStatusMessage = "Nominal";
 
-//var hudColourScheme = {outline:"#00FF00",infill:"#000000AA",text:"#00FF00",staticText:"#00AA00",dynamicText:"#00FF00"};
-var hudColourScheme = {outline:"#FFFFFF",infill:"#000000AA",text:"#FFFFFF",staticText:"#AAAAAA",dynamicText:"#FFFFFF"};
-
 let mySongData = zzfxM(...song);
 let myAudioNode = zzfxP(...mySongData);
 myAudioNode.loop = true;
 myAudioNode.start();
 
-var stars = Array.from(Array(500).keys()).map(i => {return {x:(Math.random() * 2 * canvas.width) - canvas.width,y:(Math.random() * 2 * canvas.height) - canvas.height,r:Math.random() * 3}});
+var stars = Array.from(Array(500).keys()).map(i => {return {x:(Math.random() * 2 * canW) - canW,y:(Math.random() * 2 * canH) - canH,r:Math.random() * 3}});
 
-noise.seed(Math.random());
+seed(Math.random());
 
 var mapWidth = 500;
 var otherColourScheme = [{levels:[0,1,2],colour:new Colour(62, 47, 91,255)},{levels:[3,4],colour:new Colour(190, 184, 235,255)},{levels:[5,6,7],colour:new Colour(64, 121, 140,255)},{levels:[8,9],colour:new Colour(115, 251, 211,255)}];
@@ -1056,6 +775,8 @@ var runGameBool = false;
 var runIntro = false;
 var textScroll = false;
 var sentanceCounter = 0;
+
+var fT = (s,x,y) => ctx.fillText(s, x, y);
 
 var millisOnLastFrame = new Date().getTime();
 var frameSpeedFactor = 0;
@@ -1077,52 +798,52 @@ function gameloop(){
 }
 
 function intro(){
-    ctx.strokeStyle = hudColourScheme.outline;
-    ctx.fillStyle = hudColourScheme.infill;
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.fillStyle = "#000000AA";
     generateUIOverlay(0.02,0.9,0.1);
 
-    var textX = canvas.width * 0.13;
-    var textY = canvas.height * 0.11;
+    var textX = canW * 0.13;
+    var textY = canH * 0.11;
     ctx.font = "22px Arial";
     ctx.fillStyle = "#FFFFFF";
     ctx.strokeStyle = "#000000";
     ctx.textAlign = "start"; 
     ctx.textBaseline = "alphabetic";
-    ctx.fillText("Welcome, valued Roboemployee, to the JMC™ Autonomous Mining Initative.", textX,textY);
-    ctx.fillText("Over the course of the next 7 solar rotations your mining effectiveness will be assesed by", textX,50 + textY);
-    ctx.fillText("your ability to meet daily monetary quotas.", textX,75 + textY);
+    fT("Welcome, valued Roboemployee, to the JMC™ Autonomous Mining Initative.", textX,textY);
+    fT("Over the course of the next 7 solar rotations your mining effectiveness will be assesed by", textX,50 + textY);
+    fT("your ability to meet daily monetary quotas.", textX,75 + textY);
 
-    ctx.fillText("Quotas can be met by ", textX,100 + textY);
+    fT("Quotas can be met by ", textX,100 + textY);
     var xOff = ctx.measureText("Quotas can be met by ").width;
     ctx.fillStyle = "#00FF00";
-    ctx.fillText("Mining (E/Space)", textX + xOff,100 + textY);
+    fT("Mining (E/Space)", textX + xOff,100 + textY);
     xOff = xOff + ctx.measureText("Mining (E/Space)").width;
     ctx.fillStyle = "#FFFFFF";
-    ctx.fillText(" and selling resources to the TELEDEPOT.", textX+xOff,100 + textY);
+    fT(" and selling resources to the TELEDEPOT.", textX+xOff,100 + textY);
 
-    ctx.fillText("Failure to complete these quotas will result in immediate nuclear vapourisation.", textX,150 + textY);
-    ctx.fillText("JMC™ Operations & Managment regrets to inform you that terrain maps", textX,200 + textY);
-    ctx.fillText("for JMC™ Planet 404 have been lost, you are required to use your", textX,225 + textY);
+    fT("Failure to complete these quotas will result in immediate nuclear vapourisation.", textX,150 + textY);
+    fT("JMC™ Operations & Managment regrets to inform you that terrain maps", textX,200 + textY);
+    fT("for JMC™ Planet 404 have been lost, you are required to use your", textX,225 + textY);
 
-    ctx.fillText("JMC™ Craft's ", textX,250 + textY);
+    fT("JMC™ Craft's ", textX,250 + textY);
     xOff = ctx.measureText("JMC™ Craft's ").width;
     ctx.fillStyle = "#00FF00";
-    ctx.fillText("Build Mode (B) & Remove Mode (R)", textX + xOff,250 + textY);
+    fT("Build Mode (B) & Remove Mode (R)", textX + xOff,250 + textY);
     xOff = xOff + ctx.measureText("Build Mode (B) & Remove Mode (R)").width;
     ctx.fillStyle = "#FFFFFF";
-    ctx.fillText(" to place RADARs and uncover more terrain.", textX+xOff,250 + textY);
+    fT(" to place RADARs and uncover more terrain.", textX+xOff,250 + textY);
 
-    ctx.fillText("The CONSTRUCTOR creates buildings, such as extra RADARs, from resources and energy.", textX,300 + textY);
-    ctx.fillText("Your JMC™ Craft has a limited battery capacity, failure to charge the battery", textX,325 + textY);
-    ctx.fillText("will result in loss of resources and buildings in possesion.", textX,350 + textY);
-    ctx.fillText("An RTG has been made available to provide energy and charge your JMC™ Craft.", textX,375 + textY);
-    ctx.fillText("A ROBOSHOP has been made available for you to purchase upgrades to aid effectiveness.", textX,400 + textY);
+    fT("The CONSTRUCTOR creates buildings, such as extra RADARs, from resources and energy.", textX,300 + textY);
+    fT("Your JMC™ Craft has a limited battery capacity, failure to charge the battery", textX,325 + textY);
+    fT("will result in loss of resources and buildings in possesion.", textX,350 + textY);
+    fT("An RTG has been made available to provide energy and charge your JMC™ Craft.", textX,375 + textY);
+    fT("A ROBOSHOP has been made available for you to purchase upgrades to aid effectiveness.", textX,400 + textY);
 
     ctx.textAlign = "center";
-    ctx.fillText("WASD to move, left shift to sprint, E/Space to interact.", canvas.width/2,450 + textY);
+    fT("WASD to move, left shift to sprint, E/Space to interact.", canW/2,450 + textY);
 
-    ctx.fillText("Good Luck.", canvas.width/2,canvas.height * 0.82);
-    ctx.fillText("Press E/Space to start",canvas.width/2,25 + canvas.height * 0.85);
+    fT("Good Luck.", canW/2,canH * 0.82);
+    fT("Press E/Space to start",canW/2,25 + canH * 0.85);
     if(inputs.inter == true && prevInputs.inter == false){
         runIntro = false;
         runGameBool = true;
@@ -1132,7 +853,7 @@ function intro(){
 function handleMainMenu(){
     ctx.fillStyle = "#FFFFF0";
     ctx.save();
-    ctx.translate(canvas.width/2,canvas.height/2);
+    ctx.translate(canW/2,canH/2);
     stars.forEach(s => {
         ctx.beginPath();
         ctx.arc(s.x,s.y,s.r,0, 2 * Math.PI);
@@ -1144,7 +865,7 @@ function handleMainMenu(){
     ctx.textAlign = "center"; 
     ctx.textBaseline = "middle";
     ctx.font = "65px Tahoma";
-    ctx.fillText("Planet 404",canvas.width/2,canvas.height*0.1);
+    fT("Planet 404",canW/2,canH*0.1);
 
     if(inputs.up == true && prevInputs.up == false){
         selectedMenuItem = Math.max(0,selectedMenuItem - 1);
@@ -1195,31 +916,25 @@ function handleMainMenu(){
         var index = mainMenuItems.indexOf(i);
         if(selectedMenuItem == index){
             var textLength = ctx.measureText(i).width;
-            ctx.drawImage(roverImg, Math.trunc((canvas.width * 0.45) - (textLength * 0.5) - (roverImg.width * 0.5)), Math.trunc(canvas.height * 0.3 + (80 * index) - (roverImg.height * 0.5)));
-            ctx.drawImage(roverImg, Math.trunc((canvas.width * 0.55) + (textLength * 0.5) - (roverImg.width * 0.5)), Math.trunc(canvas.height * 0.3 + (80 * index) - (roverImg.height * 0.5)));
-            ctx.fillStyle = hudColourScheme.dynamicText;
+            ctx.drawImage(roverImg, Math.trunc((canW * 0.45) - (textLength * 0.5) - (roverImg.width * 0.5)), Math.trunc(canH * 0.3 + (80 * index) - (roverImg.height * 0.5)));
+            ctx.drawImage(roverImg, Math.trunc((canW * 0.55) + (textLength * 0.5) - (roverImg.width * 0.5)), Math.trunc(canH * 0.3 + (80 * index) - (roverImg.height * 0.5)));
+            ctx.fillStyle = "#FFFFFF";
         } else {
-            ctx.fillStyle = hudColourScheme.staticText;
+            ctx.fillStyle = "#AAAAAA";
         }
-        ctx.fillText(i,canvas.width*0.5,canvas.height * 0.3 + (80 * index));
+        fT(i,canW*0.5,canH * 0.3 + (80 * index));
     });
 
 }
 
+//Waypoint
 function initGame(){
     //Generate Terrain
     var biomeSeq = Array.from(Array(mapWidth).keys()).map(i => {
         var dist = Math.abs(spawnX - i) / (mapWidth * 0.5);
-        var biome = Math.min(4,Math.abs(Math.trunc(5 * (Math.cos((Math.PI * 2) * (dist))))));
-        return biome;
+        return Math.min(4,Math.abs(Math.trunc(5 * (Math.cos((Math.PI * 2) * (dist))))));
     });
     generateMap(mapWidth,biomeSeq,otherColourScheme,spawnX);
-    //Place start buildings
-    placeBuilding(tiles.find(t => t.x == spawnX && t.y == 2),{type:"RADAR",value:1});
-    placeBuilding(tiles.find(t => t.x == spawnX && t.y == 0),{type:"RTG",value:1});
-    placeBuilding(tiles.find(t => t.x == spawnX - 1 && t.y == 0),{type:"CONSTRUCTOR",value:1});
-    placeBuilding(tiles.find(t => t.x == spawnX + 3 && t.y == 2),{type:"TELEDEPOT",value:1});
-    placeBuilding(tiles.find(t => t.x == spawnX - 3 && t.y == 1),{type:"ROBOSHOP",value:1});
     updatePlayerPos(0,0);
     //Reset variables
     playerBuildings = [{type:"RADAR",value:1}];
@@ -1231,18 +946,15 @@ function initGame(){
 
     playerMaxEnergy = 50;
     playerEnergy = playerMaxEnergy;
-    playerDrainRate = 1;
     maxStepHeight = 1;
-    mineFactor = 1;
     maxStorage = 50;
 
     solarOutput = 1;
     craftSpeed = 1;
-    minerFactor = 5;
     mineSpeed = 3;
     minerTransmit = false;
     constructorTransmit = false;
-    batteryDischarge = 1.5;
+    batteryDischarge = 2.5;
     RTGOutput = 5;
     radarRange = 6;
 
@@ -1253,12 +965,19 @@ function initGame(){
 
     prevInputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,info:false,esc:false,speve:false};
     inputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,info:false,esc:false,speve:false};
+
+    //Place start buildings
+    placeBuilding(tiles.find(t => t.x == spawnX && t.y == 2),{type:"RADAR",value:1});
+    placeBuilding(tiles.find(t => t.x == spawnX && t.y == 0),{type:"RTG",value:1});
+    placeBuilding(tiles.find(t => t.x == spawnX - 1 && t.y == 0),{type:"CONSTRUCTOR",value:1});
+    placeBuilding(tiles.find(t => t.x == spawnX + 3 && t.y == 2),{type:"TELEDEPOT",value:1});
+    placeBuilding(tiles.find(t => t.x == spawnX - 3 && t.y == 1),{type:"ROBOSHOP",value:1});
 }
 
 function runGame(){
     ctx.fillStyle = "#FFFFF0";
     ctx.save();
-    ctx.translate(canvas.width/2,canvas.height/2);
+    ctx.translate(canW/2,canH/2);
     ctx.rotate((Math.PI/180) * ((sols * 360) + time));
     stars.forEach(s => {
         ctx.beginPath();
@@ -1267,35 +986,30 @@ function runGame(){
     });
     ctx.restore();
     
-    renderMap(canvas.height * 0.71,playerPosOffset);
+    renderMap(canH * 0.71,playerPosOffset);
 
 
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "center"; 
     if(escMenu && !playerDeadState && !failedQuota){
-        ctx.fillStyle = "#FFFFFF";
-        ctx.textAlign = "center"; 
         ctx.textBaseline = "middle";
         ctx.font = "45px Tahoma";
-        ctx.fillText("Paused",canvas.width/2,30);
+        fT("Paused",canW/2,30);
         ctx.font = "35px Tahoma";
         menuItems.forEach(i => {
             var index = menuItems.indexOf(i);
             if(selectedMenuItem == index){
                 var textLength = ctx.measureText(i).width;
-                ctx.drawImage(roverImg, Math.trunc((canvas.width * 0.45) - (textLength * 0.5) - (roverImg.width * 0.5)), Math.trunc(canvas.height * 0.15 + (50 * index) - (roverImg.height * 0.5)));
-                ctx.drawImage(roverImg, Math.trunc((canvas.width * 0.55) + (textLength * 0.5) - (roverImg.width * 0.5)), Math.trunc(canvas.height * 0.15 + (50 * index) - (roverImg.height * 0.5)));
-                ctx.fillStyle = hudColourScheme.dynamicText;
+                ctx.drawImage(roverImg, Math.trunc((canW * 0.45) - (textLength * 0.5) - (roverImg.width * 0.5)), Math.trunc(canH * 0.15 + (50 * index) - (roverImg.height * 0.5)));
+                ctx.drawImage(roverImg, Math.trunc((canW * 0.55) + (textLength * 0.5) - (roverImg.width * 0.5)), Math.trunc(canH * 0.15 + (50 * index) - (roverImg.height * 0.5)));
+                ctx.fillStyle = "#FFFFFF";
             } else {
-                ctx.fillStyle = hudColourScheme.staticText;
+                ctx.fillStyle = "#AAAAAA";
             }
-            ctx.fillText(i,canvas.width*0.5,canvas.height * 0.15 + (50 * index));
+            fT(i,canW*0.5,canH * 0.15 + (50 * index));
         });
         handleMenuInput();
     } else if(!playerDeadState && !failedQuota && !finishedQuotas) {
-        ctx.font = "15px Arial";
-        ctx.fillStyle = "#FFFFFF";
-        ctx.strokeStyle = "#000000";
-        ctx.textAlign = "start"; 
-        ctx.textBaseline = "alphabetic";
         //Tile updates
         tiles.filter(t => t.isVisible && t.building.type != "NONE").forEach(t => handleTileUpdates(t));
         
@@ -1337,7 +1051,7 @@ function runGame(){
             hudFlash = false;
             batteryStatusMessage = "Paused";
         } else {
-            playerEnergy -= (playerDrainRate + playerTile.hazard) * (frameSpeedFactor/1000);
+            playerEnergy -= (1 + playerTile.hazard) * (frameSpeedFactor/1000);
         }
 
         handleHUD();
@@ -1352,10 +1066,9 @@ function runGame(){
         ctx.strokeStyle = "#000000";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText("You Died",canvas.width/2,canvas.height * 0.2);
+        fT("You Died",canW/2,canH * 0.2);
         if(roverImgScale < 0.4){
-            (textScale*0.3).toFixed(0) + "px Arial";
-            ctx.fillText("Press E/Space to respawn",canvas.width/2,canvas.height * 0.3);
+            fT("Press E/Space to respawn",canW/2,canH * 0.3);
             if(inputs.inter == true && prevInputs.inter == false){
                 playerEnergy = playerMaxEnergy;
                 playerResources = [];
@@ -1379,11 +1092,10 @@ function runGame(){
         ctx.strokeStyle = "#000000";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText("Quota Failed",canvas.width/2,canvas.height * 0.2);
-        tiles.forEach(t => t.hazard += (frameSpeedFactor/800));
+        fT("Quota Failed",canW/2,canH * 0.2);
+        tiles.forEach(t => t.hazard = Math.min(6, t.hazard + (frameSpeedFactor/800)));
         if(roverImgScale < 0.4){
-            (textScale*0.3).toFixed(0) + "px Arial";
-            ctx.fillText("Press E to return to main menu",canvas.width/2,canvas.height * 0.3);
+            fT("Press E to return to main menu",canW/2,canH * 0.3);
             if(inputs.inter == true && prevInputs.inter == false){
                 mainMenu = true;
                 escMenu = false;
@@ -1396,34 +1108,34 @@ function runGame(){
         if(roverImgScale > 0.8){
             ctx.fillStyle = "#FFFFFF" + componentToHex(255 - (255 * ((1 - roverImgScale)/0.2)));
             ctx.beginPath();
-            ctx.arc(canvas.width/2, canvas.height/2, canvas.width * ((1 - roverImgScale)/0.2), 0, 2 * Math.PI);
+            ctx.arc(canW/2, canH/2, canW * ((1 - roverImgScale)/0.2), 0, 2 * Math.PI);
             ctx.fill();
         } else {
             ctx.fillStyle = "#FFFFFF" + componentToHex((255 * (roverImgScale/0.8)));
-            ctx.fillRect(0,0,canvas.width, canvas.height);
+            ctx.fillRect(0,0,canW, canH);
         }
         
     } else if(finishedQuotas){
-        ctx.strokeStyle = hudColourScheme.outline;
-        ctx.fillStyle = hudColourScheme.infill;
+        ctx.strokeStyle = "#FFFFFF";
+        ctx.fillStyle = "#000000A";
         generateUIOverlay(0.05,0.5,0.2);
 
-        var textX = canvas.width/2 * 0.45;
+        var textX = canW/2 * 0.45;
 
         ctx.font = "20px Arial";
         ctx.fillStyle = "#FFFFFF";
         ctx.strokeStyle = "#000000";
         ctx.textAlign = "start"; 
         ctx.textBaseline = "alphabetic";
-        ctx.fillText("Congratulations, you have completed all JMC™ Mining Initative quotas.", textX,canvas.height * 0.2);
-        ctx.fillText("Due to the costs of JMC™ Craft recovery, you have been offered an", textX,25 + canvas.height * 0.2);
-        ctx.fillText("involutary position as cheif of planetary excavations and are forbidden", textX,50 + canvas.height * 0.2);
-        ctx.fillText("from leaving this planet.", textX,75 + canvas.height * 0.2);
+        fT("Congratulations, you have completed all JMC™ Mining Initative quotas.", textX,canH * 0.2);
+        fT("Due to the costs of JMC™ Craft recovery, you have been offered an", textX,25 + canH * 0.2);
+        fT("involutary position as cheif of planetary excavations and are forbidden", textX,50 + canH * 0.2);
+        fT("from leaving this planet.", textX,75 + canH * 0.2);
 
         ctx.textAlign = "center";
-        ctx.fillText("Thanks for playing!", canvas.width/2,canvas.height * 0.45);
+        fT("Thanks for playing!", canW/2,canH * 0.45);
         if(time >= 1.5){
-            ctx.fillText("Press E to enter endless mode",canvas.width/2,25 + canvas.height * 0.45);
+            fT("Press E to enter endless mode",canW/2,25 + canH * 0.45);
             if(inputs.inter == true && prevInputs.inter == false){
                 endlessMode = true;
                 finishedQuotas = false;
@@ -1450,8 +1162,8 @@ function runGame(){
             }
         } else if(!(finishedQuotas || endlessMode || failedQuota)){
             failedQuota = true;
-            s([,,299,.01,.03,1.95,3,.1,.9,.6,,,,.5,.9,.6,,.52,.06]);
-            s([,0,160,,1.25,.04,2,,,,-25,.25,.01,,,,.01]);
+            s([soundFxVolume,,299,.01,.03,1.95,3,.1,.9,.6,,,,.5,.9,.6,,.52,.06]);
+            s([soundFxVolume,0,160,,1.25,.04,2,,,,-25,.25,.01,,,,.01]);
         }
         sols += 1;
     }
@@ -1581,8 +1293,7 @@ function handleInput(){
             handleBuildingInteraction(playerTile);
         } else {
             if(playerTile.resource.type != "NONE"){
-                var totalMined = Math.round(mineFactor);
-                if(addToPlayerResources(playerTile.resource.type,totalMined,true) > 0){
+                if(addToPlayerResources(playerTile.resource.type,1) > 0){
                     mineTile(playerTile);
                     s([soundFxVolume,0,320,.02 - (playerTile.resource.value/1000),,0,4,.1,,,,,,,,.2,.01,0,.01]);
                 } else {
@@ -1599,8 +1310,7 @@ function handleInput(){
             handleBuildingInteraction(playerTile);
         } else {
             if(playerTile.resource.type != "NONE"){
-                var totalMined = Math.round(mineFactor);
-                if(addToPlayerResources(playerTile.resource.type,totalMined,true) > 0){
+                if(addToPlayerResources(playerTile.resource.type,1) > 0){
                     mineTile(playerTile);
                     s([soundFxVolume,0,320,.02 - (playerTile.resource.value/1000),,0,4,.1,,,,,,,,.2,.01,0,.01]);
                 } else {
@@ -1725,35 +1435,9 @@ function handleMenuInput(){
 }
 
 function saveGame(){
-    var ls = window.localStorage;
-    ls.setItem('Planet404_TYUDHSJ_TILES', JSON.stringify(tiles));
-    ls.setItem('Planet404_TYUDHSJ_TIME', JSON.stringify(time));
-    ls.setItem('Planet404_TYUDHSJ_SOLS', JSON.stringify(sols));
-
-    ls.setItem('Planet404_TYUDHSJ_RESOURCES', JSON.stringify(playerResources));
-    ls.setItem('Planet404_TYUDHSJ_BUILDINGS', JSON.stringify(playerBuildings));
-    ls.setItem('Planet404_TYUDHSJ_BALANCE', JSON.stringify(playerBalance));
-    ls.setItem('Planet404_TYUDHSJ_PLAYERENERGY', JSON.stringify(playerEnergy));
-
-    ls.setItem('Planet404_TYUDHSJ_RECIPES', JSON.stringify(recipes));
-    ls.setItem('Planet404_TYUDHSJ_SHOP', JSON.stringify(shopItems));
-
-    ls.setItem('Planet404_TYUDHSJ_playerMaxEnergy', JSON.stringify(playerMaxEnergy));
-    ls.setItem('Planet404_TYUDHSJ_playerDrainRate', JSON.stringify(playerDrainRate));
-    ls.setItem('Planet404_TYUDHSJ_maxStepHeight', JSON.stringify(maxStepHeight));
-    ls.setItem('Planet404_TYUDHSJ_mineFactor', JSON.stringify(mineFactor));
-    ls.setItem('Planet404_TYUDHSJ_maxStorage', JSON.stringify(maxStorage));
-    ls.setItem('Planet404_TYUDHSJ_radarRange', JSON.stringify(radarRange));
-
-    ls.setItem('Planet404_TYUDHSJ_solarOutput', JSON.stringify(solarOutput));
-    ls.setItem('Planet404_TYUDHSJ_craftSpeed', JSON.stringify(craftSpeed));
-    ls.setItem('Planet404_TYUDHSJ_minerFactor', JSON.stringify(minerFactor));
-    ls.setItem('Planet404_TYUDHSJ_mineSpeed', JSON.stringify(mineSpeed));
-    ls.setItem('Planet404_TYUDHSJ_minerTransmit', JSON.stringify(minerTransmit));
-    ls.setItem('Planet404_TYUDHSJ_constructorTransmit', JSON.stringify(constructorTransmit));
-    ls.setItem('Planet404_TYUDHSJ_batteryDischarge', JSON.stringify(batteryDischarge));
-    ls.setItem('Planet404_TYUDHSJ_RTGOutput', JSON.stringify(RTGOutput));
-    ls.setItem('Planet404_TYUDHSJ_ENDLESS', JSON.stringify(endlessMode));
+    window.localStorage.setItem('Planet404_6473_DATA', JSON.stringify([tiles,time,sols,playerResources,playerBuildings,playerBalance,playerEnergy,recipes,shopItems,
+                                                          playerMaxEnergy,maxStepHeight,maxStorage,radarRange,solarOutput,craftSpeed,mineSpeed,minerTransmit,constructorTransmit,
+                                                          batteryDischarge,RTGOutput,endlessMode]));
 }
 
 function loadGame(){
@@ -1768,36 +1452,34 @@ function loadGame(){
     selectedBuilding = 0;
     selectingSell = 0;
 
-    var ls = window.localStorage;
-    tiles = JSON.parse(ls.getItem('Planet404_TYUDHSJ_TILES'));
-    time = JSON.parse(ls.getItem('Planet404_TYUDHSJ_TIME'));
-    sols = JSON.parse(ls.getItem('Planet404_TYUDHSJ_SOLS'));
+    var data = JSON.parse(window.localStorage.getItem('Planet404_6473_DATA'));
+    tiles = data[0];
 
-    playerResources = JSON.parse(ls.getItem('Planet404_TYUDHSJ_RESOURCES'));
-    playerBuildings = JSON.parse(ls.getItem('Planet404_TYUDHSJ_BUILDINGS'));
-    playerBalance = JSON.parse(ls.getItem('Planet404_TYUDHSJ_BALANCE'));
-    playerEnergy = JSON.parse(ls.getItem('Planet404_TYUDHSJ_PLAYERENERGY'));
+    time = data[1];
+    sols = data[2];
 
-    recipes = JSON.parse(ls.getItem('Planet404_TYUDHSJ_RECIPES'));
-    shopItems = JSON.parse(ls.getItem('Planet404_TYUDHSJ_SHOP'));
+    playerResources = data[3];
+    playerBuildings = data[4];
+    playerBalance = data[5];
+    playerEnergy = data[6];
 
-    playerMaxEnergy = JSON.parse(ls.getItem('Planet404_TYUDHSJ_playerMaxEnergy'));
-    playerDrainRate = JSON.parse(ls.getItem('Planet404_TYUDHSJ_playerDrainRate'));
-    maxStepHeight = JSON.parse(ls.getItem('Planet404_TYUDHSJ_maxStepHeight'));
-    mineFactor = JSON.parse(ls.getItem('Planet404_TYUDHSJ_mineFactor'));
-    maxStorage = JSON.parse(ls.getItem('Planet404_TYUDHSJ_maxStorage'));
-    radarRange = JSON.parse(ls.getItem('Planet404_TYUDHSJ_radarRange'));
+    recipes = data[7];
+    shopItems = data[8];
 
-    solarOutput = JSON.parse(ls.getItem('Planet404_TYUDHSJ_solarOutput'));
-    craftSpeed = JSON.parse(ls.getItem('Planet404_TYUDHSJ_craftSpeed'));
-    minerFactor = JSON.parse(ls.getItem('Planet404_TYUDHSJ_minerFactor'));
-    mineSpeed = JSON.parse(ls.getItem('Planet404_TYUDHSJ_mineSpeed'));
-    minerTransmit = JSON.parse(ls.getItem('Planet404_TYUDHSJ_minerTransmit'));
-    constructorTransmit = JSON.parse(ls.getItem('Planet404_TYUDHSJ_constructorTransmit'));
-    batteryDischarge = JSON.parse(ls.getItem('Planet404_TYUDHSJ_batteryDischarge'));
-    RTGOutput = JSON.parse(ls.getItem('Planet404_TYUDHSJ_RTGOutput'));
-    endlessMode = JSON.parse(ls.getItem('Planet404_TYUDHSJ_ENDLESS'));
-    updatePlayerPos(tiles,0,0);
+    playerMaxEnergy = data[9];;
+    maxStepHeight = data[10];
+    maxStorage = data[11];
+
+    radarRange = data[12];
+    solarOutput = data[13];
+    craftSpeed = data[14];
+    mineSpeed = data[15];
+    minerTransmit = data[16];
+    constructorTransmit = data[17];;
+    batteryDischarge = data[18];
+    RTGOutput = data[19];
+    endlessMode = data[20];
+    updatePlayerPos(0,0);
 }
 
 function handleBuildingInteraction(playerTile){
@@ -1853,12 +1535,12 @@ function handleBuildingInteraction(playerTile){
                 if(playerTile.building.storedResource == 0){
                     messages.push({text:"Resource full",time:0});
                 } else {
-                    var added = addToPlayerResources(playerTile.building.storedType,playerTile.building.storedResource,false);
+                    var added = addToPlayerResources(playerTile.building.storedType,playerTile.building.storedResource);
                     if(added == 0){
                         denySound();
                         messages.push({text:"Resource full" + added + playerTile.building.storedType,time:0});
                     } else {
-                        playerTile.building.storedResource -= addToPlayerResources(playerTile.building.storedType,playerTile.building.storedResource,false);
+                        playerTile.building.storedResource -= addToPlayerResources(playerTile.building.storedType,playerTile.building.storedResource);
                         messages.push({text:"Gained " + added + playerTile.building.storedType,time:0});
                         confirmSound();
                     }
@@ -1989,7 +1671,7 @@ function handleBuildingInteraction(playerTile){
 }
 
 function handleHUD(){
-    var modeHeight = canvas.height * 0.12;
+    var modeHeight = canH * 0.12;
     var selectionHeight = 40;
     var rightInfoHeight = 55;
     var rightInfoStep = 25;
@@ -2004,14 +1686,9 @@ function handleHUD(){
         hudSwap = false;
     }
 
-    if(hudSwap){
-        ctx.strokeStyle = "#FF0000";
-    } else {
-        ctx.strokeStyle = hudColourScheme.outline;
-    }
-
-    var rightHeight = rightInfoHeight + (rightInfoStep * playerResources.length) + canvas.height * 0.05;
-    ctx.fillStyle = hudColourScheme.infill;
+    ctx.strokeStyle = hudSwap ? "#FF0000" : "#FFFFFF";
+    ctx.fillStyle = "#000000AA";
+    var rightHeight = rightInfoHeight + (rightInfoStep * playerResources.length) + canH * 0.05;
     var points = generateHudOverlay(rightHeight);
     ctx.beginPath();
     for(var i = 0;i<points.length;i++){
@@ -2028,210 +1705,179 @@ function handleHUD(){
 
     ctx.font = "15px Arial";
     ctx.fillStyle = "#FFFFFF";
-    ctx.strokeStyle = "#000000";
     ctx.textAlign = "start"; 
-    ctx.textBaseline = "alphabetic";
-    while(messages.length > 3){
-        messages.shift();
-    }
+    messages = messages.slice(-3,5);
     messages = messages.filter(m => m.time < 2000);
     var topHeight = messages.length * 25;
     messages.forEach(message => {
-        ctx.fillText(message.text,canvas.width * 0.01,canvas.height * 0.42 + (6 * 25) - topHeight + (messages.indexOf(message) * 25));
+        fT(message.text,canW * 0.01,canH * 0.42 + (6 * 25) - topHeight + (messages.indexOf(message) * 25));
         message.time += frameSpeedFactor;
     });
 
     ctx.textAlign = "center"; 
     ctx.textBaseline = "middle";
     ctx.font = "25px Arial";
-    ctx.fillText("Inventory",canvas.width * 0.92,30);
+    fT("Inventory",canW * 0.92,30);
     ctx.font = "15px Arial";
     playerResources.forEach(r => {
-        if(selectingSell){
-            if(prices.filter(p => prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT")[selectedSell].type == r.type)){
-                ctx.fillStyle = hudColourScheme.dynamicText;
-            } else {
-                ctx.fillStyle = hudColourScheme.staticText;
-            }
-        } else {
-            ctx.fillStyle = hudColourScheme.text;
-        }
-        
-        ctx.fillText(r.value + "/" + maxStorage + " units of " + r.type,canvas.width * 0.92, 25 + rightInfoHeight + (playerResources.indexOf(r) * rightInfoStep));
+        fT(r.value + "/" + maxStorage + " units of " + r.type,canW * 0.92, 25 + rightInfoHeight + (playerResources.indexOf(r) * rightInfoStep));
     });
     
-
-    ctx.fillStyle = hudColourScheme.text;
-    ctx.fillText("Sol: " + (sols + 1) + " Planet Rotation: " + time.toFixed(0) + "°", canvas.width/2,15);
+    fT("Sol: " + (sols + 1) + " Planet Rotation: " + time.toFixed(0) + "°", canW/2,15);
 
     if(!buildMode && !removeMode && !settingRecipe && !selectingSell && !buyingMode && (time <= 8 || time >= 352)){
+        ctx.fillStyle = "#000000AA";
         if(time < 3 || time >= 357){
-            ctx.strokeStyle = hudColourScheme.outline;
-            ctx.fillStyle = hudColourScheme.infill;
+            ctx.strokeStyle = "#FFFFFF";
             generateUIOverlay(0.05,0.14,0.39);
             ctx.font = "30px Tahoma";
             ctx.fillStyle = "#FFFFFF";
-            ctx.fillText("Sol " + (sols + 1) + "/7",canvas.width/2,modeHeight);
+            fT("Sol " + (sols + 1) + "/7",canW/2,modeHeight);
         } else if(time <= 8){
             var fade = componentToHex(255 - (255 * ((time-3)/5)));
-            ctx.strokeStyle = hudColourScheme.outline + fade;
-            ctx.fillStyle = hudColourScheme.infill;
+            ctx.strokeStyle = "#FFFFFF" + fade;
             generateUIOverlay(0.05,0.14,0.39);
             ctx.font = "30px Tahoma";
             ctx.fillStyle = "#FFFFFF" + fade;
-            ctx.fillText("Sol " + (sols + 1) + "/7",canvas.width/2,modeHeight);
+            fT("Sol " + (sols + 1) + "/7",canW/2,modeHeight);
         } else if(time >= 352){
             var fade = componentToHex((255 * ((time-352)/5)));
-            ctx.strokeStyle = hudColourScheme.outline + fade;
-            ctx.fillStyle = hudColourScheme.infill;
+            ctx.strokeStyle = "#FFFFFF" + fade;
             generateUIOverlay(0.05,0.14,0.39);
             ctx.font = "30px Tahoma";
             ctx.fillStyle = "#FFFFFF" + fade;
-            ctx.fillText("Sol " + (sols + 1) + "/7",canvas.width/2,modeHeight);
+            fT("Sol " + (sols + 1) + "/7",canW/2,modeHeight);
         }
     }
 
-
+    ctx.strokeStyle = "#FFFFFF";
     if(buildMode){
-        ctx.strokeStyle = hudColourScheme.outline;
-        ctx.fillStyle = hudColourScheme.infill;
+        ctx.fillStyle = "#000000AA";
         generateUIOverlay(0.05,0.5,0.4);
         ctx.font = "30px Tahoma";
         ctx.fillStyle = "#FFFFFF";
-        ctx.fillText("Build Mode",canvas.width/2,modeHeight);
+        fT("Build Mode",canW/2,modeHeight);
         ctx.font = "20px Tahoma";
         var number = 5;
         var visableOptions = playerBuildings.filter(p => Math.abs(playerBuildings.indexOf(p) - selectedBuilding) < number + (Math.max(0,number - 1 - selectedBuilding)));
         visableOptions.forEach(p => {
             var index = playerBuildings.indexOf(p);
+            ctx.fillStyle = "#AAAAAA";
             if(selectedBuilding == index){
-                ctx.fillStyle = hudColourScheme.dynamicText;
-            } else {
-                ctx.fillStyle = hudColourScheme.staticText;
+                ctx.fillStyle = "#FFFFFF";
             }
             if(p.type != "EXIT"){
-                ctx.fillText(p.value + " " + p.type,canvas.width/2,modeHeight + selectionHeight + (25 * visableOptions.indexOf(p)));
+                fT(p.value + " " + p.type,canW/2,modeHeight + selectionHeight + (25 * visableOptions.indexOf(p)));
             } else {
-                ctx.fillText(p.type ,canvas.width/2,modeHeight + selectionHeight + (25 * visableOptions.indexOf(p)));
+                fT(p.type ,canW/2,modeHeight + selectionHeight + (25 * visableOptions.indexOf(p)));
             }
         });
     }
 
     if(removeMode){
-        ctx.strokeStyle = hudColourScheme.outline;
-        ctx.fillStyle = hudColourScheme.infill;
+        ctx.fillStyle = "000000AA";
         generateUIOverlay(0.05,0.14,0.39);
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "30px Tahoma";
-        ctx.fillText("Remove Mode",canvas.width/2,modeHeight);
+        fT("Remove Mode",canW/2,modeHeight);
     }
 
+    
     if(settingRecipe){
-        ctx.strokeStyle = hudColourScheme.outline;
-        ctx.fillStyle = hudColourScheme.infill;
+        ctx.fillStyle = "#000000AA";
         generateUIOverlay(0.05,0.5,0.3);
-        ctx.beginPath();
-        ctx.moveTo(canvas.width * 0.5,canvas.height * 0.07);
-        ctx.lineTo(canvas.width * 0.5,canvas.height * 0.53);
-        ctx.stroke();
-
         ctx.fillStyle = "#FFFFFF";
+        ctx.beginPath();
+        ctx.moveTo(canW * 0.5,canH * 0.07);
+        ctx.lineTo(canW * 0.5,canH * 0.53);
+        ctx.stroke();
         ctx.font = "30px Tahoma";
-        ctx.fillText("Set Recipe:",canvas.width*0.4,modeHeight + (canvas.width*0.01));
+        fT("Set Recipe:",canW*0.4,modeHeight + (canW*0.01));
         ctx.font = "20px Tahoma";
         var number = 5;
         var visableOptions = recipes.filter(p => Math.abs(recipes.indexOf(p) - selectedBuilding) < number + (Math.max(0,number - 1 - selectedBuilding)));
         visableOptions.forEach(r => {
             var index = recipes.indexOf(r);
+            ctx.fillStyle = "#AAAAAA";
             if(selectedBuilding == index){
-                ctx.fillStyle = hudColourScheme.dynamicText;
-            } else {
-                ctx.fillStyle = hudColourScheme.staticText;
+                ctx.fillStyle = "#FFFFFF";
             }
             if(r.product == "EXIT"){
-                ctx.fillText(r.product,canvas.width*0.4,modeHeight + (canvas.width*0.01) + selectionHeight + (25 * visableOptions.indexOf(r)));
+                fT(r.product,canW*0.4,modeHeight + (canW*0.01) + selectionHeight + (25 * visableOptions.indexOf(r)));
             } else {
                 if(selectedBuilding == index){
                     ctx.font = "25px Tahoma";
-                    r.items.forEach(i => ctx.fillText(i.value + " " + i.type, canvas.width*0.59, modeHeight + (canvas.width*0.01) + selectionHeight + (25 * r.items.indexOf(i))));
-                    ctx.fillText(r.energy + " ENERGY", canvas.width*0.59, modeHeight + (canvas.width*0.01) + selectionHeight + (25 * r.items.length))
+                    r.items.forEach(i => fT(i.value + " " + i.type, canW*0.59, modeHeight + (canW*0.01) + selectionHeight + (25 * r.items.indexOf(i))));
+                    fT(r.energy + " ENERGY", canW*0.59, modeHeight + (canW*0.01) + selectionHeight + (25 * r.items.length))
                 }
                 ctx.font = "20px Tahoma";
-                ctx.fillText(r.product,canvas.width*0.4,modeHeight + (canvas.width*0.01) + selectionHeight + (25 * visableOptions.indexOf(r)));
+                fT(r.product,canW*0.4,modeHeight + (canW*0.01) + selectionHeight + (25 * visableOptions.indexOf(r)));
             }
         });
     }
 
-
+    
     if(selectingSell){
-        ctx.strokeStyle = hudColourScheme.outline;
-        ctx.fillStyle = hudColourScheme.infill;
+        ctx.fillStyle = "#000000AA";
         generateUIOverlay(0.05,0.5,0.4);
-        ctx.font = "30px Tahoma";
         ctx.fillStyle = "#FFFFFF";
-        ctx.fillText("Sell Mode",canvas.width/2,modeHeight);
+        ctx.font = "30px Tahoma";
+        fT("Sell Mode",canW/2,modeHeight);
         ctx.font = "20px Tahoma";
         var number = 5;
         var options = prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT");
         var visableOptions = options.filter(p => Math.abs(options.indexOf(p) - selectedSell) < number + (Math.max(0,number - 1 - selectedSell)));
         visableOptions.forEach(p => {
             var index = options.indexOf(p);
+            ctx.fillStyle = "#AAAAAA";
             if(selectedSell == index){
-                ctx.fillStyle = hudColourScheme.dynamicText;
-            } else {
-                ctx.fillStyle = hudColourScheme.staticText;
+                ctx.fillStyle = "#FFFFFF";
             }
             if(p.type != "EXIT"){
-                ctx.fillText(p.ammount + " " + p.type + " : ₿" + p.price * p.ammount,canvas.width/2,modeHeight + selectionHeight + (25 * visableOptions.indexOf(p)));
+                fT(p.ammount + " " + p.type + " : ₿" + p.price * p.ammount,canW/2,modeHeight + selectionHeight + (25 * visableOptions.indexOf(p)));
             } else {
-                ctx.fillText(p.type ,canvas.width/2,modeHeight + selectionHeight + (25 * visableOptions.indexOf(p)));
+                fT(p.type ,canW/2,modeHeight + selectionHeight + (25 * visableOptions.indexOf(p)));
             }
         });
     }
 
     if(buyingMode){
-        ctx.strokeStyle = hudColourScheme.outline;
-        ctx.fillStyle = hudColourScheme.infill;
+        ctx.fillStyle = "#000000AA";
         generateUIOverlay(0.05,0.5,0.2);
+        ctx.fillStyle = "#FFFFFF";
         ctx.beginPath();
-        ctx.moveTo(canvas.width * 0.5,canvas.height * 0.07);
-        ctx.lineTo(canvas.width * 0.5,canvas.height * 0.53);
+        ctx.moveTo(canW * 0.5,canH * 0.07);
+        ctx.lineTo(canW * 0.5,canH * 0.53);
         ctx.stroke();
         if(shopItems[selectedBuy].type != "EXIT"){
             ctx.beginPath();
-            ctx.moveTo(canvas.width * 0.5,canvas.height * 0.46);
-            ctx.lineTo(canvas.width * 0.78,canvas.height * 0.46);
+            ctx.moveTo(canW * 0.5,canH * 0.46);
+            ctx.lineTo(canW * 0.78,canH * 0.46);
             ctx.stroke();
         }
         ctx.font = "30px Tahoma";
-        ctx.fillStyle = "#FFFFFF";
-        ctx.fillText("Buy Mode",canvas.width * 0.36,modeHeight);
+        fT("Buy Mode",canW * 0.36,modeHeight);
         ctx.font = "20px Tahoma";
         var number = 5;
         var visableOptions = shopItems.filter(p => Math.abs(shopItems.indexOf(p) - selectedBuy) < number + (Math.max(0,number - 1 - selectedBuy)));
         visableOptions.forEach(i => {
             var index = shopItems.indexOf(i);
+            ctx.fillStyle = "#AAAAAA";
             if(selectedBuy == index){
-                ctx.fillStyle = hudColourScheme.dynamicText;
-            } else {
-                ctx.fillStyle = hudColourScheme.staticText;
+                ctx.fillStyle = "#FFFFFF";
             }
             ctx.textAlign = "center"; 
             ctx.textBaseline = "middle";
             if(i.type != "EXIT"){
-                ctx.font = "20px Tahoma";
-                ctx.fillText(i.item ,canvas.width * 0.36,modeHeight + 20 + selectionHeight + (25 * visableOptions.indexOf(i)));
+                fT(i.item ,canW * 0.36,modeHeight + 20 + selectionHeight + (25 * visableOptions.indexOf(i)));
                 if(selectedBuy == index){
-                    ctx.fillText(i.type ,canvas.width * 0.65,modeHeight + 20);
-                    ctx.fillText("₿" + selectedSellDisplayPrice.toLocaleString('en-US', {maximumFractionDigits: 0}) ,canvas.width * 0.64,canvas.height * 0.495);
-                    ctx.font = "20px Tahoma";
+                    fT(i.type ,canW * 0.65,modeHeight + 20);
+                    fT("₿" + selectedSellDisplayPrice.toLocaleString('en-US', {maximumFractionDigits: 0}) ,canW * 0.64,canH * 0.495);
                     ctx.textAlign = "start"; 
-                    //ctx.textBaseline = "alphabetic";
-                    i.desc.forEach(s => ctx.fillText(s ,canvas.width * 0.51,modeHeight + 20 + selectionHeight + (25 * i.desc.indexOf(s))));
+                    i.desc.forEach(s => fT(s ,canW * 0.51,modeHeight + 20 + selectionHeight + (25 * i.desc.indexOf(s))));
                 }
             } else {
-                ctx.font = "20px Tahoma";
-                ctx.fillText(i.type ,canvas.width * 0.36,modeHeight + 20 + selectionHeight + (25 * visableOptions.indexOf(i)));
+                fT(i.type ,canW * 0.36,modeHeight + 20 + selectionHeight + (25 * visableOptions.indexOf(i)));
             }
         });
         selectedSellDisplayPrice = lerp(shopItems[selectedBuy].cost,selectedSellDisplayPrice,(frameSpeedFactor/80));
@@ -2241,16 +1887,16 @@ function handleHUD(){
     ctx.textBaseline = "middle";
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "20px Tahoma";
-    ctx.fillText("JMC",canvas.width * 0.05,canvas.height * 0.14);
-    drawLogo(canvas.width * 0.05,canvas.height * 0.070,50);
+    fT("JMC",canW * 0.05,canH * 0.14);
+    drawLogo(canW * 0.05,canH * 0.070,50);
     if(!endlessMode){
-        ctx.fillText("Daily Quota:",canvas.width * 0.05,canvas.height * 0.22);
+        fT("Daily Quota:",canW * 0.05,canH * 0.22);
     } else {
-        ctx.fillText("Endless",canvas.width * 0.05,canvas.height * 0.22);
-        ctx.fillText("Mode",canvas.width * 0.05,25 + canvas.height * 0.22);
+        fT("Endless",canW * 0.05,canH * 0.22);
+        fT("Mode",canW * 0.05,25 + canH * 0.22);
     }
     ctx.font = "25px Tahoma";
-    ctx.fillText("₿" + playerBalanceDisplayed.toLocaleString('en-US', {maximumFractionDigits: 0}) ,canvas.width * 0.05,canvas.height * 0.18);
+    fT("₿" + playerBalanceDisplayed.toLocaleString('en-US', {maximumFractionDigits: 0}) ,canW * 0.05,canH * 0.18);
     playerBalanceDisplayed = lerp(playerBalance,playerBalanceDisplayed,(frameSpeedFactor/100));
     if(!endlessMode){
         if(playerBalance >= quotas[sols]){
@@ -2258,25 +1904,25 @@ function handleHUD(){
         } else if(time > 300 && Math.trunc(time) % 2 == 0){
             ctx.fillStyle = "#FF0000";
         }
-        ctx.fillText("₿" + quotas[sols].toLocaleString('en-US', {maximumFractionDigits: 0}) ,canvas.width * 0.05,canvas.height * 0.26);
+        fT("₿" + quotas[sols].toLocaleString('en-US', {maximumFractionDigits: 0}) ,canW * 0.05,canH * 0.26);
     }
 
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "15px Tahoma";
     var batteryStatusHeight = 0.45;
-    drawBattery(canvas.width * 0.02,canvas.height * batteryStatusHeight,100,playerEnergy/playerMaxEnergy);
+    drawBattery(canW * 0.02,canH * batteryStatusHeight,100,playerEnergy/playerMaxEnergy);
     if(hudSwap){
         ctx.fillStyle = "#FF0000";
     }
-    ctx.fillText("Battery",canvas.width * 0.07,canvas.height * (batteryStatusHeight - 0.13));
-    ctx.fillText("Status:",canvas.width * 0.07,canvas.height * (batteryStatusHeight - 0.11));
+    fT("Battery",canW * 0.07,canH * (batteryStatusHeight - 0.13));
+    fT("Status:",canW * 0.07,canH * (batteryStatusHeight - 0.11));
     var percentEnergy = playerEnergy/playerMaxEnergy;
     ctx.font = "12px Tahoma";
-    ctx.fillText(batteryStatusMessage,canvas.width * 0.07,canvas.height * (batteryStatusHeight - 0.09));
+    fT(batteryStatusMessage,canW * 0.07,canH * (batteryStatusHeight - 0.09));
     ctx.fillStyle = "#FFFFFF";
     if(tiles.find(t => t.hasPlayer).hazard > 0){
         ctx.font = "50px Tahoma";
-        ctx.fillText("☢",canvas.width * 0.07,canvas.height * (batteryStatusHeight - 0.032));
+        fT("☢",canW * 0.07,canH * (batteryStatusHeight - 0.032));
     }
     if(percentEnergy > 0.6){
         batteryStatusMessage = "Nominal";
@@ -2304,12 +1950,13 @@ function handleHUD(){
 }
 
 function handleTileUpdates(t) {
-    var infoX = canvas.width * 0.85;
-    var infoY = canvas.height * 0.45;
+    var infoX = canW * 0.85;
+    var infoY = canH * 0.45;
     var infoStep = 20;
     ctx.lineWidth = 2;
     ctx.textAlign = "start"; 
     ctx.textBaseline = "alphabetic";
+    ctx.font = "15px Arial"
     switch(t.building.type){
         case "SOLAR":
             var totalEnergy = solarOutput * Math.max(0.25,Math.sin(time * Math.PI/180));
@@ -2327,9 +1974,8 @@ function handleTileUpdates(t) {
             });
             }
             if(t.hasPlayer && !escMenu){
-                ctx.textAlign = "center"; 
-                ctx.fillText("⚡",(infoX + 9) ,infoY + infoStep);
-                drawBattery(infoX,infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,totalEnergy/solarOutput));
+                fT("⚡",(infoX + 9) ,infoY + infoStep);
+                drawBattery(infoX,infoY + (infoStep*2) + canH * 0.08,canH * 0.1,Math.min(1,totalEnergy/solarOutput));
             }
             break;
         case "CONSTRUCTOR":
@@ -2349,15 +1995,14 @@ function handleTileUpdates(t) {
                 }
             }
             if(t.hasPlayer && !escMenu){
-                ctx.fillText("Recipe: " + (t.building.recipe != undefined ? t.building.recipe.product : "None") ,infoX,infoY);
-                ctx.textAlign = "center"; 
-                ctx.fillText("⚡",(infoX + 9) ,infoY + infoStep);
+                fT("Recipe: " + (t.building.recipe != undefined ? t.building.recipe.product : "None") ,infoX,infoY);
+                fT("⚡",(infoX + 9) ,infoY + infoStep);
                 if(t.building.storedProduct){
                     ctx.fillStyle = "#00FF00";
                 }
-                ctx.fillText("%",(19 + infoX) + (canvas.height * 0.1) * 0.25,infoY + infoStep);
-                drawBattery(infoX,infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.energy/t.building.maxEnergy));
-                drawBattery(10 + infoX + (canvas.height * 0.1) * 0.25, infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.craftTimer));
+                fT("%",(19 + infoX) + (canH * 0.1) * 0.25,infoY + infoStep);
+                drawBattery(infoX,infoY + (infoStep*2) + canH * 0.08,canH * 0.1,Math.min(1,t.building.energy/t.building.maxEnergy));
+                drawBattery(10 + infoX + (canH * 0.1) * 0.25, infoY + (infoStep*2) + canH * 0.08,canH * 0.1,Math.min(1,t.building.craftTimer));
             }
             break;
         case "MINER":
@@ -2369,23 +2014,22 @@ function handleTileUpdates(t) {
             } else {
                 t.building.mineTimer += (frameSpeedFactor/25000) * mineSpeed;
                 if(t.building.mineTimer >= 1){
-                    t.building.storedResource = Math.min(t.building.maxStored, t.building.storedResource + minerFactor);
+                    t.building.storedResource = Math.min(t.building.maxStored, t.building.storedResource + 5);
                     mineTile(t);
                     t.building.mining = false;
                     t.building.mineTimer = 0;
                 }
             }
             if(minerTransmit){
-                t.building.storedResource -= addToPlayerResources(t.building.storedType,t.building.storedResource,false);
+                t.building.storedResource -= addToPlayerResources(t.building.storedType,t.building.storedResource);
             }
             if(t.hasPlayer && !escMenu){
-                ctx.textAlign = "center";
-                ctx.fillText("⚡",(infoX + 9) ,infoY + infoStep);
-                ctx.fillText("%",(19 + infoX) + (canvas.height * 0.1) * 0.25,infoY + infoStep);
-                ctx.fillText("⨆",(29 + infoX) + (canvas.height * 0.1) * 0.5,infoY + infoStep);
-                drawBattery(infoX,infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.energy/t.building.maxEnergy));
-                drawBattery(10 + infoX + (canvas.height * 0.1) * 0.25, infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.mineTimer));
-                drawBattery(20 + infoX + (canvas.height * 0.1) * 0.5, infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.storedResource/t.building.maxStored));
+                fT("⚡",(infoX + 9) ,infoY + infoStep);
+                fT("%",(19 + infoX) + (canH * 0.1) * 0.25,infoY + infoStep);
+                fT("⨆",(29 + infoX) + (canH * 0.1) * 0.5,infoY + infoStep);
+                drawBattery(infoX,infoY + (infoStep*2) + canH * 0.08,canH * 0.1,Math.min(1,t.building.energy/t.building.maxEnergy));
+                drawBattery(10 + infoX + (canH * 0.1) * 0.25, infoY + (infoStep*2) + canH * 0.08,canH * 0.1,Math.min(1,t.building.mineTimer));
+                drawBattery(20 + infoX + (canH * 0.1) * 0.5, infoY + (infoStep*2) + canH * 0.08,canH * 0.1,Math.min(1,t.building.storedResource/t.building.maxStored));
             }
             break;
         case "BATTERY":
@@ -2416,11 +2060,10 @@ function handleTileUpdates(t) {
                 }
             }
             if(t.hasPlayer && !escMenu){
-                ctx.textAlign = "center"; 
-                ctx.fillText("⚡",(infoX + 9) ,infoY + infoStep);
-                ctx.fillText("%",(19 + infoX) + (canvas.height * 0.1) * 0.25,infoY + infoStep);
-                drawBattery(infoX,infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.energy/t.building.maxEnergy));
-                drawBattery(10 + infoX + (canvas.height * 0.1) * 0.25, infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.dischargeTimer));
+                fT("⚡",(infoX + 9) ,infoY + infoStep);
+                fT("%",(19 + infoX) + (canH * 0.1) * 0.25,infoY + infoStep);
+                drawBattery(infoX,infoY + (infoStep*2) + canH * 0.08,canH * 0.1,Math.min(1,t.building.energy/t.building.maxEnergy));
+                drawBattery(10 + infoX + (canH * 0.1) * 0.25, infoY + (infoStep*2) + canH * 0.08,canH * 0.1,Math.min(1,t.building.dischargeTimer));
             }
             break;
         case "RTG":
@@ -2463,18 +2106,16 @@ function handleTileUpdates(t) {
                 t.building.generating = true;
             }
             if(t.hasPlayer){
-                ctx.textAlign = "center"; 
-                ctx.fillText("⨆",(infoX + 9) ,infoY + infoStep);
-                ctx.fillText("%",(19 + infoX) + (canvas.height * 0.1) * 0.25,infoY + infoStep);
-                drawBattery(infoX,infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.coal/t.building.maxCoal));
-                drawBattery(10 + infoX + (canvas.height * 0.1) * 0.25, infoY + (infoStep*2) + canvas.height * 0.08,canvas.height * 0.1,Math.min(1,t.building.generatingTimer));
+                fT("⨆",(infoX + 9) ,infoY + infoStep);
+                fT("%",(19 + infoX) + (canH * 0.1) * 0.25,infoY + infoStep);
+                drawBattery(infoX,infoY + (infoStep*2) + canH * 0.08,canH * 0.1,Math.min(1,t.building.coal/t.building.maxCoal));
+                drawBattery(10 + infoX + (canH * 0.1) * 0.25, infoY + (infoStep*2) + canH * 0.08,canH * 0.1,Math.min(1,t.building.generatingTimer));
             }
             break;
     }
 }
 
 function exploreMode(){
-    playerDrainRate = 0;
     playerMaxEnergy = 10000000000;
     playerEnergy = 10000000000;
     tiles.forEach(t => t.isVisible = true);

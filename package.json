@@ -9,6 +9,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "local-web-server": "^4.2.1"
+    "local-web-server": "^4.2.1",
+    "uglify-js-es6": "^2.8.9"
   }
 }
