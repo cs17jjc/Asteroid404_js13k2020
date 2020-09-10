@@ -9,17 +9,12 @@ zzfxX=new(top.AudioContext||webkitAudioContext);
 zzfxM=(n,f,t,e=125)=>{let l,o,z,r,g,h,x,a,u,c,d,i,m,p,G,M=0,R=[],b=[],j=[],k=0,q=0,s=1,v={},w=zzfxR/e*60>>2;for(;s;k++)R=[s=a=d=m=0],t.map((e,d)=>{for(x=f[e][k]||[0,0,0],s|=!!f[e][k],G=m+(f[e][0].length-2-!a)*w,p=d==t.length-1,o=2,r=m;o<x.length+p;a=++o){for(g=x[o],u=o==x.length+p-1&&p||c!=(x[0]||0)|g|0,z=0;z<w&&a;z++>w-99&&u?i+=(i<1)/99:0)h=(1-i)*R[M++]/2||0,b[r]=(b[r]||0)-h*q+h,j[r]=(j[r++]||0)+h*q+h;g&&(i=g%1,q=x[1]||0,(g|=0)&&(R=v[[c=x[M=0]||0,g]]=v[[c,g]]||(l=[...n[c]],l[2]*=2**((g-12)/12),g>0?zzfxG(...l):[])))}m=G});return[b,j]}
 //Music
 
-var kickDrum1 = Array.from(new Array(18).keys()).map(i => i == 2 ? 15 : 0);
-var kickDrum2 = kickDrum1.slice();
-kickDrum2[14] = 15;
-var getArr = () => Array.from(new Array(18).keys());
-var snare = getArr().map(i => i == 10 ? 15 : i == 0 ? 1 : 0);
-var hihat = getArr().map(i => i == 0 ? 2 : (i % 4 == 0 && i != 12) ? 15 : 0);
-var mkEch = (n) => getArr().map(i => i == 0 ? 3 : [2,6,10,14].includes(i) ? n + [0.1,0.5,0.7][[2,6,10,14].indexOf(i)] : i == 1 ? -0.1 : 0);
-var Ech1 = mkEch(18);
-var Ech2 = mkEch(22);
-var Ech3 = mkEch(24);
-var Ech4 = mkEch(30);
+
+var getArr = (n) => Array.from(new Array(n).keys());
+var drm = [getArr(18).map(i => i == 2 ? 15 : 0),getArr(18).map(i => i == 2 ? 15 : 0),getArr(18).map(i => i == 10 ? 15 : i == 0 ? 1 : 0),getArr(18).map(i => i == 0 ? 2 : (i % 4 == 0 && i != 12) ? 15 : 0)];
+drm[1][14] = 15;
+var mkEch = (n) => getArr(18).map(i => i == 0 ? 3 : [2,6,10,14].includes(i) ? n + [0,0.1,0.5,0.7][[2,6,10,14].indexOf(i)] : i == 1 ? -0.1 : 0);
+var Ech = [mkEch(18),mkEch(22),mkEch(24),mkEch(30)];
 var mainLoop = [8,9,10,11,8,9,10,11];
 var song = [
 [
@@ -28,24 +23,23 @@ var song = [
 [.4,0,2200,,,.04,3,2,,,800,.02,,4.8,,.01,.1],  //Hi-hat
 [,0,130.81 ,,,1] //Echo Synth
 ],
-[[Ech1],[Ech2],[Ech3],[Ech4],[Ech1,kickDrum1,snare],[Ech2,kickDrum1,snare],[Ech3,kickDrum1,snare],[Ech4,kickDrum2,snare],[Ech1,kickDrum1,snare,hihat],[Ech2,kickDrum1,snare,hihat],[Ech3,kickDrum1,snare,hihat],[Ech4,kickDrum2,snare,hihat]],
-[0,1,2,3,0,1,2,3,4,5,6,7,4,5,6,7].concat(mainLoop).concat(mainLoop).concat(mainLoop).concat(mainLoop),120,{title: "",author: ""}];
+[[Ech[0]],[Ech[1]],[Ech[2]],[Ech[3]],[Ech[0],drm[0],drm[2]],[Ech[1],drm[0],drm[2]],[Ech[2],drm[0],drm[2]],[Ech[3],drm[1],drm[2]],[Ech[0],drm[0],drm[2],drm[3]],[Ech[1],drm[0],drm[2],drm[3]],[Ech[2],drm[0],drm[2],drm[3]],[Ech[3],drm[1],drm[2],drm[3]]],
+[0,1,2,3,0,1,2,3,4,5,6,7,4,5,6,7].concat(mainLoop,mainLoop,mainLoop,mainLoop),120];
 
 //Perlin
-    function Grad(x, y, z) {
-      this.x = x; this.y = y; this.z = z;
+class Grad {
+    constructor(x, y, z) {
+        this.x = x; this.y = y; this.z = z;
     }
+    dot2(x, y) {
+        return this.x * x + this.y * y;
+    }
+}
   
-    Grad.prototype.dot2 = function(x, y) {
-      return this.x*x + this.y*y;
-    };
-    Grad.prototype.dot3 = function(x, y, z) {
-      return this.x*x + this.y*y + this.z*z;
-    };
     var grad3 = [new Grad(1,1,0),new Grad(-1,1,0),new Grad(1,-1,0),new Grad(-1,-1,0),
                  new Grad(1,0,1),new Grad(-1,0,1),new Grad(1,0,-1),new Grad(-1,0,-1),
                  new Grad(0,1,1),new Grad(0,-1,1),new Grad(0,1,-1),new Grad(0,-1,-1)];
-    var p = Array.from(new Array(256).keys()).map(i => Math.trunc(Math.random() * 255));
+    var p = getArr(256).map(i => Math.trunc(Math.random() * 255));
     var perm = new Array(512);
     var gradP = new Array(512);
     function seed(seed) {
@@ -79,27 +73,25 @@ var song = [
       var X = Math.floor(x), Y = Math.floor(y);
       x = x - X; y = y - Y;
       X = X & 255; Y = Y & 255;
+      var u = fade(x);
       var n00 = gradP[X+perm[Y]].dot2(x, y);
       var n01 = gradP[X+perm[Y+1]].dot2(x, y-1);
       var n10 = gradP[X+1+perm[Y]].dot2(x-1, y);
       var n11 = gradP[X+1+perm[Y+1]].dot2(x-1, y-1);
-      var u = fade(x);
       return lerp(
-          lerp(n00, n10, u),
-          lerp(n01, n11, u),
+        lerp(n00, n10, u),
+        lerp(n01, n11, u),
          fade(y));
     };
 
 //Classes
 class Tile {
-    constructor(x,y,biome){
+    constructor(x,y){
         this.x = x;
         this.y = y;
-        this.biome = biome;
         this.hasPlayer = false;
         this.resource = {type:"NONE"};
         this.building = {type:"NONE"};
-        this.highlighted = false;
         this.isVisible = false;
         this.screenPos = {x:0,y:0};
         this.hazard = 0;
@@ -149,72 +141,53 @@ resColMap.set("LITHIUM",new Colour(169,169,169,255));
 resColMap.set("SILICON",new Colour(0,153,204,255));
 resColMap.set("PLUTONIUM",new Colour(0,255,0,255));
 
-var roverImg = document.getElementById("rover");
-
+var dG = (strId) => document.getElementById(strId);
+var roverImg = dG("0");
 var imgMap = new Map();
-imgMap.set("RADAR",document.getElementById("tower"));
-imgMap.set("CONSTRUCTOR",document.getElementById("constructor"));
-imgMap.set("SOLAR",document.getElementById("solar"));
-imgMap.set("MINER",document.getElementById("miner"));
-imgMap.set("BATTERY",document.getElementById("battery"));
-imgMap.set("RTG",document.getElementById("rtg"));
-imgMap.set("TELEDEPOT",document.getElementById("teledepot"));
-imgMap.set("ROBOSHOP",document.getElementById("shop"));
-imgMap.set("GENERATOR",document.getElementById("generator"));
-
-function drawHexTile(tile){
-
-    var scrPos = tile.screenPos;
-    drawHexagon(scrPos);
-
-    if(tile.isVisible && tile.resource.type != "NONE"){
-        var rCol = resColMap.get(tile.resource.type);
-        ctx.lineWidth = 3;
-        ctx.fillStyle = rCol.toHex();
-        ctx.strokeStyle = rCol.darkend(0.4).toHex();
-        var l = tile.resource.lines;
-        ctx.beginPath();
-        ctx.moveTo(l[0].x + scrPos.x,l[0].y + scrPos.y);
-        for(var ll = 1; ll < l.length;ll++){
-            ctx.lineTo(l[ll].x + scrPos.x,l[ll].y + scrPos.y);
-        }
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-    }
-}
+imgMap.set("RADAR",dG("1"));
+imgMap.set("CONSTRUCTOR",dG("2"));
+imgMap.set("SOLAR",dG("3"));
+imgMap.set("MINER",dG("4"));
+imgMap.set("BATTERY",dG("5"));
+imgMap.set("RTG",dG("6"));
+imgMap.set("TELEDEPOT",dG("7"));
+imgMap.set("ROBOSHOP",dG("8"));
+imgMap.set("GENERATOR",dG("9"));
 
 function renderMap(drawHeight,playerPosOffset){
     var tileWithPlayer = tiles.find(t => t.hasPlayer);
     var visableTiles = tiles.filter(t => Math.abs(t.x - tileWithPlayer.x) <= tileViewRadius).sort((a,b) => a.height - b.height).sort((a,b) => a.y - b.y).sort((a,b) => a.isVisible - b.isVisible);
     visableTiles.forEach(t => {
         t.screenPos.x = t.x * tileRadius * 1.5 + canW/2 - tileWithPlayer.x * tileRadius * 1.5;
-        t.screenPos.y = t.y * tileRadius * 2 * 0.8660254037844387 * perspRatio + drawHeight + (t.x % 2 != 0 ? 0.8660254037844387 * tileRadius * perspRatio : 0);
-
+        t.screenPos.y = t.y * tileRadius * 2 * 0.866025 * perspRatio + drawHeight + (t.x % 2 != 0 ? 0.866025 * tileRadius * perspRatio : 0);
+        ctx.lineWidth = 3;
         if(t.isVisible){
             t.screenPos.y -= t.height;
             var tileColour = new Colour(Math.max(0,t.colour.r * (1 - (t.hazard/10))),Math.min(255,t.colour.g * (1 + (t.hazard/10))),Math.max(0,t.colour.b * (1 - (t.hazard/10))),255);
             ctx.strokeStyle = t.hazard == 0 ? tileColour.darkend(0.2).toHex() : tileColour.darkend(1.5).toHex();
             ctx.fillStyle = tileColour.toHex();
-            if(interactTiles.includes(t)){
-                if(buildMode){
-                    ctx.strokeStyle = "#FFFF00";
-                } else if(removeMode){
-                    ctx.strokeStyle = "#FF0000";
+            drawHexagon(t.screenPos);
+            if(t.resource.type != "NONE"){
+                var rCol = resColMap.get(t.resource.type);
+                ctx.lineWidth = 3;
+                ctx.fillStyle = rCol.toHex();
+                ctx.strokeStyle = rCol.darkend(0.4).toHex();
+                var l = t.resource.lines;
+                ctx.beginPath();
+                ctx.moveTo(l[0].x + t.screenPos.x,l[0].y + t.screenPos.y);
+                for(var ll = 1; ll < l.length;ll++){
+                    ctx.lineTo(l[ll].x + t.screenPos.x,l[ll].y + t.screenPos.y);
                 }
-                if(interactTiles.indexOf(t) == selectedTile){
-                    ctx.strokeStyle = "#00FF00";
-                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
             }
-            ctx.lineWidth = 3;
-            drawHexTile(t);
             var img = imgMap.get(t.building.type);
             img != undefined ? ctx.drawImage(img,Math.trunc(t.screenPos.x - img.width/2),Math.trunc(t.screenPos.y - img.height*0.6)) : null;
         } else {
             ctx.strokeStyle = "#000000";
             ctx.fillStyle = "#AAAAAA";
-            ctx.lineWidth = 3;
-            drawHexTile(t);
+            drawHexagon(t.screenPos);
             ctx.fillStyle = "#000000";
             var fontSize = Math.trunc(tileRadius*perspRatio);
             ctx.font = fontSize + "px Arial";
@@ -223,60 +196,44 @@ function renderMap(drawHeight,playerPosOffset){
             fT("404",t.screenPos.x ,t.screenPos.y);
         }
     });
-    var playerTile = visableTiles.find(t => t.hasPlayer);
-    var playerTileCoords = playerTile.screenPos;
-    if(!playerDeadState){
-        ctx.drawImage(roverImg,(playerTileCoords.x - Math.trunc(roverImg.width*roverImgScale/2)) + Math.trunc(playerPosOffset.x),(Math.trunc(playerTileCoords.y - (roverImg.height*roverImgScale/2) - 10 + Math.sin(180 * time * (Math.PI/180)) * 4)) + Math.trunc(playerPosOffset.y),Math.trunc(roverImg.width*roverImgScale),Math.trunc(roverImg.height*roverImgScale));
-    } else {
-        ctx.drawImage(roverImg,(playerTileCoords.x - Math.trunc(roverImg.width*roverImgScale/2)) + Math.trunc(playerPosOffset.x),(Math.trunc(playerTileCoords.y - (roverImg.height*roverImgScale/2) - 10)) + Math.trunc(playerPosOffset.y),Math.trunc(roverImg.width*roverImgScale),Math.trunc(roverImg.height*roverImgScale));
-    }
-    
+    var playerTileCoords = tileWithPlayer.screenPos;
+    ctx.drawImage(roverImg,Math.trunc(playerTileCoords.x - (roverImg.width*roverImgScale/2) + playerPosOffset.x),Math.trunc((playerTileCoords.y - (roverImg.height*roverImgScale/2) - 10) + playerPosOffset.y + (Math.sin(millisOnLastFrame/500)*5)),Math.trunc(roverImg.width*roverImgScale),Math.trunc(roverImg.height*roverImgScale));
 }
 function updateRadarVisableTiles(){
     var radarTiles = tiles.filter(t => t.building.type == "RADAR");
-    console.log(radarTiles.length);
-    tiles.forEach(t => {
-        if(radarTiles.some(r => Math.abs(r.x - t.x) <= radarRange)){
-            t.isVisible = true;
-        } else {
-            t.isVisible = false;
-        }
-    });
+    tiles.forEach(t => t.isVisible = radarTiles.some(r => Math.abs(r.x - t.x) <= radarRange));
 }
 function drawLogo(x,y,size){
-    var topY = -size/2;
-    var bottomY = size/2;
-    var leftX = -size/2;
-    var rightX = size/2;
     ctx.save();
     ctx.translate(x,y);
     ctx.strokeStyle = "#A2A2A2";
     ctx.beginPath();
-    ctx.moveTo(0, topY);
-    ctx.lineTo(leftX,bottomY);
-    ctx.lineTo(rightX,bottomY);
+    ctx.moveTo(0, -size/2);
+    ctx.lineTo(-size/2,size/2);
+    ctx.lineTo(size/2,size/2);
     ctx.closePath();
     ctx.stroke();
     ctx.fillStyle = "#FF0000";
     ctx.beginPath();
-    ctx.arc(0, topY, size/4, 0, 2 * Math.PI);
+    ctx.arc(0, -size/2, size/4, 0, 2 * Math.PI);
     ctx.fill();
     ctx.fillStyle = "#FFF500";
     ctx.beginPath();
-    ctx.arc(leftX,bottomY, size/4, 0, 2 * Math.PI);
+    ctx.arc(-size/2,size/2, size/4, 0, 2 * Math.PI);
     ctx.fill();
     ctx.fillStyle = "#0045FF";
     ctx.beginPath();
-    ctx.arc(rightX,bottomY, size/4, 0, 2 * Math.PI);
+    ctx.arc(size/2,size/2, size/4, 0, 2 * Math.PI);
     ctx.fill();
     ctx.restore();
 }
 function drawBattery(x,y,size,percentage){
     var width = size * 0.25;
+    var p = Math.min(1,percentage);
     ctx.save();
     ctx.translate(x,y);
-    ctx.fillStyle = new Colour(255 - (255 * percentage),255 * percentage,0,255).toHex();
-    ctx.fillRect(0,-size * percentage,width,size * percentage);
+    ctx.fillStyle = new Colour(255 - (255 * p),255 * p,0,255).toHex();
+    ctx.fillRect(0,-size * p,width,size * p);
     ctx.strokeStyle = "#FFFFFF";
     ctx.beginPath();
     ctx.moveTo(0,-size);
@@ -289,7 +246,6 @@ function drawBattery(x,y,size,percentage){
 }
 function updatePlayerPos(deltaX,deltaY){
     interactTimer = 0;
-    moving = true;
     var playerTile = tiles.find(t => t.hasPlayer);
         var newTile = tiles.find(t => t.x == playerTile.x + deltaX && t.y == playerTile.y + deltaY);
         if(newTile != null){
@@ -309,19 +265,14 @@ function updatePlayerPos(deltaX,deltaY){
         }
 }
 function mineTile(tile){
-    if(tile.resource.type != "NONE"){
-        var type = tile.resource.type;
         if(tile.resource.value == 1){
-            tile.resource = {type:"NONE",value:0};
+            tile.resource = {type:"NONE"};
         } 
         else {
             tile.resource.value -= 1;
             tile.resource.lines = generateResourcePoints(tile.resource.value,tile.resource.type);
         }
-        return {type:type,value:1};
-    } else {
-        return tile.resource;
-    }
+        return {type:tile.resource.type,value:1};
 }
 function placeBuilding(tile,building){
         tile.building.type = building.type;
@@ -334,7 +285,7 @@ function placeBuilding(tile,building){
                 tb.energy = 0;
                 tb.maxEnergy = 20;
                 tb.crafting = false;
-                tb.craftTimer = 0;
+                tb.timer = 0;
                 tb.storedProduct = false;
                 break;
             case "MINER":
@@ -344,18 +295,18 @@ function placeBuilding(tile,building){
                 tb.energy = 0;
                 tb.maxEnergy = 10;
                 tb.mining = false;
-                tb.mineTimer = 0;
+                tb.timer = 0;
                 break;
             case "BATTERY":
                 tb.energy = 0;
                 tb.maxEnergy = 20;
-                tb.dischargeTimer = 0;
+                tb.timer = 0;
                 tb.discharging = false;
                 break;
             case "GENERATOR":
                 tb.coal = 0;
                 tb.maxCoal = 25;
-                tb.generatingTimer = 0;
+                tb.timer = 0;
                 tb.generating = false;
                 break;
         }
@@ -366,35 +317,30 @@ function removeBuilding(tile){
         switch(tile.building.type){
             case "RADAR":
                 var playerTile = tiles.find(t => t.hasPlayer);
-                if(tiles.filter(t => Math.abs(t.x - playerTile.x) <= radarRange).filter(t => t.building.type == "RADAR" && t != tile).length >= 1){
-                    addToPlayerBuildings(tile.building.type,1);
-                    tile.building = {type:"NONE"};
-                    updateRadarVisableTiles();
-                    s([soundFxVolume,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
-                } else {
+                if(tiles.filter(t => Math.abs(t.x - playerTile.x) <= radarRange && t.building.type == "RADAR" && t != tile).length == 0){
                     messages.push({text:"No other radar in range",time:0});
+                    return;
                 }
+                addToPlayerBuildings(tile.building.type,1);
+                tile.building = {type:"NONE"};
+                updateRadarVisableTiles();
                 break;
             case "CONSTRUCTOR":
                 if(tile.building.storedProduct == true){
                     addToPlayerBuildings(tile.building.recipe.product,1);
                 }
                 addToPlayerBuildings(tile.building.type,1);
-                tile.building = {type:"NONE"};
-                s([soundFxVolume,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
                 break;
             case "GENERATOR":
                 addToPlayerResources("CARBON",tile.building.coal);
                 addToPlayerBuildings(tile.building.type,1);
-                tile.building = {type:"NONE"};
-                s([soundFxVolume,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
                 break;
             default:
                 addToPlayerBuildings(tile.building.type,1);
-                tile.building = {type:"NONE"};
-                s([soundFxVolume,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
                 break;
         }
+        tile.building = {type:"NONE"};
+        s([soundFxVolume,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
 }
 
 function addToPlayerResources(type,ammount){
@@ -434,28 +380,24 @@ function componentToHex(c) {
   }
 
   function generateHudOverlay(rightHeight){
-    var leftHeight = 0.29;
-    var leftHeight2 = 0.48;
     var points = [];
-
-    points.unshift({x:0,y:canH * leftHeight});
-    points.unshift({x:canW * 0.09,y:canH * leftHeight});
-    points.unshift({x:canW * 0.1,y:canH * (leftHeight - 0.02)});
+    points.unshift({x:0,y:canH * 0.29});
+    points.unshift({x:canW * 0.09,y:canH * 0.29});
+    points.unshift({x:canW * 0.1,y:canH * 0.27});
     points.unshift({x:canW * 0.1,y:0});
     points.unshift({x:0,y:0});
 
-    points.unshift({x:0,y:canH * leftHeight2});
-    points.unshift({x:canW * 0.09,y:canH * leftHeight2});
-    points.unshift({x:canW * 0.1,y:canH * (leftHeight2 - 0.02)});
-    points.unshift({x:canW * 0.1,y:canH * leftHeight});
-    points.unshift({x:0,y:canH * leftHeight});
+    points.unshift({x:0,y:canH * 0.48});
+    points.unshift({x:canW * 0.09,y:canH * 0.48});
+    points.unshift({x:canW * 0.1,y:canH * 0.46 - 0.02});
+    points.unshift({x:canW * 0.1,y:canH * 0.29});
+    points.unshift({x:0,y:canH * 0.29});
     points.unshift({x:0,y:0});
 
-    var topLength = 0.08;
-    points.unshift({x:canW * (0.5 - topLength - 0.03),y:0});
-    points.unshift({x:canW * (0.5 - topLength),y:canH * 0.04});
-    points.unshift({x:canW * (0.5 + topLength),y:canH * 0.04});
-    points.unshift({x:canW * (0.5 + topLength + 0.03),y:0});
+    points.unshift({x:canW * 0.39,y:0});
+    points.unshift({x:canW * 0.42,y:canH * 0.04});
+    points.unshift({x:canW * 0.58,y:canH * 0.04});
+    points.unshift({x:canW * 0.61,y:0});
 
     points.unshift({x:canW * 0.83,y:0});
     points.unshift({x:canW * 0.83,y:rightHeight - canH * 0.02});
@@ -508,27 +450,9 @@ function componentToHex(c) {
   }
 
   function generateResourcePoints(value,type){
-    var points = 0;
-    switch(type){
-        case "ROCK":
-            points = 12;
-            break;
-        case "SILICON":
-            points = 5;
-            break;
-        case "LITHIUM":
-            points = 9;
-            break;
-        case "CARBON":
-            points = 15;
-            break;
-        default:
-            points = 7;
-            break;
-    }
-    var number = 1;
+    var points = 5 + Math.trunc(Math.random() * 5);
     var size = value/20;
-    var xOffset = ((Math.random() - 0.5) * (tileRadius*0.2) * size);
+    var xOffset = (Math.random() - 0.5) * (tileRadius*0.2) * size;
     var yOffset = (Math.random() - 0.5) * (tileRadius*0.2) * size;
     var lines = [];
     for(var i = 0; i < points;i++){
@@ -538,33 +462,16 @@ function componentToHex(c) {
     return lines;
   }
 
-  function generateBlob(points,size,xOffset,yOffset){
-    var curLines = []
-    var angles = [];
-    for(var i = 0; i < points;i++){
-        var a = (i * ((Math.PI*2)/points));
-        curLines.unshift({x:Math.max(-tileRadius * 0.6 + 5,Math.min(tileRadius * 0.6 - 5,xOffset + (Math.cos(a) * size * tileRadius + (Math.random() * 15 * size)))),y:Math.max(-tileRadius * perspRatio + 5,Math.min(tileRadius * perspRatio - 5,yOffset + (Math.sin(a) * size * (tileRadius*perspRatio) + (Math.random() * 15 * size * perspRatio))))});
-    }
-    return curLines;
-  }
+  function generateMap(width,colours,startX){
 
-
-  function generateMap(width,biomeSeq,colours,startX){
-
-    tiles = [];
-    for(var y = 0; y < 5;y++){
-        for(var x = 0; x < width;x++){
-                tiles.push(new Tile(x,y,biomeSeq[x]));
-        }
-    }
-
+    tiles = getArr(width).flatMap(x => getArr(5).map(y => new Tile(x,y)));
     tiles.forEach(t => {
-        var heightNumber = Math.trunc(Math.abs((perlin2(t.x/10, t.y/10)+1)/2 * (3 + t.biome * 2)));
+        var heightNumber = Math.max(0,Math.min(10,Math.trunc(Math.abs((perlin2(t.x/10, t.y/10)+1)/2 * 10))));
         t.height = tileStepHeight * heightNumber;
-        t.colour = colours.find(c => c.levels.includes(heightNumber)).colour;
+        t.colour = colours.find(c => c.levels.includes(heightNumber)).colour.darkend(1 - (Math.random() - 0.5)/3);
 
         if(Math.abs(startX - t.x) > (width * 0.005) && Math.random() > 0.85){
-            addResourceToTile(t,"IRON",Math.random() * 15,10,0.6);
+            addResourceToTile(t,"IRON",Math.random() * 15,10,0.4);
         } else if(Math.abs(startX - t.x) > (width * 0.05) && Math.random() > 0.90) {
            addResourceToTile(t,"COPPER",Math.random() * 15,10,0.5);
         } else if(Math.abs(startX - t.x) > (width * 0.08) && Math.random() > 0.92) {
@@ -574,8 +481,7 @@ function componentToHex(c) {
         } else if(Math.abs(startX - t.x) > (width * 0.14) && Math.random() > 0.85) {
             addResourceToTile(t,"SILICON",Math.random() * 15,10,0.5);
         } else if(Math.abs(startX - t.x) > (width * 0.24) && Math.random() > 0.85) {
-            var ammount = Math.random() * 15;
-            addResourceToTile(t,"PLUTONIUM",ammount,10,0.7);
+            addResourceToTile(t,"PLUTONIUM",Math.random() * 15,10,0.7);
             addHazardToTile(t,4);
         } else if(Math.random() > 0.88) {
             addResourceToTile(t,"ROCK",Math.random() * 15,10,0.9);
@@ -588,13 +494,12 @@ function componentToHex(c) {
     tiles.filter(t => t.resource.type != "NONE").forEach(t => t.resource.lines = generateResourcePoints(t.resource.value,t.resource.type));
   }
 
-  function addResourceToTile(tile,type,ammount,minimum,expansion){
-    var resourceAmmount = Math.max(minimum,Math.trunc(ammount));
-    tile.resource = {type:type,value:resourceAmmount};
-    getSurroundingTiles(tile).filter(t => Math.random() > expansion).forEach(t => t.resource = {type:type,value:Math.max(5,Math.trunc(resourceAmmount * Math.random()))});
+function addResourceToTile(tile,type,ammount,minimum,expansion) {
+    tile.resource = {type:type,value:Math.max(minimum,Math.trunc(ammount))};
+    getSurroundingTiles(tile).filter(t => Math.random() > expansion).forEach(t => t.resource = {type:type,value:Math.max(5,Math.trunc(tile.resource.value * Math.random()))});
   }
 
-  function addHazardToTile(tile,ammount){
+  function addHazardToTile(tile,ammount) {
     tile.hazard = ammount;
     getSurroundingTiles(tile).forEach(t => t.hazard = ammount * 0.8);
   }
@@ -619,7 +524,7 @@ var resPrices = [{type:"ROCK",price:1,},
                  {type:"SILICON",price:100},
                  {type:"PLUTONIUM",price:200}];
 
-var prices = Array.from(new Array(21).keys()).map(i => {
+var prices = getArr(21).map(i => {
     var thirds = Math.trunc(i/3);
     var p = resPrices[thirds];
     return {type:p.type,price:p.price,ammount:[1,10,50][i - thirds*3]};
@@ -659,7 +564,7 @@ var playerDeadState = false;
 var playerBalance;
 var playerBalanceDisplayed = 0;
 
-var quotas = [800,1500,2500,5000,10000,20000,50000];
+var quotas = [500,1000,2000,5000,10000,20000,50000];
 var failedQuota = false;
 var finishedQuotas = false;
 
@@ -678,8 +583,6 @@ var playerPosOffset = {x:0,y:0};
 
 var tiles = [];
 var messages = [];
-var interactTiles = [];
-var selectedTile = 0;
 var selectedSell = 0;
 var selectedSellDisplayPrice = 0;
 var selectedBuy = 0;
@@ -690,7 +593,6 @@ var selectedBuilding = 0;
 
 //Modes
 var buildMode = false;
-var removeMode = false;
 var settingRecipe = false;
 var escMenu = false;
 var selectingSell = false;
@@ -736,7 +638,7 @@ var stars = Array.from(Array(500).keys()).map(i => {return {x:(Math.random() * 2
 seed(Math.random());
 
 var mapWidth = 500;
-var otherColourScheme = [{levels:[0,1,2],colour:new Colour(62, 47, 91,255)},{levels:[3,4],colour:new Colour(190, 184, 235,255)},{levels:[5,6,7],colour:new Colour(64, 121, 140,255)},{levels:[8,9],colour:new Colour(115, 251, 211,255)}];
+var otherColourScheme = [{levels:[0,1,2],colour:new Colour(62, 47, 91,255)},{levels:[3,4],colour:new Colour(190, 184, 235,255)},{levels:[5,6,7],colour:new Colour(64, 121, 140,255)},{levels:[8,9,10],colour:new Colour(115, 251, 211,255)}];
 var spawnX = 240;
 
 var runGameBool = false;
@@ -796,10 +698,10 @@ function intro(){
     fT("JMC™ Craft's ", textX,250 + textY);
     xOff = ctx.measureText("JMC™ Craft's ").width;
     ctx.fillStyle = "#00FF00";
-    fT("Build Mode (B) & Remove Mode (R)", textX + xOff,250 + textY);
-    xOff = xOff + ctx.measureText("Build Mode (B) & Remove Mode (R)").width;
+    fT("Build (B) & Remove (R)", textX + xOff,250 + textY);
+    xOff = xOff + ctx.measureText("Build (B) & Remove (R)").width;
     ctx.fillStyle = "#FFFFFF";
-    fT(" to place RADARs and uncover more terrain.", textX+xOff,250 + textY);
+    fT(" functionality to place RADARs and uncover more terrain.", textX+xOff,250 + textY);
 
     fT("The CONSTRUCTOR creates buildings, such as extra RADARs, from resources and energy.", textX,300 + textY);
     fT("Your JMC™ Craft has a limited battery capacity, failure to charge the battery", textX,325 + textY);
@@ -853,11 +755,13 @@ function handleMainMenu(){
                 runIntro = true;
                 break;
             case "Load Game":
-                loadGame();
-                soundFxVolume = 0.5;
-                runGameBool = true;
-                mainMenu = false;
-                selectedMenuItem = 0;
+                if(window.localStorage.has('Planet404_6473_DATA') != null){
+                    loadGame();
+                    soundFxVolume = 0.5;
+                    runGameBool = true;
+                    mainMenu = false;
+                    selectedMenuItem = 0;
+                }
                 break;
             case "Mute Music":
                 myAudioNode.disconnect();
@@ -898,11 +802,7 @@ function handleMainMenu(){
 //Waypoint
 function initGame(){
     //Generate Terrain
-    var biomeSeq = Array.from(Array(mapWidth).keys()).map(i => {
-        var dist = Math.abs(spawnX - i) / (mapWidth * 0.5);
-        return Math.min(4,Math.abs(Math.trunc(5 * (Math.cos((Math.PI * 2) * (dist))))));
-    });
-    generateMap(mapWidth,biomeSeq,otherColourScheme,spawnX);
+    generateMap(mapWidth,otherColourScheme,spawnX);
     updatePlayerPos(0,0);
     //Reset variables
     playerBuildings = [{type:"RADAR",value:1}];
@@ -924,6 +824,7 @@ function initGame(){
     constructorTransmit = false;
     batteryDischarge = 2.5;
     RTGOutput = 5;
+    generatorOutput = 2;
     radarRange = 6;
 
     time = 0;
@@ -994,17 +895,6 @@ function runGame(){
         playerBuildings = playerBuildings.filter(b => b.value > 0);
         selectedBuy = Math.min(shopItems.length - 1,selectedBuy);
     
-        //Reset modes
-        if(buildMode && (playerBuildings.length == 0 || !interactTiles.some(t => t.building.type == "NONE"))){
-            selectedTile = 0;
-            buildMode = false;
-            interactTiles = [];
-        }
-        if(removeMode && !interactTiles.some(t => t.building.type != "NONE")){
-            selectedTile = 0;
-            removeMode = false;
-            interactTiles = [];
-        }
         if(selectingSell && prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount)).length == 0){
             selectedSell = 0;
             selectingSell = false;
@@ -1069,7 +959,6 @@ function runGame(){
                 escMenu = false;
                 runGameBool = false;
                 failedQuota = false;
-                selectedMenuItem = 0;
                 roverImgScale = 1;
             }
         }
@@ -1117,7 +1006,7 @@ function runGame(){
     }
     prevPlayerEnergy = playerEnergy;
     if(!playerDeadState){
-        time += (frameSpeedFactor/800);
+        time += (frameSpeedFactor/1500);
     }
     if(time >= 359){
         if(playerBalance >= quotas[sols] && !(finishedQuotas || endlessMode)){
@@ -1139,16 +1028,16 @@ function runGame(){
 }
 
 function handleInput(){
-    if(inputs.up == true && prevInputs.up == false && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.y) < 10){
+    if(inputs.up == true && prevInputs.up == false && !buildMode && !settingRecipe && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.y) < 10){
         updatePlayerPos(0,-1);
     }
-    if(inputs.down == true && prevInputs.down == false && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.y) < 10){
+    if(inputs.down == true && prevInputs.down == false && !buildMode && !settingRecipe && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.y) < 10){
         updatePlayerPos(0,1);
     }
-    if(inputs.up == true && prevInputs.up == true && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.y) < 10){
+    if(inputs.up == true && prevInputs.up == true && !buildMode && !settingRecipe && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.y) < 10){
         updatePlayerPos(0,-1);
     }
-    if(inputs.down == true && prevInputs.down == true && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.y) < 10){
+    if(inputs.down == true && prevInputs.down == true && !buildMode && !settingRecipe && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.y) < 10){
         updatePlayerPos(0,1);
     }
     if(inputs.up == true && prevInputs.up == false && buildMode){
@@ -1226,34 +1115,20 @@ function handleInput(){
     }
 
 
-    if(inputs.right == true && prevInputs.right == false && !buildMode && !removeMode && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.x) < 10){
+    if(inputs.right == true && prevInputs.right == false && !buildMode && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.x) < 10){
         updatePlayerPos(1,0);
     }
-    if(inputs.left == true && prevInputs.left == false && !buildMode && !removeMode && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.x) < 10){
+    if(inputs.left == true && prevInputs.left == false && !buildMode && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.x) < 10){
         updatePlayerPos(-1,0);
     }
-    if(inputs.right == true && prevInputs.right == true && !buildMode && !removeMode && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.x) < 10){
+    if(inputs.right == true && prevInputs.right == true && !buildMode && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.x) < 10){
         updatePlayerPos(1,0);
     }
-    if(inputs.left == true && prevInputs.left == true && !buildMode && !removeMode && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.x) < 10){
+    if(inputs.left == true && prevInputs.left == true && !buildMode && !escMenu && !selectingSell && !buyingMode && Math.abs(playerPosOffset.x) < 10){
         updatePlayerPos(-1,0);
-    }
-    if(inputs.right == true && prevInputs.right == false && (buildMode || removeMode)){
-        if(selectedTile == interactTiles.length - 1){
-            selectedTile = 0;
-        } else {
-            selectedTile += 1;
-        }
-    }
-    if(inputs.left == true && prevInputs.left == false && (buildMode || removeMode)){
-        if(selectedTile == 0){
-            selectedTile = interactTiles.length - 1;
-        } else {
-            selectedTile -= 1;
-        }
     }
 
-    if(inputs.inter == true && prevInputs.inter == false && !buildMode && !removeMode && !escMenu){
+    if(inputs.inter == true && prevInputs.inter == false && !buildMode && !escMenu){
         interactTimerSpeed = 1;
         interactTimer = 0;
         var playerTile = tiles.find(t => t.hasPlayer);
@@ -1263,7 +1138,7 @@ function handleInput(){
             if(playerTile.resource.type != "NONE"){
                 if(addToPlayerResources(playerTile.resource.type,1) > 0){
                     mineTile(playerTile);
-                    s([soundFxVolume,0,320,.02 - (playerTile.resource.value/1000),,0,4,.1,,,,,,,,.2,.01,0,.01]);
+                    s([soundFxVolume,0,320,.01,,0,4,.1,,,,,,,,.2,.01,0,.01]);
                 } else {
                     messages.push({text:"Resource full",time:0});
                 }
@@ -1271,7 +1146,7 @@ function handleInput(){
         }
     }
     var playerTile = tiles.find(t => t.hasPlayer);
-    if(inputs.inter == true && prevInputs.inter == true && !buildMode && !removeMode && !escMenu && interactTimer >= 1){
+    if(inputs.inter == true && prevInputs.inter == true && !buildMode && !escMenu && interactTimer >= 1){
         interactTimer = 0;
         var playerTile = tiles.find(t => t.hasPlayer);
         if(playerTile.building.type != "NONE"){
@@ -1280,68 +1155,46 @@ function handleInput(){
             if(playerTile.resource.type != "NONE"){
                 if(addToPlayerResources(playerTile.resource.type,1) > 0){
                     mineTile(playerTile);
-                    s([soundFxVolume,0,320,.02 - (playerTile.resource.value/1000),,0,4,.1,,,,,,,,.2,.01,0,.01]);
+                    s([soundFxVolume,0,320,.01,,0,4,.1,,,,,,,,.2,.01,0,.01]);
                 } else {
                     messages.push({text:"Resource full",time:0});
                 }
             }
         }
-    } else if(inputs.inter == true && prevInputs.inter == true && !buildMode && !removeMode && !escMenu){
+    } else if(inputs.inter == true && prevInputs.inter == true && !buildMode && !escMenu){
             interactTimer += (frameSpeedFactor/100) * interactTimerSpeed;
     }
 
     //If B is pressed and not in any modes and player has buildings
-    if(inputs.build == true && prevInputs.build == false && !buildMode && !removeMode && !settingRecipe && !escMenu && !selectingSell && !buyingMode){
+    if(inputs.build == true && prevInputs.build == false && !buildMode && !settingRecipe && !escMenu && !selectingSell && !buyingMode){
         if(playerBuildings.length > 0){
             selectedBuilding = 0;
             buildMode = true;
-            interactTiles = getSurroundingTiles(tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type == "NONE").sort((a,b) => a.y - b.y).sort((a,b) => a.x - b.x);
-            interactTiles.forEach(t => t.highlighted = true);
         } else {
             messages.push({text:"No Buildings",time:0});
         }
     } else if(inputs.build == true && prevInputs.build == false && buildMode){
-        selectedTile = 0;
         buildMode = false;
-        interactTiles = [];
     }
 
-    //If R is pressed and not in any modes and player has buildings
-    if(inputs.remove == true && prevInputs.remove == false && !buildMode && !removeMode && !settingRecipe && !selectingSell && !buyingMode && !escMenu){
-        removeMode = true;
-        interactTiles = getSurroundingTiles(tiles.find(t => t.hasPlayer)).filter(t => t.isVisible && t.building.type != "NONE").sort((a,b) => a.y - b.y).sort((a,b) => a.x - b.x);
-        interactTiles.forEach(t => t.highlighted = true);
-    } else if(inputs.remove == true && prevInputs.remove == false && removeMode){
-        selectedTile = 0;
-        removeMode = false;
-        interactTiles = [];
-    }
-
+    var playerTile = tiles.find(t => t.hasPlayer);
     //If E is pressed and in build mode and empty spaces
-    if(buildMode && inputs.inter == true && prevInputs.inter == false && interactTiles.some(t => t.building.type == "NONE")){
-        placeBuilding(interactTiles[selectedTile],playerBuildings[selectedBuilding]);
+    if(buildMode && inputs.inter == true && prevInputs.inter == false && tiles.some(t => t.hasPlayer && t.building.type == "NONE")){
+        placeBuilding(playerTile ,playerBuildings[selectedBuilding]);
         playerBuildings = playerBuildings.filter(b => b.value > 0);
-        interactTiles[selectedTile].highlighted = false;
-        interactTiles = interactTiles.filter(t => t != interactTiles[selectedTile]);
-        selectedTile = Math.min(interactTiles.length - 1, selectedTile);
-        selectedBuilding = Math.min(playerBuildings.length-1,selectedBuilding);
+        buildMode = false;
+        selectedBuilding = 0;
     }
     //If E is pressed and in remove mode and buildings
-    if(removeMode && inputs.inter == true && prevInputs.inter == false && interactTiles.some(t => t.building.type != "NONE")){
-        removeBuilding(interactTiles[selectedTile]);
-        interactTiles[selectedTile].highlighted = false;
-        interactTiles = interactTiles.filter(t => t != interactTiles[selectedTile]);
-        selectedTile = Math.min(interactTiles.length - 1, selectedTile);
+    if(inputs.remove == true && prevInputs.remove == false && tiles.some(t => t.hasPlayer && t.building.type != "NONE")){
+        removeBuilding(playerTile);
     }
-    if(inputs.esc == true && prevInputs.esc == false && (buildMode || removeMode || selectingSell || buyingMode || settingRecipe)){
+    if(inputs.esc == true && prevInputs.esc == false && (buildMode || selectingSell || buyingMode || settingRecipe)){
         buildMode = false;
-        removeMode = false;
         selectingSell = false;
         buyingMode = false;
         settingRecipe = false;
 
-        interactTiles = [];
-        selectedTile = 0;
         selectedBuilding = 0;
         selectingSell = 0;
     } else if (inputs.esc == true && prevInputs.esc == false){
@@ -1370,7 +1223,6 @@ function handleMenuInput(){
                 mainMenu = true;
                 escMenu = false;
                 runGameBool = false;
-                selectedMenuItem = 0;
                 break;
             case "Save Game":
                 saveGame();
@@ -1378,7 +1230,11 @@ function handleMenuInput(){
                 escMenu = false;
                 break;
             case "Load Game":
-                loadGame();
+                if(window.localStorage.getItem('Planet404_6473_DATA') != null){
+                    loadGame();
+                } else {
+                    messages.push({text:"Game Save not found",time:0});
+                }
                 escMenu = false;
                 break;
             case "Mute Music":
@@ -1405,18 +1261,15 @@ function handleMenuInput(){
 function saveGame(){
     window.localStorage.setItem('Planet404_6473_DATA', JSON.stringify([tiles,time,sols,playerResources,playerBuildings,playerBalance,playerEnergy,recipes,shopItems,
                                                           playerMaxEnergy,maxStepHeight,maxStorage,radarRange,solarOutput,craftSpeed,mineSpeed,minerTransmit,constructorTransmit,
-                                                          batteryDischarge,RTGOutput,endlessMode]));
+                                                          batteryDischarge,RTGOutput,generatorOutput,endlessMode]));
 }
 
 function loadGame(){
     buildMode = false;
-    removeMode = false;
     selectingSell = false;
     buyingMode = false;
     settingRecipe = false;
 
-    interactTiles = [];
-    selectedTile = 0;
     selectedBuilding = 0;
     selectingSell = 0;
 
@@ -1446,7 +1299,8 @@ function loadGame(){
     constructorTransmit = data[17];;
     batteryDischarge = data[18];
     RTGOutput = data[19];
-    endlessMode = data[20];
+    generatorOutput = data[20];
+    endlessMode = data[21];
     updatePlayerPos(0,0);
 }
 
@@ -1491,7 +1345,7 @@ function handleBuildingInteraction(playerTile){
                 messages.push({text:"Gained " + playerTile.building.recipe.product,time:0});
                 playerTile.building.storedProduct = false;
                 playerTile.building.recipe = null;
-                playerTile.building.craftTimer = 0;
+                playerTile.building.timer = 0;
                 confirmSound();
             } else if(playerTile.building.recipe == null){
                 settingRecipe = true;
@@ -1500,16 +1354,14 @@ function handleBuildingInteraction(playerTile){
             break;
         case "MINER":
             if(!minerTransmit){
-                if(playerTile.building.storedResource == 0){
-                    messages.push({text:"Resource full",time:0});
-                } else {
+                if(playerTile.building.storedResource > 0) {
                     var added = addToPlayerResources(playerTile.building.storedType,playerTile.building.storedResource);
                     if(added == 0){
                         denySound();
                         messages.push({text:"Resource full" + added + playerTile.building.storedType,time:0});
                     } else {
                         playerTile.building.storedResource -= addToPlayerResources(playerTile.building.storedType,playerTile.building.storedResource);
-                        messages.push({text:"Gained " + added + playerTile.building.storedType,time:0});
+                        messages.push({text:"Gained " + added + " " + playerTile.building.storedType,time:0});
                         confirmSound();
                     }
                 }
@@ -1693,7 +1545,7 @@ function handleHUD(){
     
     fT("Sol: " + (sols + 1) + " Planet Rotation: " + time.toFixed(0) + "°", canW/2,15);
 
-    if(!buildMode && !removeMode && !settingRecipe && !selectingSell && !buyingMode && (time <= 8 || time >= 352)){
+    if(!buildMode && !settingRecipe && !selectingSell && !buyingMode && (time <= 8 || time >= 352)){
         ctx.fillStyle = "#000000AA";
         if(time < 3 || time >= 357){
             ctx.strokeStyle = "#FFFFFF";
@@ -1742,15 +1594,6 @@ function handleHUD(){
         });
     }
 
-    if(removeMode){
-        ctx.fillStyle = "#000000AA";
-        generateUIOverlay(0.05,0.14,0.39);
-        ctx.fillStyle = "#FFFFFF";
-        ctx.font = "30px Tahoma";
-        fT("Remove Mode",canW/2,modeHeight);
-    }
-
-    
     if(settingRecipe){
         ctx.fillStyle = "#000000AA";
         generateUIOverlay(0.05,0.5,0.3);
@@ -1942,19 +1785,19 @@ function handleTileUpdates(t) {
             });
             }
             if(t.hasPlayer && !escMenu){
-                fT("⚡",(infoX + 9) ,infoY + infoStep);
+                fT("⚡",infoX ,infoY + infoStep);
                 drawBattery(infoX,infoY + (infoStep*2) + canH * 0.08,canH * 0.1,Math.min(1,totalEnergy/solarOutput));
             }
             break;
         case "CONSTRUCTOR":
             if(t.building.recipe != null){
                 if(t.building.crafting){
-                    t.building.craftTimer += (frameSpeedFactor/10000) * craftSpeed;
-                    if(t.building.craftTimer >= 1){
+                    t.building.timer += (frameSpeedFactor/10000) * craftSpeed;
+                    if(t.building.timer >= 1){
                         if(constructorTransmit){
                             addToPlayerBuildings(t.building.recipe.product,1);
                             t.building.recipe = null;
-                            playerTile.building.craftTimer = 0;
+                            playerTile.building.timer = 0;
                         } else {
                             t.building.storedProduct = true;
                         }
@@ -1964,13 +1807,13 @@ function handleTileUpdates(t) {
             }
             if(t.hasPlayer && !escMenu){
                 fT("Recipe: " + (t.building.recipe != undefined ? t.building.recipe.product : "None") ,infoX,infoY);
-                fT("⚡",(infoX + 9) ,infoY + infoStep);
+                fT("⚡",infoX ,infoY + infoStep);
                 if(t.building.storedProduct){
                     ctx.fillStyle = "#00FF00";
                 }
-                fT("%",(19 + infoX) + (canH * 0.1) * 0.25,infoY + infoStep);
-                drawBattery(infoX,infoY + (infoStep*2) + canH * 0.08,canH * 0.1,Math.min(1,t.building.energy/t.building.maxEnergy));
-                drawBattery(10 + infoX + (canH * 0.1) * 0.25, infoY + (infoStep*2) + canH * 0.08,canH * 0.1,Math.min(1,t.building.craftTimer));
+                fT("%",(infoX + 12) + (canH * 0.1) * 0.25,infoY + infoStep);
+                drawBattery(infoX,infoY + (infoStep*2) + canH * 0.08,canH * 0.1,t.building.energy/t.building.maxEnergy);
+                drawBattery(10 + infoX + (canH * 0.1) * 0.25, infoY + (infoStep*2) + canH * 0.08,canH * 0.1,t.building.timer);
             }
             break;
         case "MINER":
@@ -1980,24 +1823,24 @@ function handleTileUpdates(t) {
                     t.building.mining = true;
                 }
             } else {
-                t.building.mineTimer += (frameSpeedFactor/25000) * mineSpeed;
-                if(t.building.mineTimer >= 1){
+                t.building.timer += (frameSpeedFactor/25000) * mineSpeed;
+                if(t.building.timer >= 1){
                     t.building.storedResource = Math.min(t.building.maxStored, t.building.storedResource + 5);
                     mineTile(t);
                     t.building.mining = false;
-                    t.building.mineTimer = 0;
+                    t.building.timer = 0;
                 }
             }
             if(minerTransmit){
                 t.building.storedResource -= addToPlayerResources(t.building.storedType,t.building.storedResource);
             }
             if(t.hasPlayer && !escMenu){
-                fT("⚡",(infoX + 9) ,infoY + infoStep);
-                fT("%",(19 + infoX) + (canH * 0.1) * 0.25,infoY + infoStep);
-                fT("⨆",(29 + infoX) + (canH * 0.1) * 0.5,infoY + infoStep);
+                fT("⚡",infoX,infoY + infoStep);
+                fT("%",(12 + infoX) + (canH * 0.1) * 0.25,infoY + infoStep);
+                fT("⨆",(24 + infoX) + (canH * 0.1) * 0.5,infoY + infoStep);
                 drawBattery(infoX,infoY + (infoStep*2) + canH * 0.08,canH * 0.1,Math.min(1,t.building.energy/t.building.maxEnergy));
-                drawBattery(10 + infoX + (canH * 0.1) * 0.25, infoY + (infoStep*2) + canH * 0.08,canH * 0.1,Math.min(1,t.building.mineTimer));
-                drawBattery(20 + infoX + (canH * 0.1) * 0.5, infoY + (infoStep*2) + canH * 0.08,canH * 0.1,Math.min(1,t.building.storedResource/t.building.maxStored));
+                drawBattery(10 + infoX + (canH * 0.1) * 0.25, infoY + (infoStep*2) + canH * 0.08,canH * 0.1,t.building.timer);
+                drawBattery(20 + infoX + (canH * 0.1) * 0.5, infoY + (infoStep*2) + canH * 0.08,canH * 0.1,t.building.storedResource/t.building.maxStored);
             }
             break;
         case "BATTERY":
@@ -2005,14 +1848,14 @@ function handleTileUpdates(t) {
             var surroundingBatteries = surrounding.filter(tt => tt.building.type == "BATTERY").filter(tt => tt.building.energy + 1 < t.building.energy);
             var surroundingOther = surrounding.filter(tt => tt.building.type != "BATTERY");
             if(t.building.discharging){
-                t.building.dischargeTimer += (frameSpeedFactor/10000) * batteryDischarge;
+                t.building.timer += (frameSpeedFactor/10000) * batteryDischarge;
                 if(surrounding.length == 0){
-                    t.building.dischargeTimer = 0;
+                    t.building.timer = 0;
                     t.building.discharging = false;
                     t.building.energy = Math.min(t.building.energy + 1,t.building.maxEnergy);
                 }
-                if(t.building.dischargeTimer >= 1){
-                    t.building.dischargeTimer = 0;
+                if(t.building.timer >= 1){
+                    t.building.timer = 0;
                     t.building.discharging = false;
 
                     if(surroundingOther.length > 0){
@@ -2028,10 +1871,10 @@ function handleTileUpdates(t) {
                 }
             }
             if(t.hasPlayer && !escMenu){
-                fT("⚡",(infoX + 9) ,infoY + infoStep);
-                fT("%",(19 + infoX) + (canH * 0.1) * 0.25,infoY + infoStep);
-                drawBattery(infoX,infoY + (infoStep*2) + canH * 0.08,canH * 0.1,Math.min(1,t.building.energy/t.building.maxEnergy));
-                drawBattery(10 + infoX + (canH * 0.1) * 0.25, infoY + (infoStep*2) + canH * 0.08,canH * 0.1,Math.min(1,t.building.dischargeTimer));
+                fT("⚡",infoX,infoY + infoStep);
+                fT("%",(12 + infoX) + (canH * 0.1) * 0.25,infoY + infoStep);
+                drawBattery(infoX,infoY + (infoStep*2) + canH * 0.08,canH * 0.1,t.building.energy/t.building.maxEnergy);
+                drawBattery(10 + infoX + (canH * 0.1) * 0.25, infoY + (infoStep*2) + canH * 0.08,canH * 0.1,t.building.timer);
             }
             break;
         case "RTG":
@@ -2050,7 +1893,7 @@ function handleTileUpdates(t) {
             }
             break;
         case "GENERATOR":
-            if(t.building.generatingTimer >= 1){
+            if(t.building.timer >= 1){
                 if(t.hasPlayer && playerEnergy < playerMaxEnergy){
                     playerEnergy = Math.min(playerMaxEnergy,playerEnergy + generatorOutput);
                 } else {
@@ -2064,20 +1907,20 @@ function handleTileUpdates(t) {
                         }
                     });
                 }
-                t.building.generatingTimer = 0;
+                t.building.timer = 0;
                 t.building.generating = false;
-            } else if(t.building.generatingTimer < 1 && t.building.generating){
-                t.building.generatingTimer += (frameSpeedFactor/800);
+            } else if(t.building.timer < 1 && t.building.generating){
+                t.building.timer += (frameSpeedFactor/800);
             } else if(t.building.coal >= 1 && ((t.hasPlayer && playerEnergy < playerMaxEnergy) || (getSurroundingTiles(t).filter(tt => tt.building.energy != null).filter(tt => tt.building.energy != tt.building.maxEnergy).length > 0))){
                 t.building.coal -= 1;
-                t.building.generatingTimer = 0;
+                t.building.timer = 0;
                 t.building.generating = true;
             }
             if(t.hasPlayer){
-                fT("⨆",(infoX + 9) ,infoY + infoStep);
-                fT("%",(19 + infoX) + (canH * 0.1) * 0.25,infoY + infoStep);
-                drawBattery(infoX,infoY + (infoStep*2) + canH * 0.08,canH * 0.1,Math.min(1,t.building.coal/t.building.maxCoal));
-                drawBattery(10 + infoX + (canH * 0.1) * 0.25, infoY + (infoStep*2) + canH * 0.08,canH * 0.1,Math.min(1,t.building.generatingTimer));
+                fT("⨆",infoX + 2,infoY + infoStep);
+                fT("%",(12 + infoX) + (canH * 0.1) * 0.25,infoY + infoStep);
+                drawBattery(infoX,infoY + (infoStep*2) + canH * 0.08,canH * 0.1,t.building.coal/t.building.maxCoal);
+                drawBattery(10 + infoX + (canH * 0.1) * 0.25, infoY + (infoStep*2) + canH * 0.08,canH * 0.1,t.building.timer);
             }
             break;
     }
