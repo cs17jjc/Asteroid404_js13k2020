@@ -102,7 +102,7 @@ class Colour{
         return rgbToHex(this.r,this.g,this.b);
     }
     darkend(factor){
-        return new Colour(Math.min(255, Math.trunc(this.r * factor)),Math.min(255, Math.trunc(this.g * factor)),Math.min(255, Math.trunc(this.b * factor)));
+        return new Colour(this.r * factor,this.g * factor,this.b * factor);
     }
 }
 
@@ -112,10 +112,8 @@ var canvas = document.getElementById("canv");
 var ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
 
-var tiles = [];
 var messages = [];
 var tileWithPlayer;
-
 
 //Utils
 let tileRadius = 60;
@@ -157,7 +155,7 @@ function drawLines(points,x,y,fill = true){
     ctx.moveTo(points[0].x + x,points[0].y + y);
     gArr(points.length-1).forEach(i => ctx.lineTo(points[i+1].x + x,points[i+1].y + y));
     ctx.closePath();
-    fill ? ctx.fill() : null;
+    if(fill){ctx.fill()};
     ctx.stroke();
 }
 
@@ -175,8 +173,8 @@ function renderStars(rot){
 }
 
 function updateRadarVisableTiles(){
-    var radarTiles = tiles.filter(t => t.building.type == "RADAR");
-    tiles.forEach(t => t.isVisible = radarTiles.some(r => Math.abs(r.x - t.x) <= radarRange));
+    var radarTiles = gameData[0].filter(t => t.building.type == "RADAR");
+    gameData[0].forEach(t => t.isVisible = radarTiles.some(r => Math.abs(r.x - t.x) <= gameData[12]));
 }
 function drawLogo(x,y,size){
     ctx.save();
@@ -205,11 +203,11 @@ function drawBattery(x,y,size,percentage){
 }
 function updatePlayerPos(deltaX,deltaY){
     interactTimer = 0;
-    tileWithPlayer = tileWithPlayer != null ? tileWithPlayer : tiles.find(t => t.hasPlayer);
-    var newTile = tiles.find(t => t.x == tileWithPlayer.x + deltaX && t.y == tileWithPlayer.y + deltaY);
+    tileWithPlayer = tileWithPlayer != null ? tileWithPlayer : gameData[0].find(t => t.hasPlayer);
+    var newTile = gameData[0].find(t => t.x == tileWithPlayer.x + deltaX && t.y == tileWithPlayer.y + deltaY);
     if(newTile != null){
         if(newTile.isVisible){
-            if(Math.abs(newTile.height - tileWithPlayer.height) <= maxStepHeight * tileStepHeight){
+            if(Math.abs(newTile.height - tileWithPlayer.height) <= gameData[10] * tileStepHeight){
                 tileWithPlayer.hasPlayer = false;
                 newTile.hasPlayer = true;
                 playerPosOffset = {x:tileWithPlayer.screenPos.x - newTile.screenPos.x,y:tileWithPlayer.screenPos.y - newTile.screenPos.y};
@@ -229,62 +227,41 @@ function mineTile(tile){
 function placeBuilding(tile,building){
         tile.building.type = building.type;
         var tb = tile.building;
-        switch(building.type){
-            case "RADAR":
-                updateRadarVisableTiles();
-                break;
-            case "CONSTRUCTOR":
-                tb.energy = 0;
-                tb.maxEnergy = 20;
-                tb.crafting = false;
-                tb.timer = 0;
-                tb.storedProduct = false;
-                break;
-            case "MINER":
-                tb.storedResource = 0;
-                tb.storedType = tile.resource.type;
-                tb.maxStored = 50;
-                tb.energy = 0;
-                tb.maxEnergy = 10;
-                tb.mining = false;
-                tb.timer = 0;
-                tb.counter = 0;
-                break;
+        if(tb.type == "RADAR"){updateRadarVisableTiles()}
+        if(tb.type == "CONSTRUCTOR" || tb.type == "MINER"){
+            tb.energy = 0;
+            tb.maxEnergy = 20;
+            tb.timer = 0;
+            tb.processing = false;
+            if(tb.type == "CONSTRUCTOR"){tb.storedProduct = false;}
+            if(tb.type == "MINER"){tb.storedResource = 0;tb.storedType = tile.resource.type;tb.maxStored = 50;tb.counter = 0;}
         }
         building.value -= 1;
         s([soundFxVolume,,191,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
 }
 function removeBuilding(tile){
     addToPlayerBuildings(tile.building.type,1);
-    switch(tile.building.type){
-        case "RADAR":
-            tile.building = {type:"NONE"};
-            updateRadarVisableTiles();
-            break;
-        case "CONSTRUCTOR":
-            tile.building.storedProduct ? addToPlayerBuildings(tile.building.recipe.product,1) : null;
-            break;
-    }
     tile.building = {type:"NONE"};
+    if(tile.building.type == "RADAR"){updateRadarVisableTiles();}
     s([soundFxVolume,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
 }
 
 function addToPlayerResources(type,ammount){
-    var addedValue = Math.min(maxStorage,ammount);
-    var playerRes = playerResources.find(r => r.type == type);
+    var addedValue = Math.min(gameData[11],ammount);
+    var playerRes = gameData[3].find(r => r.type == type);
     if(playerRes != null){
-        if(playerRes.value + addedValue > maxStorage){
-            addedValue = maxStorage - playerRes.value;
+        if(playerRes.value + addedValue > gameData[11]){
+            addedValue = gameData[11] - playerRes.value;
         }
         playerRes.value += addedValue;
     } else {
-        playerResources.push({type:type,value:addedValue});
+        gameData[3].push({type:type,value:addedValue});
     }
     return addedValue;
 }
 function addToPlayerBuildings(type,ammount){
-    var playerBuild = playerBuildings.find(r => r.type == type);
-    playerBuild != null ? playerBuild.value += ammount : playerBuildings.push({type:type,value:ammount});
+    var playerBuild = gameData[4].find(r => r.type == type);
+    playerBuild != null ? playerBuild.value += ammount : gameData[4].push({type:type,value:ammount});
 }
 
 function drawHexagon(pos){
@@ -293,7 +270,7 @@ function drawHexagon(pos){
 }
 
 function componentToHex(c) {
-    var hex = Math.trunc(c).toString(16);
+    var hex = Math.max(0,Math.min(255,Math.trunc(c))).toString(16);
     return hex.length == 1 ? "0" + hex : hex;
   }
   
@@ -351,7 +328,7 @@ function componentToHex(c) {
   }
 
   function getSurroundingTiles(tile){
-      return tiles.filter(t => {
+      return gameData[0].filter(t => {
         var yDelta = t.y - tile.y;
         var xDelta = t.x - tile.x;
         return (Math.abs(yDelta) == 1 && xDelta == 0) || (yDelta == 0 && Math.abs(xDelta) == 1) || (tile.x % 2 == 0 && yDelta == -1 && Math.abs(xDelta) == 1) || (tile.x % 2 != 0 && yDelta == 1 && Math.abs(xDelta) == 1);
@@ -369,23 +346,26 @@ function componentToHex(c) {
 
   function generateMap(){
 
-    tiles = gArr(mapWidth).flatMap(x => gArr(5).map(y => new Tile(x,y)));
-    tiles.forEach(t => {
+    gameData[0] = gArr(mapWidth).flatMap(x => gArr(5).map(y => new Tile(x,y)));
+    gameData[0].forEach(t => {
         var heightNumber = Math.max(0,Math.min(9,Math.trunc(Math.abs((perlin2(t.x/10, t.y/10)+1)/2 * 9))));
         t.height = tileStepHeight * heightNumber;
-        t.colour = planetCols.find(c => c.levels.includes(heightNumber)).colour.darkend(1 - (Math.random() - 0.5)/3);
+        //Calculate colour for tile
+        t.colour = (heightNumber < 2 ? new Colour(107, 43, 6) : heightNumber < 4 ? new Colour(184, 12, 9) : heightNumber < 6 ? new Colour(130, 2, 99) : heightNumber < 8 ? new Colour(162, 136, 227) : new Colour(229, 231, 230)).darkend(1 - (Math.random() - 0.5)/3);
         var absDelta = Math.abs(spawnX - t.x);
-        absDelta > (mapWidth * 0.005) && Math.random() > 0.85 ? addResourceToTile(t,"IRON",Math.random() * 15,10,0.4) : null;
-        absDelta > (mapWidth * 0.04) && Math.random() > 0.90 ? addResourceToTile(t,"COPPER",Math.random() * 15,10,0.5) : null;
-        absDelta > (mapWidth * 0.08) && Math.random() > 0.92 ? addResourceToTile(t,"CARBON",Math.random() * 15,10,0.6) : null;
-        absDelta > (mapWidth * 0.12) && Math.random() > 0.92 ? addResourceToTile(t,"SILICON",Math.random() * 15,10,0.5) : null;
-        absDelta > (mapWidth * 0.14) && Math.random() > 0.88 ? addResourceToTile(t,"LITHIUM",Math.random() * 15,10,0.6) : null;
-        absDelta > (mapWidth * 0.24) && Math.random() > 0.9 ? addResourceToTile(t,"PLUTONIUM",Math.random() * 15,10,0.7) : null;
-        t.resource.type == "PLUTONIUM" ? addHazardToTile(t,t.resource.value) : null;
+        if(absDelta < (mapWidth * 0.5) && Math.random() > 0.9) { addResourceToTile(t,"ROCK",Math.random() * 15,10,0.5)}
+        if(absDelta > (mapWidth * 0.005) && Math.random() > 0.85) { addResourceToTile(t,"IRON",Math.random() * 15,10,0.5)}
+        if(absDelta > (mapWidth * 0.04) && Math.random() > 0.90) { addResourceToTile(t,"COPPER",Math.random() * 15,10,0.5)}
+        if(absDelta > (mapWidth * 0.08) && Math.random() > 0.92) { addResourceToTile(t,"CARBON",Math.random() * 15,10,0.6)}
+        if(absDelta > (mapWidth * 0.10) && Math.random() > 0.92) { addResourceToTile(t,"SILICON",Math.random() * 15,10,0.5)}
+        if(absDelta > (mapWidth * 0.15) && Math.random() > 0.88) { addResourceToTile(t,"LITHIUM",Math.random() * 15,10,0.6)}
+        if(absDelta > (mapWidth * 0.22) && Math.random() > 0.9) { addResourceToTile(t,"PLUTONIUM",Math.random() * 15,10,0.7)}
+        if(t.resource.type == "PLUTONIUM") { addHazardToTile(t,t.resource.value)}
+        if(absDelta > (mapWidth * 0.10) && Math.random() > 0.8) { addHazardToTile(t,3 * Math.random())}
     });
-    tiles.find(t => t.x == spawnX).hasPlayer = true;
+    gameData[0].find(t => t.x == spawnX).hasPlayer = true;
     //Generate lines for tiles with resources
-    tiles.forEach(t => t.resource.type != "NONE" ? t.resource.lines = generateResourcePoints(t.resource.value) : null);
+    gameData[0].forEach(t => {if(t.resource.type != "NONE"){t.resource.lines = generateResourcePoints(t.resource.value)}});
   }
 
 function addResourceToTile(tile,type,ammount,minimum,expansion) {
@@ -394,18 +374,18 @@ function addResourceToTile(tile,type,ammount,minimum,expansion) {
   }
 
   function addHazardToTile(tile,ammount) {
-    tile.hazard = ammount;
-    getSurroundingTiles(tile).forEach(t => t.hazard = ammount * 0.8);
+    tile.hazard = Math.ceil(ammount);
+    getSurroundingTiles(tile).forEach(t => t.hazard = Math.ceil(ammount * 0.8));
   }
 
 //Source
-var menuItems = ["Resume","Main Menu","Save Game","Load Game","Mute Music","Mute Sound FX"];
+var menuItems = ["Resume","Main Menu","Save Game","Load Game","Toggle Music","Toggle Sound FX"];
 var selectedMenuItem = 0;
 
-var mainMenuItems = ["New Game","Load Game","Mute Music","Mute Sound FX"];
+var mainMenuItems = ["New Game","Load Game"];
 var mainMenu = true;
 
-var soundFxVolume = 0;
+var soundFxVolume = 0.5;
 var confirmSound = () => s([soundFxVolume,.01,593,,.03,0,1,2.04,.1,.1,50,.01,,-0.1,,,.06,.96,.08]);
 var denySound = () => s([soundFxVolume,0,604,,,.13,4,2.01,-0.1,.2,50,,.01,,,.4,.05,.68,.05]);
 
@@ -433,17 +413,19 @@ var shopItemsStart = [{item:"RESOURCE STORAGE",cost:350,costMulti:2,desc:["Incre
                  {item:"MINER SPEED",cost:750,costMulti:1.8,desc:["Incrases Miner speed by 50%"]},
                  {item:"MINER TRANSMITTER",cost:1985,desc:["Miner transmits mined","resources to inventory."]},
                  {item:"RTG OUTPUT",cost:250,costMulti:1.8,desc:["Increases RTG output by 1."]},
-                 {item:"SOLAR OUTPUT",cost:550,costMulti:1.4,desc:["Increases Solar output by 1."]}]
+                 {item:"SOLAR OUTPUT",cost:550,costMulti:1.4,desc:["Increases Solar output by 1."]}];
 
-var shopItems;
-var recipes;
+// 0 => tiles, 1 => time, 2 => sols, 3 => playerResources
+// 4 => playerBuildings, 5 => playerBalance, 6 => playerEnergy, 7 => recipes
+// 8 => shopItems, 9 => playerMaxEnergy, 10 => maxStepHeight, 11 => maxStorage
+// 12 => radarRange, 13 => solarOutput, 14 => craftSpeed, 15 => mineSpeed
+// 16 => minerTransmit, 17 => constructorTransmit, 18 => RTGOutput, 19 => endlessMode
+var gameData;
 
 var playerSpeed = 1;
-var playerEnergy = 50;
-var prevPlayerEnergy = 50;
+var prevPlayerEnergy;
 var playerDeadState = false;
 
-var playerBalance;
 var playerBalanceDisplayed = 0;
 
 var quotas = [500,1000,2000,5000,10000,20000,50000];
@@ -461,14 +443,10 @@ canvas.style.height = canvas.height + "px";
 var prevInputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,esc:false,speve:false,shop:false};
 var inputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,esc:false,speve:false,shop:false};
 
-var tiles = [];
-var messages = [];
 var selectedSell = 0;
 var selectedSellDisplayPrice = 0;
 var selectedBuy = 0;
 
-var playerResources;
-var playerBuildings;
 var selectedBuilding = 0;
 
 //Modes
@@ -477,25 +455,6 @@ var settingRecipe = false;
 var escMenu = false;
 var selectingSell = false;
 var buyingMode = false;
-
-var endlessMode = false;
-
-//Player Upgrades:
-var playerMaxEnergy;
-var maxStepHeight;
-var maxStorage;
-
-//Building Upgrades:
-var solarOutput;
-var craftSpeed;
-var mineSpeed;
-var minerTransmit;
-var constructorTransmit;
-var RTGOutput;
-var radarRange;
-
-var time;
-var sols;
 
 var hudFlashTimer = 0;
 var hudFlash = false;
@@ -508,23 +467,16 @@ var batteryStatusMessage = "Nominal";
 let mySongData = zzfxM(...song);
 let myAudioNode = zzfxP(...mySongData);
 myAudioNode.loop = true;
-myAudioNode.start();
+//myAudioNode.start();
+var musicToggle = true;
 
-var stars = Array.from(Array(500).keys()).map(i => {return {x:(Math.random() * 2 * canW) - canW,y:(Math.random() * 2 * canH) - canH,r:Math.random() * 3}});
+var stars = gArr(500).map(i => {return {x:(Math.random() * 2 * canW) - canW,y:(Math.random() * 2 * canH) - canH,r:Math.random() * 3}});
 
 var mapWidth = 500;
-var colMap = new Map();
-colMap.set(0,new Colour(80, 81, 79));
-colMap.set(3,new Colour(242, 95, 92));
-colMap.set(6,new Colour(255, 224, 102));
-colMap.set(9,new Colour(36, 123, 160));
-var planetCols = gArr(4).map(i => {return {levels:[3*i,3*i + 1,3*i + 2],colour:colMap.get(3*i)}});
 var spawnX = 240;
 
 var runGameBool = false;
 var runIntro = false;
-var textScroll = false;
-var sentanceCounter = 0;
 
 var fT = (s,x,y) => ctx.fillText(s, x, y);
 
@@ -598,41 +550,26 @@ function handleMainMenu(){
         s([]);
     }
     if(inputs.inter == true && prevInputs.inter == false){
-        switch(mainMenuItems[selectedMenuItem]){
-            case "New Game":
-                initGame();
-                soundFxVolume = 0.5;
+        if(mainMenuItems[selectedMenuItem] == "New Game"){
+            soundFxVolume = 0;
+            initGame();
+            soundFxVolume = 0.5;
+            mainMenu = false;
+            selectedMenuItem = 0;
+            runIntro = true;
+            confirmSound();
+        }
+        if(mainMenuItems[selectedMenuItem] == "Load Game"){
+            if(window.localStorage.getItem('Planet404_6473_DATA') != null){
+                loadGame();
+                runGameBool = true;
                 mainMenu = false;
                 selectedMenuItem = 0;
-                runIntro = true;
-                break;
-            case "Load Game":
-                if(window.localStorage.getItem('Planet404_6473_DATA') != null){
-                    loadGame();
-                    soundFxVolume = 0.5;
-                    runGameBool = true;
-                    mainMenu = false;
-                    selectedMenuItem = 0;
-                }
-                break;
-            case "Mute Music":
-                myAudioNode.disconnect();
-                mainMenuItems[selectedMenuItem] = "Unmute Music";
-                break;
-            case "Mute Sound FX":
-                soundFxVolume = 0;
-                mainMenuItems[selectedMenuItem] = "Unmute Sound FX";
-                break;
-            case "Unmute Music":
-                myAudioNode.connect(zzfxX.destination);
-                mainMenuItems[selectedMenuItem] = "Mute Music";
-                break;
-            case "Unmute Sound FX":
-                soundFxVolume = 1;
-                mainMenuItems[selectedMenuItem] = "Mute Sound FX";
-                break;
+                confirmSound();
+            } else {
+                denySound();
+            }
         }
-        confirmSound();
     }
 
     ctx.font = "40px Tahoma";
@@ -651,58 +588,64 @@ function handleMainMenu(){
 //Waypoint
 function initGame(){
     //Generate Terrain
+    gameData = new Array(20);
     seed(Math.random());
     generateMap();
     //Reset variables
-    playerBuildings = [{type:"RADAR",value:1}];
-    playerResources = [];
-    playerBalance = 0;
-    recipes = startRecipes.slice();
-    shopItems = shopItemsStart.slice();
-    endlessMode = false;
+    gameData[4] = [{type:"RADAR",value:1}];
+    gameData[3] = [];
+    gameData[5] = 0;
+    gameData[7] = startRecipes.slice();
+    gameData[8] = shopItemsStart.slice();
+    gameData[19] = false;
 
-    playerMaxEnergy = 50;
-    playerEnergy = playerMaxEnergy;
-    maxStepHeight = 1;
-    maxStorage = 50;
+    gameData[9] = 50;
+    gameData[6] = gameData[9];
+    gameData[10] = 1;
+    gameData[11] = 50;
 
-    solarOutput = 4;
-    craftSpeed = 1;
-    mineSpeed = 1;
-    minerTransmit = false;
-    constructorTransmit = false;
-    RTGOutput = 5;
-    radarRange = 6;
+    gameData[13] = 4;
+    gameData[14] = 1;
+    gameData[15] = 1;
+    gameData[16] = false;
+    gameData[17] = false;
+    gameData[18] = 5;
+    gameData[12] = 6;
 
-    time = 0;
-    sols = 0;
+    gameData[1] = 0;
+    gameData[2] = 0;
 
     failedQuota = false;
 
     prevInputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,info:false,esc:false,speve:false,shop:false};
     inputs = {up:false,down:false,left:false,right:false,inter:false,build:false,remove:false,info:false,esc:false,speve:false,shop:false};
 
+    playerPosOffset = {x:0,y:0};
+
     //Place start buildings
-    placeBuilding(tiles.find(t => t.x == spawnX && t.y == 2),{type:"RADAR",value:1});
-    placeBuilding(tiles.find(t => t.x == spawnX && t.y == 0),{type:"RTG",value:1});
-    placeBuilding(tiles.find(t => t.x == spawnX - 1 && t.y == 0),{type:"CONSTRUCTOR",value:1});
-    placeBuilding(tiles.find(t => t.x == spawnX + 2 && t.y == 1),{type:"TELEDEPOT",value:1});
+    placeBuilding(gameData[0].find(t => t.x == spawnX && t.y == 2),{type:"RADAR",value:1});
+    placeBuilding(gameData[0].find(t => t.x == spawnX && t.y == 0),{type:"RTG",value:1});
+    placeBuilding(gameData[0].find(t => t.x == spawnX - 1 && t.y == 0),{type:"CONSTRUCTOR",value:1});
+    placeBuilding(gameData[0].find(t => t.x == spawnX + 2 && t.y == 1),{type:"TELEDEPOT",value:1});
+    tileWithPlayer = gameData[0].find(t => t.hasPlayer);
     updatePlayerPos(0,0);
+    prevPlayerEnergy = gameData[6];
 }
 
 
 
 function runGame(){
 
-    renderStars((Math.PI/180) * ((sols * 360) + time));
+    renderStars((Math.PI/180) * ((gameData[2] * 360) + gameData[1]));
 
-    var visableTiles = tiles.filter(t => Math.abs(t.x - tileWithPlayer.x) <= tileViewRadius).sort((a,b) => a.height - b.height).sort((a,b) => a.y - b.y).sort((a,b) => a.isVisible - b.isVisible);
+    //Render map
+    var visableTiles = gameData[0].filter(t => Math.abs(t.x - tileWithPlayer.x) <= tileViewRadius).sort((a,b) => a.height - b.height).sort((a,b) => a.y - b.y).sort((a,b) => a.isVisible - b.isVisible);
     visableTiles.forEach(t => {
         t.screenPos.x = t.x * tileRadius * 1.5 + canW/2 - tileWithPlayer.x * tileRadius * 1.5;
         t.screenPos.y = t.y * tileRadius * 2 * 0.866025 * perspRatio + canH * 0.71 + (t.x % 2 != 0 ? 0.866025 * tileRadius * perspRatio : 0) - (t.isVisible ? t.height : 0);
         ctx.lineWidth = 3;
 
-        var tileColour = new Colour(Math.max(0,t.colour.r * (1 - (t.hazard/10))),Math.min(255,t.colour.g * (1 + (t.hazard/10))),Math.max(0,t.colour.b * (1 - (t.hazard/10))));
+        var tileColour = new Colour(lerp(t.colour.r,0,t.hazard/5 * t.colour.r/255),lerp(t.colour.g,255,t.hazard/5 + (Math.sin(millisOnLastFrame/300)*t.hazard/20)),lerp(t.colour.b,0,t.hazard/5 * t.colour.b/255));
         ctx.strokeStyle = t.isVisible ? t.hazard == 0 ? tileColour.darkend(0.2).toHex() : tileColour.darkend(1.5).toHex() : "#000000";
         ctx.fillStyle = t.isVisible ? tileColour.toHex() : "#AAAAAA";
         drawHexagon(t.screenPos);
@@ -710,16 +653,16 @@ function runGame(){
         var rCol = resColMap.get(t.resource.type);
         ctx.fillStyle = rCol.toHex();
         ctx.strokeStyle = rCol.darkend(0.2).toHex();
-        t.isVisible && t.resource.type != "NONE" ? drawLines(t.resource.lines,t.screenPos.x,t.screenPos.y) : null;
+        if(t.isVisible && t.resource.type != "NONE"){drawLines(t.resource.lines,t.screenPos.x,t.screenPos.y)};
 
         ctx.fillStyle = "#000000";
-        ctx.font = Math.trunc(tileRadius*perspRatio) + "px Arial";
+        ctx.font = "24px Arial";
         ctx.textAlign = "center"; 
         ctx.textBaseline = "middle"; 
-        !t.isVisible ? fT("404",t.screenPos.x ,t.screenPos.y) : null;
+        if(!t.isVisible){fT("404",t.screenPos.x ,t.screenPos.y)};
 
         var img = imgMap.get(t.building.type);
-        img != undefined && t.isVisible ? ctx.drawImage(img[0],Math.trunc(t.screenPos.x - img[0].width/2),Math.trunc(t.screenPos.y - img[0].height*img[1])) : null;
+        if(img != undefined && t.isVisible){ctx.drawImage(img[0],Math.trunc(t.screenPos.x - img[0].width/2),Math.trunc(t.screenPos.y - img[0].height*img[1]))}
     });
     var playerTileCoords = tileWithPlayer.screenPos;
     ctx.drawImage(roverImg,Math.trunc(playerTileCoords.x - (roverImg.width*roverImgScale/2) + playerPosOffset.x),Math.trunc((playerTileCoords.y - (roverImg.height*roverImgScale/2) - 10) + playerPosOffset.y + (Math.sin(millisOnLastFrame/400)*3)),Math.trunc(roverImg.width*roverImgScale),Math.trunc(roverImg.height*roverImgScale));
@@ -742,30 +685,34 @@ function runGame(){
         handleMenuInput();
     } else if(!playerDeadState && !failedQuota && !finishedQuotas) {
         //Tile updates
-        tiles.filter(t => t.isVisible && t.building.type != "NONE").forEach(t => handleTileUpdates(t));
+        gameData[0].forEach(t => {if(t.isVisible && t.building.type != "NONE"){handleTileUpdates(t)}});
         
         playerSpeed = inputs.speve == true && prevInputs.speve == true ? 1.8 : 1;
         playerPosOffset = {x:lerp(playerPosOffset.x,0,(frameSpeedFactor/180) * playerSpeed),y:lerp(playerPosOffset.y,0,(frameSpeedFactor/180) * playerSpeed)}
 
-        playerResources = playerResources.filter(r => r.value > 0);
-        selectedSell = Math.min(prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount)).length - 1,selectedSell);
-        playerBuildings = playerBuildings.filter(b => b.value > 0);
-        selectedBuy = Math.min(shopItems.length - 1,selectedBuy);
+        gameData[3] = gameData[3].filter(r => r.value > 0);
+        selectedSell = Math.min(prices.filter(p => gameData[3].some(r => p.type == r.type && r.value >= p.ammount)).length - 1,selectedSell);
+        gameData[4] = gameData[4].filter(b => b.value > 0);
+        selectedBuy = Math.min(gameData[8].length - 1,selectedBuy);
     
-        if(prices.filter(p => playerResources.some(r => p.type == r.type) && selectingSell).length == 0){
+
+        if(prices.filter(p => gameData[3].some(r => p.type == r.type) && selectingSell).length == 0){
             selectedSell = 0;
             selectingSell = false;
         }
 
         //Drain player battery
-        if(prevPlayerEnergy < playerEnergy){
+        if(prevPlayerEnergy < gameData[6]){
+            batteryStatusMessage ="Charging";
+        }
+        if(selectingSell || buyingMode || ["SOLAR","RTG"].some(s => s == tileWithPlayer.building.type)){
+            batteryStatusMessage ="Paused";
+        }
+        if(["Charging","Paused"].includes(batteryStatusMessage)){
             hudFlash = false;
-            batteryStatusMessage = "Charging";
-        } else if(selectingSell || buyingMode || ["SOLAR","RTG"].some(s => s == tileWithPlayer.building.type)){
-            hudFlash = false;
-            batteryStatusMessage = "Paused";
-        } 
-        playerEnergy -= ["Charging","Paused"].includes(batteryStatusMessage) ? 0 : (1 + tileWithPlayer.hazard) * (frameSpeedFactor/1000);
+        } else {
+            gameData[6] -= (1 + tileWithPlayer.hazard) * (frameSpeedFactor/1000);
+        }
         
         handleHUD();
         handleInput();
@@ -780,9 +727,9 @@ function runGame(){
         if(roverImgScale < 0.4){
             fT("Press E to respawn",canW/2,canH * 0.3);
             if(inputs.inter == true && prevInputs.inter == false){
-                playerEnergy = playerMaxEnergy;
-                playerResources = [];
-                playerBuildings = [];
+                gameData[6] = gameData[9];
+                gameData[3] = [];
+                gameData[4] = [];
                 playerDeadState = false;
                 roverImgScale = 1;
                 playerPosOffset = {x:0,y:0};
@@ -797,7 +744,7 @@ function runGame(){
         ctx.fillStyle = "#FFFFFF";
         ctx.strokeStyle = "#000000";
         fT("Quota Failed",canW/2,canH * 0.2);
-        tiles.forEach(t => t.hazard = Math.min(6, t.hazard + (frameSpeedFactor/800)));
+        gameData[0].forEach(t => t.hazard = Math.min(6, t.hazard + (frameSpeedFactor/800)));
         if(roverImgScale < 0.4){
             fT("Press E to return to main menu",canW/2,canH * 0.3);
             if(inputs.inter == true && prevInputs.inter == false){
@@ -830,26 +777,27 @@ function runGame(){
         fT("Due to the costs of JMC™ Craft recovery, you have been offered an", canW/2,25 + canH * 0.2);
         fT("involutary position as head of planetary excavations.", canW/2,50 + canH * 0.2);
         fT("Thanks for playing!", canW/2,canH * 0.45);
-        if(time >= 1.5){
+        if(gameData[1] >= 1.5){
             fT("Press E to enter endless mode",canW/2,25 + canH * 0.45);
-            endlessMode = inputs.inter == true && prevInputs.inter == false;
-            finishedQuotas = !endlessMode;
+            gameData[19] = inputs.inter == true && prevInputs.inter == false;
+            finishedQuotas = !gameData[19];
         }
     }
 
-    (playerEnergy <= 0 && !playerDeadState ? () => {playerDeadState = true;s([soundFxVolume,,160,.01,.2,.04,2,,-0.1,.1,-100,.1]);} : () => {})();
-    prevPlayerEnergy = playerEnergy;
-
-    if(!playerDeadState){
-        time += (frameSpeedFactor/1500);
+    if(gameData[6] <= 0 && !playerDeadState){
+        playerDeadState = true;
+        s([soundFxVolume,,160,.01,.2,.04,2,,-0.1,.1,-100,.1]);
     }
+    prevPlayerEnergy = gameData[6];
 
-    if(time > 359){
+    gameData[1] += !playerDeadState ? frameSpeedFactor/1500 : 0;
 
-        if(!(finishedQuotas || endlessMode)){
-            if(playerBalance >= quotas[sols]){
-                playerBalance -= quotas[sols];
-                finishedQuotas = sols == 6;
+    if(gameData[1] > 359){
+
+        if(!(finishedQuotas || gameData[19])){
+            if(gameData[5] >= quotas[gameData[2]]){
+                gameData[5] -= quotas[gameData[2]];
+                finishedQuotas = gameData[2] == 6;
                 finishedQuotas ? s([soundFxVolume,0,220,,2,.08,1.5,,,,50,.07,.1,,,,.01]) : s([soundFxVolume,0,160,,1,.04,2,,,,25,.07,.03,,,,.01]);
             } else {
                 failedQuota = true;
@@ -858,8 +806,8 @@ function runGame(){
             }
         }
 
-        sols += 1;
-        time = 0;
+        gameData[2] += 1;
+        gameData[1] = 0;
     }
 }
 
@@ -867,24 +815,25 @@ function handleInput(){
 
     if(!buildMode && !escMenu && !selectingSell && !buyingMode && !settingRecipe){
         //If not in any modes then update position based on input
-        Math.abs(playerPosOffset.x) < 10 && Math.abs(playerPosOffset.y) < 10 ? inputs.up == true ? updatePlayerPos(0,-1) : inputs.down == true ? updatePlayerPos(0,1) : inputs.right == true ? updatePlayerPos(1,0) : inputs.left == true ? updatePlayerPos(-1,0) : null : null;
+        Math.abs(playerPosOffset.x) < 15 && Math.abs(playerPosOffset.y) < 15 ? inputs.up == true ? updatePlayerPos(0,-1) : inputs.down == true ? updatePlayerPos(0,1) : inputs.right == true ? updatePlayerPos(1,0) : inputs.left == true ? updatePlayerPos(-1,0) : null : null;
     } else {
         //If in a mode, all other moves up & down produce beep
-        inputs.up == true && prevInputs.up == false || inputs.down == true && prevInputs.down == false ? s([]) : null;
+        if(inputs.up == true && prevInputs.up == false || inputs.down == true && prevInputs.down == false){ s([])};
     }
 
     if(buildMode){
-        selectedBuilding = inputs.up == true && prevInputs.up == false ? Math.max(0,selectedBuilding - 1) : inputs.down == true && prevInputs.down == false ? Math.min(playerBuildings.length - 1,selectedBuilding + 1) : selectedBuilding;
+        selectedBuilding = inputs.up == true && prevInputs.up == false ? Math.max(0,selectedBuilding - 1) : inputs.down == true && prevInputs.down == false ? Math.min(gameData[4].length - 1,selectedBuilding + 1) : selectedBuilding;
     }
+
     if(settingRecipe){
-        selectedBuilding = inputs.up == true && prevInputs.up == false ? Math.max(0,selectedBuilding - 1) : inputs.down == true && prevInputs.down == false ? Math.min(recipes.length - 1,selectedBuilding + 1) : selectedBuilding;
+        selectedBuilding = inputs.up == true && prevInputs.up == false ? Math.max(0,selectedBuilding - 1) : inputs.down == true && prevInputs.down == false ? Math.min(gameData[7].length - 1,selectedBuilding + 1) : selectedBuilding;
     }
     if(selectingSell){
-        selectedSell = inputs.up == true && prevInputs.up == false ? Math.max(0,selectedSell - 1) : inputs.down == true && prevInputs.down == false ? Math.min(prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount)).length - 1,selectedSell + 1) : selectedSell;
+        selectedSell = inputs.up == true && prevInputs.up == false ? Math.max(0,selectedSell - 1) : inputs.down == true && prevInputs.down == false ? Math.min(prices.filter(p => gameData[3].some(r => p.type == r.type && r.value >= p.ammount)).length - 1,selectedSell + 1) : selectedSell;
     }
     if(buyingMode){
-        selectedBuy = inputs.up == true && prevInputs.up == false ? Math.max(0,selectedBuy - 1) : inputs.down == true && prevInputs.down == false ? Math.min(shopItems.length - 1,selectedBuy + 1) : selectedBuy;
-        inputs.inter == true && prevInputs.inter == false ? handleShop() : null;
+        selectedBuy = inputs.up == true && prevInputs.up == false ? Math.max(0,selectedBuy - 1) : inputs.down == true && prevInputs.down == false ? Math.min(gameData[8].length - 1,selectedBuy + 1) : selectedBuy;
+        if(inputs.inter == true && prevInputs.inter == false){handleShop()}
     }
     if(inputs.shop == true && prevInputs.shop == false && !buildMode && !settingRecipe && !selectingSell){
         buyingMode = !buyingMode;
@@ -896,33 +845,38 @@ function handleInput(){
         }
         if(interactTimer == 0){
             if(tileWithPlayer.resource.type != "NONE" && tileWithPlayer.building.type == "NONE"){
-                (addToPlayerResources(tileWithPlayer.resource.type,1) > 0 ? () => {mineTile(tileWithPlayer);s([soundFxVolume,0.02,320,.01,,0,4,.1,,,,,,,,.2,.01,0,.01]);} : () => messages.push({text:"Resource full",time:0}))();
+                if(addToPlayerResources(tileWithPlayer.resource.type,1) > 0){
+                    mineTile(tileWithPlayer);
+                    s([soundFxVolume,0.02,320,.01,,0,4,.1,,,,,,,,.2,.01,0,.01]);
+                } else {
+                    messages.push({text:"Resource full",time:0});
+                }
             } else if(tileWithPlayer.building.type != "NONE"){
-                handleBuildingInteraction(tileWithPlayer);
+                handleBuildingInteraction();
             }
         }
-        interactTimer = interactTimer >= 1 ? 0 : interactTimer + (frameSpeedFactor/150);
+        interactTimer = interactTimer >= 1 ? 0 : interactTimer + (frameSpeedFactor/100);
     }
 
     //If B is pressed and not in any modes and player has buildings
     if(inputs.build == true && prevInputs.build == false && !settingRecipe && !escMenu && !selectingSell && !buyingMode){
-        if(playerBuildings.length > 0 && !buildMode){
-            selectedBuilding = 0;
-            buildMode = true;
-        } else if (buildMode){
-            buildMode = false;
-        } else {
+        if(gameData[4].length == 0){
             messages.push({text:"No Buildings",time:0});
+        } else {
+            selectedBuilding = 0;
+            buildMode = !buildMode;
         }
     }
 
-    if(buildMode && inputs.inter == true && prevInputs.inter == false && tiles.some(t => t.hasPlayer && t.building.type == "NONE")){
-        placeBuilding(tileWithPlayer ,playerBuildings[selectedBuilding]);
+    if(buildMode && inputs.inter == true && prevInputs.inter == false && gameData[0].some(t => t.hasPlayer && t.building.type == "NONE")){
+        placeBuilding(tileWithPlayer ,gameData[4][selectedBuilding]);
         buildMode = false;
         selectedBuilding = 0;
     }
 
-    inputs.remove == true && prevInputs.remove == false && tiles.some(t => t.hasPlayer && t.building.type != "NONE") ? removeBuilding(tileWithPlayer) : null;
+    if(inputs.remove == true && prevInputs.remove == false && gameData[0].some(t => t.hasPlayer && t.building.type != "NONE")){
+        removeBuilding(tileWithPlayer);
+    }
 
     if(inputs.esc == true && prevInputs.esc == false){
         if(buildMode || selectingSell || buyingMode || settingRecipe){
@@ -951,56 +905,43 @@ function handleMenuInput(){
         escMenu = false;
     }
     if(inputs.inter == false && prevInputs.inter == true){
-        switch(menuItems[selectedMenuItem]){
-            case "Resume":
-                escMenu = false;
-                break;
-            case "Main Menu":
-                mainMenu = true;
-                escMenu = false;
-                runGameBool = false;
-                break;
-            case "Save Game":
-                saveGame();
-                messages.push({text:"Game Saved",time:0});
-                escMenu = false;
-                break;
-            case "Load Game":
-                if(window.localStorage.getItem('Planet404_6473_DATA') != null){
-                    loadGame();
-                } else {
-                    messages.push({text:"Game Save not found",time:0});
-                }
-                escMenu = false;
-                break;
-            case "Mute Music":
+        var opt = menuItems[selectedMenuItem];
+        escMenu = !(opt == "Resume");
+        if(opt == "Main Menu"){
+            mainMenu = true;
+            escMenu = false;
+            runGameBool = false;
+            selectedMenuItem = 0;
+        }
+        if(opt == "Save Game"){
+            window.localStorage.setItem('Planet404_6473_DATA', JSON.stringify(gameData));
+            messages.push({text:"Game Saved",time:0});
+            escMenu = false;
+        }
+        if(opt == "Load Game"){
+            if(window.localStorage.getItem('Planet404_6473_DATA') != null){
+                loadGame();
+            } else {
+                messages.push({text:"Game Save not found",time:0});
+            }
+            escMenu = false;
+        }
+        if(opt == "Toggle Music"){
+            if(musicToggle){
                 myAudioNode.disconnect();
-                menuItems[selectedMenuItem] = "Unmute Music";
-                break;
-            case "Mute Sound FX":
-                soundFxVolume = 0;
-                menuItems[selectedMenuItem] = "Unmute Sound FX";
-                break;
-            case "Unmute Music":
+            } else {
                 myAudioNode.connect(zzfxX.destination);
-                menuItems[selectedMenuItem] = "Mute Music";
-                break;
-            case "Unmute Sound FX":
-                soundFxVolume = 0.5;
-                menuItems[selectedMenuItem] = "Mute Sound FX";
-                break;
+            }
+            musicToggle = !musicToggle;
+        }
+        if(opt == "Toggle Sound FX"){
+            soundFxVolume = soundFxVolume == 0 ? 0.5 : 0;
         }
         confirmSound();
     }
 }
 
-function saveGame(){
-    window.localStorage.setItem('Planet404_6473_DATA', JSON.stringify([tiles,time,sols,playerResources,playerBuildings,playerBalance,playerEnergy,recipes,shopItems,
-                                                          playerMaxEnergy,maxStepHeight,maxStorage,radarRange,solarOutput,craftSpeed,mineSpeed,minerTransmit,constructorTransmit,
-                                                          RTGOutput,endlessMode]));
-}
-
-function loadGame(){
+function loadGame() {
     buildMode = false;
     selectingSell = false;
     buyingMode = false;
@@ -1009,71 +950,55 @@ function loadGame(){
     selectedBuilding = 0;
     selectingSell = 0;
 
-    var data = JSON.parse(window.localStorage.getItem('Planet404_6473_DATA'));
-    tiles = data[0];
+    gameData = JSON.parse(window.localStorage.getItem('Planet404_6473_DATA'));
 
-    time = data[1];
-    sols = data[2];
-
-    playerResources = data[3];
-    playerBuildings = data[4];
-    playerBalance = data[5];
-    playerEnergy = data[6];
-
-    recipes = data[7];
-    shopItems = data[8];
-
-    playerMaxEnergy = data[9];;
-    maxStepHeight = data[10];
-    maxStorage = data[11];
-
-    radarRange = data[12];
-    solarOutput = data[13];
-    craftSpeed = data[14];
-    mineSpeed = data[15];
-    minerTransmit = data[16];
-    constructorTransmit = data[17];;
-    RTGOutput = data[18];
-    endlessMode = data[19];
+    tileWithPlayer = gameData[0].find(t => t.hasPlayer);
     updatePlayerPos(0,0);
+    prevPlayerEnergy = gameData[6];
 }
 
 function handleShop(){
-        if(playerBalance >= shopItems[selectedBuy].cost){
-            playerBalance -= shopItems[selectedBuy].cost;
+        if(gameData[5] >= gameData[8][selectedBuy].cost){
+            gameData[5] -= gameData[8][selectedBuy].cost;
             //Update price based on multiplier
-            shopItems[selectedBuy].cost = shopItems[selectedBuy].costMulti != null ? Math.round(shopItems[selectedBuy].cost * shopItems[selectedBuy].costMulti) : shopItems[selectedBuy].cost;
-            var item = shopItems[selectedBuy].item;
-            maxStorage = item == "RESOURCE STORAGE" ? Math.round(maxStorage * 1.20) : maxStorage;
-            playerMaxEnergy = item == "BATTERY EFFICENCY" ? playerMaxEnergy * 1.25 : playerMaxEnergy;
-            maxStepHeight += item == "CRAFT HEIGHT TOLERANCE" ? 1 : 0;
+            gameData[8][selectedBuy].cost = gameData[8][selectedBuy].costMulti != null ? Math.round(gameData[8][selectedBuy].cost * gameData[8][selectedBuy].costMulti) : gameData[8][selectedBuy].cost;
+            var item = gameData[8][selectedBuy].item;
+            if(item == "RESOURCE STORAGE"){gameData[11] = Math.round(gameData[11] * 1.20)}
+            if(item == "BATTERY EFFICENCY"){gameData[9] *= 1.25}
+            if(item == "CRAFT HEIGHT TOLERANCE"){gameData[10] += 1}
             
-            craftSpeed = item == "CONSTRUCTOR SPEED" ? craftSpeed * 1.3 : craftSpeed;
-            constructorTransmit = item == "CONSTRUCTOR TRANSMITTER";
-            shopItems = item == "CONSTRUCTOR TRANSMITTER" ? shopItems.filter(i => i.item != "CONSTRUCTOR TRANSMITTER") : shopItems;
-            mineSpeed = item == "MINER SPEED" ? mineSpeed * 1.5 : mineSpeed;
-            minerTransmit = item == "MINER TRANSMITTER";
-            shopItems = item == "MINER TRANSMITTER" ? shopItems.filter(i => i.item != "MINER TRANSMITTER") : shopItems;
-            RTGOutput += item == "RTG OUTPUT" ? 1 : 0;
-            solarOutput += item == "SOLAR OUTPUT" ? 1 : 0;
-            radarRange += item == "RADAR RADIUS" ? 2 : 0;
-            item == "RADAR RADIUS" ? updateRadarVisableTiles() : null;
+            if(item == "CONSTRUCTOR SPEED"){gameData[14] *= 1.3}
 
-            item == "CONSTRUCTOR" ? recipes.push({product:"CONSTRUCTOR",items:[{type:"IRON",value:10},{type:"COPPER",value:15}],energy:4}) : null;
-            shopItems = item == "CONSTRUCTOR" ? shopItems.filter(i => i.item != "CONSTRUCTOR") : shopItems;
+            gameData[17] = item == "CONSTRUCTOR TRANSMITTER";
+            gameData[16] = item == "MINER TRANSMITTER";
+            if(item == "MINER TRANSMITTER" || item == "CONSTRUCTOR TRANSMITTER"){gameData[8].splice(selectedBuy,1)};
 
-            item == "MINER" ? recipes.push({product:"MINER",items:[{type:"IRON",value:10},{type:"COPPER",value:15},{type:"CARBON",value:8}],energy:6}) : null;
-            shopItems = item == "MINER" ? shopItems.filter(i => i.item != "MINER") : shopItems;
+            if(item == "MINER SPEED"){gameData[15] *= 1.5}
+            if(item == "RTG OUTPUT"){gameData[18] += 1};
+            if(item == "SOLAR OUTPUT"){gameData[13] += 1};
+            if(item == "RADAR RADIUS"){gameData[12] += 1};
+            if(item == "RADAR RADIUS"){updateRadarVisableTiles()}
 
-            item == "SOLAR" ? recipes.push({product:"SOLAR",items:[{type:"COPPER",value:5},{type:"SILICON",value:10}],energy:8}) : null;
-            shopItems = item == "SOLAR" ? shopItems.filter(i => i.item != "SOLAR") : shopItems;
-
-            item == "RTG" ? recipes.push({product:"RTG",items:[{type:"IRON",value:25},{type:"COPPER",value:25},{type:"PLUTONIUM",value:10}],energy:10}) : null;
-            shopItems = item == "RTG" ? shopItems.filter(i => i.item != "RTG") : shopItems;
+            if(item == "CONSTRUCTOR"){ 
+                gameData[7].push({product:"CONSTRUCTOR",items:[{type:"IRON",value:10},{type:"COPPER",value:15}],energy:4});
+                gameData[8].splice(selectedBuy,1);
+            }
+            if(item == "MINER"){ 
+                gameData[7].push({product:"MINER",items:[{type:"IRON",value:10},{type:"COPPER",value:15}],energy:4});
+                gameData[8].splice(selectedBuy,1);
+            }
+            if(item == "SOLAR"){ 
+                gameData[7].push({product:"SOLAR",items:[{type:"IRON",value:10},{type:"COPPER",value:15}],energy:4});
+                gameData[8].splice(selectedBuy,1);
+            }
+            if(item == "RTG"){ 
+                gameData[7].push({product:"RTG",items:[{type:"IRON",value:10},{type:"COPPER",value:15}],energy:4});
+                gameData[8].splice(selectedBuy,1);
+            }
 
             confirmSound();
         } else {
-            messages.push({text:"Cannot afford " + shopItems[selectedBuy].item,time:0});
+            messages.push({text:"Cannot afford " + gameData[8][selectedBuy].item,time:0});
             denySound();
         }
 }
@@ -1082,19 +1007,19 @@ function handleBuildingInteraction(){
     switch(tileWithPlayer.building.type){
         case "CONSTRUCTOR":
             if(settingRecipe){
-                if(tileWithPlayer.building.energy >= recipes[selectedBuilding].energy){
-                    var recipeItems = recipes[selectedBuilding].items;
-                    if(recipeItems.filter(i => playerResources.some(ii => ii.type == i.type && ii.value >= i.value)).length == recipeItems.length){
-                        tileWithPlayer.building.recipe = Object.assign({},recipes[selectedBuilding]);
+                if(tileWithPlayer.building.energy >= gameData[7][selectedBuilding].energy){
+                    var recipeItems = gameData[7][selectedBuilding].items;
+                    if(recipeItems.filter(i => gameData[3].some(ii => ii.type == i.type && ii.value >= i.value)).length == recipeItems.length){
+                        tileWithPlayer.building.recipe = Object.assign({},gameData[7][selectedBuilding]);
 
-                        playerResources.forEach(i => {
+                        gameData[3].forEach(i => {
                             var recipeItem = recipeItems.find(ii => ii.type == i.type);
                             i.value -= recipeItem != null ? recipeItem.value : 0;
                         });
 
                         messages.push({text:"Crafting " + tileWithPlayer.building.recipe.product,time:0});
-                        tileWithPlayer.building.crafting = true;
-                        tileWithPlayer.building.energy -= recipes[selectedBuilding].energy;
+                        tileWithPlayer.building.processing = true;
+                        tileWithPlayer.building.energy -= gameData[7][selectedBuilding].energy;
                         settingRecipe = false;
                         confirmSound();
                     } else {
@@ -1104,27 +1029,29 @@ function handleBuildingInteraction(){
                 } else {
                     messages.push({text:"Not enough energy",time:0});
                 }
-            } else if(tileWithPlayer.building.storedProduct){
+            }
+            if(tileWithPlayer.building.recipe == null){
+                settingRecipe = true;
+                selectedBuilding = 0;
+            }
+            if(tileWithPlayer.building.storedProduct){
                 addToPlayerBuildings(tileWithPlayer.building.recipe.product,1);
                 messages.push({text:"Gained " + tileWithPlayer.building.recipe.product,time:0});
                 tileWithPlayer.building.storedProduct = false;
                 tileWithPlayer.building.recipe = null;
                 tileWithPlayer.building.timer = 0;
                 confirmSound();
-            } else if(tileWithPlayer.building.recipe == null){
-                settingRecipe = true;
-                selectedBuilding = 0;
             }
             break;
         case "MINER":
-            if(!minerTransmit){
+            if(!gameData[16]){
                 if(tileWithPlayer.building.storedResource > 0) {
                     var added = addToPlayerResources(tileWithPlayer.building.storedType,tileWithPlayer.building.storedResource);
                     if(added == 0){
                         denySound();
                         messages.push({text:"Resource full",time:0});
                     } else {
-                        tileWithPlayer.building.storedResource -= addToPlayerResources(tileWithPlayer.building.storedType,tileWithPlayer.building.storedResource);
+                        tileWithPlayer.building.storedResource -= added;
                         messages.push({text:"Gained " + added + " " + tileWithPlayer.building.storedType,time:0});
                         confirmSound();
                     }
@@ -1133,19 +1060,10 @@ function handleBuildingInteraction(){
             break;
         case "TELEDEPOT":
             if(selectingSell){
-                var price = prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT")[selectedSell];
-                if(price.type != "EXIT"){
-                    var playerResource = playerResources.find(r => r.type == price.type);
-                    if(playerResource.value >= price.ammount){
-                        playerResource.value -= price.ammount;
-                        playerBalance += price.ammount * price.price;
-                        s([soundFxVolume,.01,287,.11,,0,3,.01,,,198,.09,,,,,.06,.5]);
-                    } else {
-                        messages.push({text:"Cannot sell " + price.ammount + " of " + price.type,time:0});
-                    }
-                } else {
-                    selectingSell = false;
-                }
+                var price = prices.filter(p => gameData[3].some(r => p.type == r.type && r.value >= p.ammount))[selectedSell];
+                gameData[3].find(r => r.type == price.type).value -= price.ammount;
+                gameData[5] += price.ammount * price.price;
+                s([soundFxVolume,.01,287,.11,,0,3,.01,,,198,.09,,,,,.06,.5]);
             } else {
                 selectedSell = 0;
                 selectingSell = true;
@@ -1172,7 +1090,7 @@ function handleHUD(){
 
     ctx.strokeStyle = hudSwap ? "#FF0000" : "#FFFFFF";
     ctx.fillStyle = "#000000AA";
-    var rightHeight = rightInfoHeight + (rightInfoStep * playerResources.length) + canH * 0.05;
+    var rightHeight = rightInfoHeight + (rightInfoStep * gameData[3].length) + canH * 0.05;
     generateHudOverlay(rightHeight);
 
     ctx.font = "15px Arial";
@@ -1191,20 +1109,20 @@ function handleHUD(){
     ctx.font = "25px Arial";
     fT("Inventory",canW * 0.92,30);
     ctx.font = "15px Arial";
-    playerResources.forEach(r => {
-        fT(r.value + "/" + maxStorage + " units of " + r.type,canW * 0.92, 25 + rightInfoHeight + (playerResources.indexOf(r) * rightInfoStep));
+    gameData[3].forEach(r => {
+        fT(r.value + "/" + gameData[11] + " units of " + r.type,canW * 0.92, 25 + rightInfoHeight + (gameData[3].indexOf(r) * rightInfoStep));
     });
     
-    fT("Sol: " + (sols + 1) + " Planet Rotation: " + time.toFixed(0) + "°", canW/2,15);
+    fT("Sol: " + (gameData[2] + 1) + " Planet Rotation: " + gameData[1].toFixed(0) + "°", canW/2,15);
 
-    if(!buildMode && !settingRecipe && !selectingSell && !buyingMode && (time <= 5 || time >= 355)){
+    if(!buildMode && !settingRecipe && !selectingSell && !buyingMode && (gameData[1] <= 5 || gameData[1] >= 355)){
         ctx.fillStyle = "#000000AA";
-        var fade = componentToHex(255 - (255 * Math.min(Math.abs(360 - time),time)/5));
+        var fade = componentToHex(255 - (255 * Math.min(Math.abs(360 - gameData[1]),gameData[1])/5));
         ctx.strokeStyle = "#FFFFFF" + fade;
         generateUIOverlay(0.05,0.14,0.39);
         ctx.font = "30px Tahoma";
         ctx.fillStyle = "#FFFFFF" + fade;
-        fT("Sol " + (sols + 1) + "/7",canW/2,modeHeight);
+        fT("Sol " + (gameData[2] + 1) + "/7",canW/2,modeHeight);
     }
 
     ctx.strokeStyle = "#FFFFFF";
@@ -1215,9 +1133,9 @@ function handleHUD(){
         ctx.fillStyle = "#FFFFFF";
         fT("Build Mode",canW/2,modeHeight);
         ctx.font = "20px Tahoma";
-        var visableOptions = playerBuildings.filter(p => Math.abs(playerBuildings.indexOf(p) - selectedBuilding) < 5 + (Math.max(0,4 - selectedBuilding)));
+        var visableOptions = gameData[4].filter(p => Math.abs(gameData[4].indexOf(p) - selectedBuilding) < 5 + (Math.max(0,4 - selectedBuilding)));
         visableOptions.forEach(p => {
-            ctx.fillStyle = selectedBuilding == playerBuildings.indexOf(p) ? "#FFFFFF" : "#AAAAAA";
+            ctx.fillStyle = selectedBuilding == gameData[4].indexOf(p) ? "#FFFFFF" : "#AAAAAA";
             fT(p.type + ":" + p.value ,canW/2,modeHeight + selectionHeight + (25 * visableOptions.indexOf(p)))
         });
     }
@@ -1230,13 +1148,13 @@ function handleHUD(){
         ctx.font = "30px Tahoma";
         fT("Set Recipe:",canW*0.4,modeHeight + (canW*0.01));
         ctx.font = "20px Tahoma";
-        var visableOptions = recipes.filter(p => Math.abs(recipes.indexOf(p) - selectedBuilding) < 5 + (Math.max(0,4 - selectedBuilding)));
+        var visableOptions = gameData[7].filter(p => Math.abs(gameData[7].indexOf(p) - selectedBuilding) < 5 + (Math.max(0,4 - selectedBuilding)));
         visableOptions.forEach(r => {
-            ctx.fillStyle = selectedBuilding == recipes.indexOf(r) ? "#FFFFFF" : "#AAAAAA";
+            ctx.fillStyle = selectedBuilding == gameData[7].indexOf(r) ? "#FFFFFF" : "#AAAAAA";
             if(r.product == "EXIT"){
                 fT(r.product,canW*0.4,modeHeight + (canW*0.01) + selectionHeight + (25 * visableOptions.indexOf(r)));
             } else {
-                if(selectedBuilding == recipes.indexOf(r)){
+                if(selectedBuilding == gameData[7].indexOf(r)){
                     ctx.font = "25px Tahoma";
                     r.items.forEach(i => fT(i.value + " " + i.type, canW*0.59, modeHeight + (canW*0.01) + selectionHeight + (25 * r.items.indexOf(i))));
                     fT(r.energy + " ENERGY", canW*0.59, modeHeight + (canW*0.01) + selectionHeight + (25 * r.items.length))
@@ -1255,7 +1173,7 @@ function handleHUD(){
         ctx.font = "30px Tahoma";
         fT("Sell Mode",canW/2,modeHeight);
         ctx.font = "20px Tahoma";
-        var options = prices.filter(p => playerResources.some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT");
+        var options = prices.filter(p => gameData[3].some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT");
         var visableOptions = options.filter(p => Math.abs(options.indexOf(p) - selectedSell) < 5 + (Math.max(0,4 - selectedSell)));
         visableOptions.forEach(p => {
             ctx.fillStyle = selectedSell == options.indexOf(p) ? "#FFFFFF" : "#AAAAAA";
@@ -1268,23 +1186,23 @@ function handleHUD(){
         generateUIOverlay(0.05,0.5,0.2);
         ctx.fillStyle = "#FFFFFF";
         drawLines([{x:canW * 0.5,y:canH * 0.07},{x:canW * 0.5,y:canH * 0.53}],0,0,false);
-        shopItems[selectedBuy].type != "EXIT" ? drawLines([{x:canW * 0.5,y:canH * 0.46},{x:canW * 0.78,y:canH * 0.46}],0,0,false) : null;
+        drawLines([{x:canW * 0.5,y:canH * 0.46},{x:canW * 0.78,y:canH * 0.46}],0,0,false);
         ctx.font = "30px Tahoma";
         fT("Buy Mode",canW * 0.36,modeHeight);
         ctx.font = "20px Tahoma";
-        var visableOptions = shopItems.filter(p => Math.abs(shopItems.indexOf(p) - selectedBuy) < 5 + (Math.max(0,4 - selectedBuy)));
+        var visableOptions = gameData[8].filter(p => Math.abs(gameData[8].indexOf(p) - selectedBuy) < 5 + (Math.max(0,4 - selectedBuy)));
         visableOptions.forEach(i => {
-            ctx.fillStyle = selectedBuy == shopItems.indexOf(i) ? "#FFFFFF" : "#AAAAAA";
+            ctx.fillStyle = selectedBuy == gameData[8].indexOf(i) ? "#FFFFFF" : "#AAAAAA";
             ctx.textAlign = "center";
             fT(i.item ,canW * 0.36,modeHeight + 20 + selectionHeight + (25 * visableOptions.indexOf(i)));
-            if(selectedBuy == shopItems.indexOf(i)){
+            if(selectedBuy == gameData[8].indexOf(i)){
                 fT("₿" + selectedSellDisplayPrice.toLocaleString('en-US', {maximumFractionDigits: 0}) ,canW * 0.64,canH * 0.495);
                 ctx.textAlign = "start";
                 i.desc.forEach(s => fT(s ,canW * 0.51,modeHeight + 20 + selectionHeight + (25 * i.desc.indexOf(s))));
             }
             
         });
-        selectedSellDisplayPrice = lerp(shopItems[selectedBuy].cost,selectedSellDisplayPrice,(frameSpeedFactor/80));
+        selectedSellDisplayPrice = lerp(gameData[8][selectedBuy].cost,selectedSellDisplayPrice,(frameSpeedFactor/80));
     }
 
     ctx.textAlign = "center"; 
@@ -1295,39 +1213,42 @@ function handleHUD(){
     drawLogo(canW * 0.05,canH * 0.070,50);
     ctx.font = "25px Tahoma";
     fT("₿" + playerBalanceDisplayed.toLocaleString('en-US', {maximumFractionDigits: 0}) ,canW * 0.05,canH * 0.18);
-    playerBalanceDisplayed = lerp(playerBalance,playerBalanceDisplayed,(frameSpeedFactor/100));
+    playerBalanceDisplayed = lerp(gameData[5],playerBalanceDisplayed,(frameSpeedFactor/100));
+
     ctx.font = "20px Tahoma";
-    //If endless mode then draw endless mode, else draw daily quota and quota value
-    (endlessMode ? () => {fT("Endless",canW * 0.05,canH * 0.22);fT("Mode",canW * 0.05,25 + canH * 0.22);} : () => {
+    if(gameData[19]){
+        fT("Endless",canW * 0.05,canH * 0.22);
+        fT("Mode",canW * 0.05,25 + canH * 0.22);
+    } else {
         fT("Daily Quota:",canW * 0.05,canH * 0.22);
         ctx.font = "25px Tahoma";
-        ctx.fillStyle = playerBalance >= quotas[sols] ? "#00FF00" : time > 300 && Math.trunc(time) % 2 == 0 ? "#FF0000" : "#FFFFFF";
-        fT("₿" + quotas[sols].toLocaleString('en-US', {maximumFractionDigits: 0}) ,canW * 0.05,canH * 0.26);
-    })();
+        ctx.fillStyle = gameData[5] >= quotas[gameData[2]] ? "#00FF00" : gameData[1] > 300 && Math.trunc(gameData[1]) % 2 == 0 ? "#FF0000" : "#FFFFFF";
+        fT("₿" + quotas[gameData[2]].toLocaleString('en-US', {maximumFractionDigits: 0}) ,canW * 0.05,canH * 0.26);
+    }
 
 
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "15px Tahoma";
     var batteryStatusHeight = 0.45;
-    drawBattery(canW * 0.02,canH * batteryStatusHeight,100,playerEnergy/playerMaxEnergy);
+    drawBattery(canW * 0.02,canH * batteryStatusHeight,100,gameData[6]/gameData[9]);
     ctx.fillStyle = hudSwap ? "#FF0000" : "#FFFFFF";
     fT("Battery",canW * 0.07,canH * (batteryStatusHeight - 0.13));
     fT("Status:",canW * 0.07,canH * (batteryStatusHeight - 0.11));
-    var percentEnergy = playerEnergy/playerMaxEnergy;
+    var percentEnergy = gameData[6]/gameData[9];
     ctx.font = "12px Tahoma";
     fT(batteryStatusMessage,canW * 0.07,canH * (batteryStatusHeight - 0.09));
     ctx.fillStyle = "#FFFFFF";
-    if(tiles.find(t => t.hasPlayer).hazard > 0){
+    if(gameData[0].find(t => t.hasPlayer).hazard > 0){
         ctx.font = "50px Tahoma";
         fT("☢",canW * 0.07,canH * (batteryStatusHeight - 0.032));
     }
 
-    batteryStatusMessage = playerEnergy <= 5 ? "Deadly" : 
-    playerEnergy <= 10 ? "Critical" : 
-    playerEnergy <= 15 ? "Very Low" : 
+    batteryStatusMessage = gameData[6] <= 5 ? "Deadly" : 
+    gameData[6] <= 10 ? "Critical" : 
+    gameData[6] <= 15 ? "Very Low" : 
     percentEnergy > 0.6 ? "Nominal" :
     percentEnergy > 0.4 ? "Satisfactory" :
-    percentEnergy > 0.3 && playerEnergy > 15 ? "Low" : batteryStatusMessage;
+    percentEnergy > 0.3 && gameData[6] > 15 ? "Low" : batteryStatusMessage;
 
     hudFlash = flashRates.has(batteryStatusMessage);
     hudFlashTimer += hudFlash ? frameSpeedFactor/flashRates.get(batteryStatusMessage) : 0;
@@ -1344,25 +1265,27 @@ function handleTileUpdates(t) {
     switch(t.building.type){
         case "SOLAR":
 
-            var totalEnergy = solarOutput * Math.max(0.5,Math.sin(time * Math.PI/180));
+            var totalEnergy = gameData[13] * Math.max(0.5,Math.sin(gameData[1] * Math.PI/180));
 
-            playerEnergy = t.hasPlayer ? Math.min(playerMaxEnergy,playerEnergy + totalEnergy * (frameSpeedFactor/1000)) : playerEnergy;
+            if(t.hasPlayer){
+                gameData[6] = Math.min(gameData[9],gameData[6] + totalEnergy * (frameSpeedFactor/1000))
+            }
             //Filter by hasPlayer and player energy so that surrounding tiles aren't powered if charging player
-            var surrounding = getSurroundingTiles(t).filter(tt => tt.building.energy != null && tt.building.energy != tt.building.maxEnergy && (!t.hasPlayer || !(t.hasPlayer == playerEnergy < playerMaxEnergy)));
+            var surrounding = getSurroundingTiles(t).filter(tt => tt.building.energy != null && tt.building.energy != tt.building.maxEnergy && (!t.hasPlayer || !(t.hasPlayer == gameData[6] < gameData[9])));
             surrounding.forEach(tt => tt.building.energy = Math.min(tt.building.maxEnergy,tt.building.energy + (totalEnergy / surrounding.length) * (frameSpeedFactor/1000)));
 
             if(t.hasPlayer && !escMenu){
                 fT("⚡",infoX ,infoY + infoStep);
-                drawBattery(infoX,infoY + (infoStep*2) + canH * 0.08,canH * 0.1,totalEnergy/solarOutput);
+                drawBattery(infoX,infoY + (infoStep*2) + canH * 0.08,canH * 0.1,totalEnergy/gameData[13]);
             }
             break;
         case "CONSTRUCTOR":
-            t.building.timer += t.building.crafting ? (frameSpeedFactor/10000) * craftSpeed : 0;
+            t.building.timer += t.building.processing ? (frameSpeedFactor/10000) * gameData[14] : 0;
             if(t.building.timer >= 1){
-                t.building.crafting = false;
+                t.building.processing = false;
                 t.building.storedProduct = true;
             }
-            if(constructorTransmit && t.building.storedProduct){
+            if(gameData[17] && t.building.storedProduct){
                 addToPlayerBuildings(t.building.recipe.product,1);
                 t.building.recipe = null;
                 t.building.timer = 0;
@@ -1379,14 +1302,14 @@ function handleTileUpdates(t) {
             }
             break;
         case "MINER":
-            if(!t.building.mining && t.building.energy >= 1 && t.resource.type != "NONE" && t.building.storedResource < t.building.maxStored){
+            if(!t.building.processing && t.building.energy >= 1 && t.resource.type != "NONE" && t.building.storedResource < t.building.maxStored){
                     t.building.energy -= 1;
-                    t.building.mining = true;
+                    t.building.processing = true;
             } 
-            t.building.timer += t.building.mining ? (frameSpeedFactor/6000) * mineSpeed : 0;
+            t.building.timer += t.building.processing ? (frameSpeedFactor/6000) * gameData[15] : 0;
             if(t.building.timer >= 1){
                 t.building.storedResource += 1;
-                t.building.mining = false;
+                t.building.processing = false;
                 t.building.timer = 0;
                 t.counter += 1;
             }
@@ -1394,7 +1317,7 @@ function handleTileUpdates(t) {
                 mineTile(t);
                 t.counter = 0;
             }
-            t.building.storedResource -= minerTransmit ? addToPlayerResources(t.building.storedType,t.building.storedResource) : 0;
+            t.building.storedResource -= gameData[16] ? addToPlayerResources(t.building.storedType,t.building.storedResource) : 0;
 
             if(t.hasPlayer && !escMenu){
                 fT("⚡",infoX,infoY + infoStep);
@@ -1406,39 +1329,34 @@ function handleTileUpdates(t) {
             }
             break;
         case "RTG":
-            playerEnergy = t.hasPlayer ? Math.min(playerMaxEnergy,playerEnergy + RTGOutput * (frameSpeedFactor/1000)) : playerEnergy;
+            if(t.hasPlayer){
+                gameData[6] = Math.min(gameData[9],gameData[6] + gameData[18] * (frameSpeedFactor/1000))
+            }
             //Filter by hasPlayer and player energy so that surrounding tiles aren't powered if charging player
-            var surrounding = getSurroundingTiles(t).filter(tt => tt.building.energy != null && tt.building.energy != tt.building.maxEnergy && (!t.hasPlayer || !(t.hasPlayer == playerEnergy < playerMaxEnergy)));
-            surrounding.forEach(tt => tt.building.energy = Math.min(tt.building.maxEnergy,tt.building.energy + (RTGOutput / surrounding.length) * (frameSpeedFactor/1000)));
+            var surrounding = getSurroundingTiles(t).filter(tt => tt.building.energy != null && tt.building.energy != tt.building.maxEnergy && (!t.hasPlayer || !(t.hasPlayer == gameData[6] < gameData[9])));
+            surrounding.forEach(tt => tt.building.energy = Math.min(tt.building.maxEnergy,tt.building.energy + (gameData[18] / surrounding.length) * (frameSpeedFactor/1000)));
             break;
     }
 }
 
 document.addEventListener('keydown', (e) => {
-    var k = e.keyCode;
-    inputs.up = k == 87 ? true : inputs.up;
-    inputs.down = k == 83 ? true : inputs.down;
-    inputs.right = k == 68 ? true : inputs.right;
-    inputs.left = k == 65 ? true : inputs.left;
-    inputs.inter = k == 69 ? true : inputs.inter;
-    inputs.build = k == 66 ? true : inputs.build;
-    inputs.remove = k == 82 ? true : inputs.remove;
-    inputs.esc = k == 27 ? true : inputs.esc;
-    inputs.speve = k == 16 ? true : inputs.speve;
-    inputs.shop = k == 81 ? true : inputs.shop;
+    setInputArr(e.keyCode,true);
 });
 document.addEventListener('keyup', (e) => {
-    var k = e.keyCode;
-    inputs.up = k == 87 ? false : inputs.up;
-    inputs.down = k == 83 ? false : inputs.down;
-    inputs.right = k == 68 ? false : inputs.right;
-    inputs.left = k == 65 ? false : inputs.left;
-    inputs.inter = k == 69 ? false : inputs.inter;
-    inputs.build = k == 66 ? false : inputs.build;
-    inputs.remove = k == 82 ? false : inputs.remove;
-    inputs.esc = k == 27 ? false : inputs.esc;
-    inputs.speve = k == 16 ? false : inputs.speve;
-    inputs.shop = k == 81 ? false : inputs.shop;
+    setInputArr(e.keyCode,false);
 });
+
+function setInputArr(k,b){
+    if(k == 87){inputs.up = b};
+    if(k == 83){inputs.down = b}
+    if(k == 68){inputs.right = b}
+    if(k == 65){inputs.left = b}
+    if(k == 69){inputs.inter = b}
+    if(k == 66){inputs.build = b}
+    if(k == 82){inputs.remove = b}
+    if(k == 27){inputs.esc = b}
+    if(k == 16){inputs.speve = b}
+    if(k == 81){inputs.shop = b}
+}
 
 setInterval(gameloop,50);
