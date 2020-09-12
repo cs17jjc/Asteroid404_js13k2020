@@ -391,7 +391,7 @@ var soundFxVolume = 0.5;
 var confirmSound = () => s([soundFxVolume,.01,593,,.03,0,1,2.04,.1,.1,50,.01,,-0.1,,,.06,.96,.08]);
 var denySound = () => s([soundFxVolume,0,604,,,.13,4,2.01,-0.1,.2,50,,.01,,,.4,.05,.68,.05]);
 
-var startRecipes = [{product:"RADAR",items:[{type:"IRON",value:20}],energy:10}];
+var startRecipes = [{product:"RADAR",items:[{type:"IRON",value:20}],energy:8}];
 [{type:"ROCK",price:1,},{type:"IRON",price:5,},{type:"COPPER",price:10,},{type:"CARBON",price:25,},{type:"SILICON",price:50},{type:"LITHIUM",price:75},{type:"PLUTONIUM",price:100}]
 
 var prices = gArr(21).map(i => {
@@ -400,8 +400,8 @@ var prices = gArr(21).map(i => {
     return {type:p.type,price:p.price,ammount:[1,10,50][i - thirds*3]};
 });
 
-var shopItemsStart = [{item:"RESOURCE STORAGE",cost:200,costMulti:1.2,desc:["Increases max resource capacity","by 20%"]},
-                 {item:"BATTERY EFFICENCY",cost:100,costMulti:1.5,desc:["Increases max battery capacity","by 25%"]},
+var shopItemsStart = [{item:"RESOURCE STORAGE",cost:200,costMulti:1.2,desc:["Increases max resource capacity","by 25%"]},
+                 {item:"BATTERY EFFICENCY",cost:100,costMulti:1.5,desc:["Increases max battery capacity","by 20%"]},
                  {item:"CRAFT HEIGHT TOLERANCE",cost:180,costMulti:1.2,desc:["Allows passage between tiles with a","larger height difference."]},
 
                  {item:"CONSTRUCTOR",cost:500,desc:["Allows construction of constructors.","Constructors manufacture other","buildings."]},
@@ -599,7 +599,7 @@ function initGame(){
     gameData[8] = shopItemsStart.slice();
     gameData[19] = false;
 
-    gameData[9] = 30;
+    gameData[9] = 50;
     gameData[6] = gameData[9];
     gameData[10] = 1;
     gameData[11] = 40;
@@ -980,8 +980,8 @@ function handleShop(){
             //Update price based on multiplier
             gameData[8][selectedBuy].cost = gameData[8][selectedBuy].costMulti != null ? Math.round(gameData[8][selectedBuy].cost * gameData[8][selectedBuy].costMulti) : gameData[8][selectedBuy].cost;
             var item = gameData[8][selectedBuy].item;
-            if(item == "RESOURCE STORAGE"){gameData[11] = Math.round(gameData[11] * 1.20)}
-            if(item == "BATTERY EFFICENCY"){gameData[9] *= 1.25}
+            if(item == "RESOURCE STORAGE"){gameData[11] = Math.round(gameData[11] * 1.25)}
+            if(item == "BATTERY EFFICENCY"){gameData[9] *= 1.2}
             if(item == "CRAFT HEIGHT TOLERANCE"){gameData[10] += 1}
             
             if(item == "CONSTRUCTOR SPEED"){gameData[14] *= 1.3}
@@ -1324,7 +1324,7 @@ function handleTileUpdates(t) {
                     t.building.energy -= 1;
                     t.building.processing = true;
             } 
-            t.building.timer += t.building.processing ? (frameSpeedFactor/6000) * gameData[15] : 0;
+            t.building.timer += t.building.processing ? (frameSpeedFactor/9000) * gameData[15] : 0;
             if(t.building.timer >= 1){
                 t.building.storedResource += 1;
                 t.building.processing = false;
