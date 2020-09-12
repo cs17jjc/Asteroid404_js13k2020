@@ -1105,6 +1105,7 @@ function handleHUD(){
         hudSwap = false;
     }
 
+
     ctx.strokeStyle = hudSwap ? "#FF0000" : "#FFFFFF";
     ctx.fillStyle = "#000000AA";
     var rightHeight = rightInfoHeight + (rightInfoStep * gameData[3].length) + canH * 0.05;
@@ -1243,7 +1244,7 @@ function handleHUD(){
         fT("₿" + quotas[gameData[2]].toLocaleString('en-US', {maximumFractionDigits: 0}) ,canW * 0.05,canH * 0.26);
     }
 
-
+    ctx.lineWidth = 2;
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "15px Tahoma";
     var batteryStatusHeight = 0.45;
