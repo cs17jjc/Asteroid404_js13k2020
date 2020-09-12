@@ -226,7 +226,7 @@ function placeBuilding(tile,building){
         if(tb.type == "RADAR"){updateRadarVisableTiles()}
         if(tb.type == "CONSTRUCTOR" || tb.type == "MINER"){
             tb.energy = 0;
-            tb.maxEnergy = 20;
+            tb.maxEnergy = 10;
             tb.timer = 0;
             tb.processing = false;
             if(tb.type == "CONSTRUCTOR"){tb.storedProduct = false;}
@@ -391,8 +391,8 @@ var soundFxVolume = 0.5;
 var confirmSound = () => s([soundFxVolume,.01,593,,.03,0,1,2.04,.1,.1,50,.01,,-0.1,,,.06,.96,.08]);
 var denySound = () => s([soundFxVolume,0,604,,,.13,4,2.01,-0.1,.2,50,,.01,,,.4,.05,.68,.05]);
 
-var startRecipes = [{product:"RADAR",items:[{type:"IRON",value:18}],energy:8}];
-[{type:"ROCK",price:1,},{type:"IRON",price:5,},{type:"COPPER",price:25,},{type:"CARBON",price:50,},{type:"SILICON",price:80},{type:"LITHIUM",price:100},{type:"PLUTONIUM",price:200}]
+var startRecipes = [{product:"RADAR",items:[{type:"IRON",value:20}],energy:10}];
+[{type:"ROCK",price:1,},{type:"IRON",price:5,},{type:"COPPER",price:10,},{type:"CARBON",price:25,},{type:"SILICON",price:50},{type:"LITHIUM",price:75},{type:"PLUTONIUM",price:100}]
 
 var prices = gArr(21).map(i => {
     var thirds = Math.trunc(i/3);
@@ -400,9 +400,9 @@ var prices = gArr(21).map(i => {
     return {type:p.type,price:p.price,ammount:[1,10,50][i - thirds*3]};
 });
 
-var shopItemsStart = [{item:"RESOURCE STORAGE",cost:350,costMulti:2,desc:["Increases max resource capacity","by 20%"]},
-                 {item:"BATTERY EFFICENCY",cost:200,costMulti:1.6,desc:["Increases max battery capacity","by 25%"]},
-                 {item:"CRAFT HEIGHT TOLERANCE",cost:350,costMulti:1.5,desc:["Allows passage between tiles with a","larger height difference."]},
+var shopItemsStart = [{item:"RESOURCE STORAGE",cost:200,costMulti:1.2,desc:["Increases max resource capacity","by 20%"]},
+                 {item:"BATTERY EFFICENCY",cost:100,costMulti:1.5,desc:["Increases max battery capacity","by 25%"]},
+                 {item:"CRAFT HEIGHT TOLERANCE",cost:180,costMulti:1.2,desc:["Allows passage between tiles with a","larger height difference."]},
 
                  {item:"CONSTRUCTOR",cost:500,desc:["Allows construction of constructors.","Constructors manufacture other","buildings."]},
                  {item:"MINER",cost:750,desc:["Allows construction of miners.","Miners gather resources 10 times","more efficent than manual mining."]},
@@ -410,7 +410,7 @@ var shopItemsStart = [{item:"RESOURCE STORAGE",cost:350,costMulti:2,desc:["Incre
                  {item:"RTG",cost:2500,desc:["Allows construction of RTGs.","RTGs generate constant energy."]},
 
                  {item:"RADAR RADIUS",cost:1000,costMulti:1.5,desc:["Increases radar uncover","distance by 2 tiles."]},
-                 {item:"CONSTRUCTOR SPEED",cost:200,costMulti:1.8,desc:["Increases constructor speed","by 30%"]},
+                 {item:"CONSTRUCTOR SPEED",cost:50,costMulti:1.6,desc:["Increases constructor speed","by 30%"]},
                  {item:"CONSTRUCTOR TRANSMITTER",cost:1850,desc:["Constructor transmits finished","constructions to inventory."]},
                  {item:"MINER SPEED",cost:750,costMulti:1.8,desc:["Incrases Miner speed by 50%"]},
                  {item:"MINER TRANSMITTER",cost:1985,desc:["Miner transmits mined","resources to inventory."]},
@@ -469,7 +469,7 @@ var batteryStatusMessage = "Nominal";
 let mySongData = zzfxM(...song);
 let myAudioNode = zzfxP(...mySongData);
 myAudioNode.loop = true;
-//myAudioNode.start();
+myAudioNode.start();
 var musicToggle = true;
 
 var stars = gArr(500).map(i => {return {x:(Math.random() * 2 * canW) - canW,y:(Math.random() * 2 * canH) - canH,r:Math.random() * 3}});
@@ -599,10 +599,10 @@ function initGame(){
     gameData[8] = shopItemsStart.slice();
     gameData[19] = false;
 
-    gameData[9] = 50;
+    gameData[9] = 30;
     gameData[6] = gameData[9];
     gameData[10] = 1;
-    gameData[11] = 50;
+    gameData[11] = 40;
 
     gameData[13] = 4;
     gameData[14] = 1;
@@ -1297,7 +1297,7 @@ function handleTileUpdates(t) {
             }
             break;
         case "CONSTRUCTOR":
-            t.building.timer += t.building.processing ? (frameSpeedFactor/10000) * gameData[14] : 0;
+            t.building.timer += t.building.processing ? (frameSpeedFactor/15000) * gameData[14] : 0;
             if(t.building.timer >= 1){
                 t.building.processing = false;
                 t.building.storedProduct = true;
