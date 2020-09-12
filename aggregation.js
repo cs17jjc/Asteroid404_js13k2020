@@ -136,14 +136,9 @@ resColMap.set("PLUTONIUM",new Colour(0,255,0));
 
 var dG = (strId) => document.getElementById(strId);
 var roverImg = dG("0");
-
-var imgMap = new Map();
-imgMap.set("RADAR",[dG("1"),0.9]);
-imgMap.set("CONSTRUCTOR",[dG("2"),0.75]);
-imgMap.set("SOLAR",[dG("3"),0.5]);
-imgMap.set("MINER",[dG("4"),0.8]);
-imgMap.set("RTG",[dG("5"),0.75]);
-imgMap.set("TELEDEPOT",[dG("6"),0.75]);
+var buildingImg = dG("1");
+var radarImg = dG("2");
+var solarImg = dG("3");
 
 var flashRates = new Map();
 flashRates.set("Deadly",50);
@@ -177,6 +172,7 @@ function updateRadarVisableTiles(){
     gameData[0].forEach(t => t.isVisible = radarTiles.some(r => Math.abs(r.x - t.x) <= gameData[12]));
 }
 function drawLogo(x,y,size){
+    ctx.lineWidth = size/10;
     ctx.save();
     ctx.translate(x,y);
     ctx.strokeStyle = "#A2A2A2";
@@ -241,8 +237,9 @@ function placeBuilding(tile,building){
 }
 function removeBuilding(tile){
     addToPlayerBuildings(tile.building.type,1);
+    var type = tile.building.type;
     tile.building = {type:"NONE"};
-    if(tile.building.type == "RADAR"){updateRadarVisableTiles();}
+    if(type == "RADAR"){updateRadarVisableTiles();}
     s([soundFxVolume,,400,,,.07,1,1.09,-5.4,,,,,.4,-0.4,.3,,.7]);
 }
 
@@ -351,7 +348,12 @@ function componentToHex(c) {
         var heightNumber = Math.max(0,Math.min(9,Math.trunc(Math.abs((perlin2(t.x/10, t.y/10)+1)/2 * 9))));
         t.height = tileStepHeight * heightNumber;
         //Calculate colour for tile
-        t.colour = (heightNumber < 2 ? new Colour(107, 43, 6) : heightNumber < 4 ? new Colour(184, 12, 9) : heightNumber < 6 ? new Colour(130, 2, 99) : heightNumber < 8 ? new Colour(162, 136, 227) : new Colour(229, 231, 230)).darkend(1 - (Math.random() - 0.5)/3);
+        t.colour = (heightNumber < 2 ? new Colour(41, 0, 37) : 
+                    heightNumber < 4 ? new Colour(69, 56, 35) : 
+                    heightNumber < 5 ? new Colour(120, 192, 145) : 
+                    heightNumber < 7 ? new Colour(116, 79, 198) :
+                    new Colour(203, 144, 77))
+                    .darkend(1 - (Math.random() - 0.5)/3);
         var absDelta = Math.abs(spawnX - t.x);
         if(absDelta < (mapWidth * 0.5) && Math.random() > 0.9) { addResourceToTile(t,"ROCK",Math.random() * 15,10,0.5)}
         if(absDelta > (mapWidth * 0.005) && Math.random() > 0.85) { addResourceToTile(t,"IRON",Math.random() * 15,10,0.5)}
@@ -370,7 +372,7 @@ function componentToHex(c) {
 
 function addResourceToTile(tile,type,ammount,minimum,expansion) {
     tile.resource = {type:type,value:Math.max(minimum,Math.trunc(ammount))};
-    getSurroundingTiles(tile).filter(t => Math.random() > expansion).forEach(t => t.resource = {type:type,value:Math.max(5,Math.trunc(tile.resource.value * Math.random()))});
+    getSurroundingTiles(tile).forEach(t => {if(Math.random() > expansion){t.resource = {type:type,value:Math.max(5,Math.trunc(tile.resource.value * Math.random()))}}});
   }
 
   function addHazardToTile(tile,ammount) {
@@ -489,8 +491,6 @@ function gameloop(){
     //Check which function to run
     mainMenu ? handleMainMenu() : runIntro ? intro() : runGameBool ? runGame() : null;
     prevInputs = Object.assign({},inputs);
-    ctx.fillStyle = "#FFFFFF";
-    fT(frameSpeedFactor,200,50);
     millisOnLastFrame = new Date().getTime();
 }
 
@@ -661,8 +661,25 @@ function runGame(){
         ctx.textBaseline = "middle"; 
         if(!t.isVisible){fT("404",t.screenPos.x ,t.screenPos.y)};
 
-        var img = imgMap.get(t.building.type);
-        if(img != undefined && t.isVisible){ctx.drawImage(img[0],Math.trunc(t.screenPos.x - img[0].width/2),Math.trunc(t.screenPos.y - img[0].height*img[1]))}
+        ctx.font = "500 100px Arial";
+        if(t.building.type == "RADAR"){ctx.drawImage(radarImg,Math.trunc(t.screenPos.x - radarImg.width/2),Math.trunc(t.screenPos.y - radarImg.height*0.9))} else
+        if(t.building.type == "SOLAR"){ctx.drawImage(solarImg,Math.trunc(t.screenPos.x - solarImg.width/2),Math.trunc(t.screenPos.y - solarImg.height*0.45))} else
+        if(t.building.type != "NONE"){
+            ctx.drawImage(buildingImg,Math.trunc(t.screenPos.x - buildingImg.width/2),Math.trunc(t.screenPos.y - buildingImg.height*0.7));
+            ctx.save();
+            ctx.translate(t.screenPos.x,t.screenPos.y);
+            drawLogo(0,0,10);
+            ctx.fillStyle = "#00FF0099";
+            ctx.fillRect(-12,-46,23,27);
+            ctx.fillStyle = "#001100FF";
+            ctx.scale(0.25,0.25);
+            fT(t.building.type == "CONSTRUCTOR" ? "⚒" :
+            t.building.type == "MINER" ? "⛏" :
+            t.building.type == "RTG" ? "☢" :
+            t.building.type == "TELEDEPOT" ? "₿" : ""
+            ,0,-130);
+            ctx.restore();
+        }
     });
     var playerTileCoords = tileWithPlayer.screenPos;
     ctx.drawImage(roverImg,Math.trunc(playerTileCoords.x - (roverImg.width*roverImgScale/2) + playerPosOffset.x),Math.trunc((playerTileCoords.y - (roverImg.height*roverImgScale/2) - 10) + playerPosOffset.y + (Math.sin(millisOnLastFrame/400)*3)),Math.trunc(roverImg.width*roverImgScale),Math.trunc(roverImg.height*roverImgScale));
