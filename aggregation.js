@@ -391,7 +391,7 @@ var soundFxVolume = 0.5;
 var confirmSound = () => s([soundFxVolume,.01,593,,.03,0,1,2.04,.1,.1,50,.01,,-0.1,,,.06,.96,.08]);
 var denySound = () => s([soundFxVolume,0,604,,,.13,4,2.01,-0.1,.2,50,,.01,,,.4,.05,.68,.05]);
 
-var startRecipes = [{product:"RADAR",items:[{type:"IRON",value:20}],energy:8}];
+var startRecipes = [{product:"RADAR",items:[{type:"IRON",value:20}],energy:2}];
 [{type:"ROCK",price:1,},{type:"IRON",price:5,},{type:"COPPER",price:10,},{type:"CARBON",price:25,},{type:"SILICON",price:50},{type:"LITHIUM",price:75},{type:"PLUTONIUM",price:100}]
 
 var prices = gArr(21).map(i => {
@@ -411,11 +411,11 @@ var shopItemsStart = [{item:"RESOURCE STORAGE",cost:200,costMulti:1.2,desc:["Inc
 
                  {item:"RADAR RADIUS",cost:1000,costMulti:1.5,desc:["Increases radar uncover","distance by 2 tiles."]},
                  {item:"CONSTRUCTOR SPEED",cost:50,costMulti:1.6,desc:["Increases constructor speed","by 30%"]},
-                 {item:"CONSTRUCTOR TRANSMITTER",cost:1850,desc:["Constructor transmits finished","constructions to inventory."]},
+                 {item:"CONSTRUCTOR TRANSMITTER",cost:420,desc:["Constructor transmits finished","constructions to inventory."]},
                  {item:"MINER SPEED",cost:750,costMulti:1.8,desc:["Incrases Miner speed by 50%"]},
-                 {item:"MINER TRANSMITTER",cost:1985,desc:["Miner transmits mined","resources to inventory."]},
-                 {item:"RTG OUTPUT",cost:250,costMulti:1.8,desc:["Increases RTG output by 1."]},
-                 {item:"SOLAR OUTPUT",cost:550,costMulti:1.4,desc:["Increases Solar output by 1."]}];
+                 {item:"MINER TRANSMITTER",cost:480,desc:["Miner transmits mined","resources to inventory."]},
+                 {item:"RTG OUTPUT",cost:200,costMulti:1.4,desc:["Increases RTG output by 1."]},
+                 {item:"SOLAR OUTPUT",cost:75,costMulti:1.6,desc:["Increases Solar output by 1."]}];
 
 // 0 => tiles, 1 => time, 2 => sols, 3 => playerResources
 // 4 => playerBuildings, 5 => playerBalance, 6 => playerEnergy, 7 => recipes
@@ -518,7 +518,7 @@ function intro(){
     fT("for JMC™ Planet 404 have been lost, you are required to use RADARs and uncover more terrain.", textX,225 + textY);
 
     fT("Use the CONSTRUCTOR to create buildings, such as RADARs, from resources and energy.", textX,300 + textY);
-    fT("An RTG has been made available to provide energy and charge your JMC™ Craft.", textX,375 + textY);
+    fT("An RTG has been made available to provide energy and charge your JMC™ Craft.", textX,325 + textY);
 
     ctx.textAlign = "center";
     fT("WASD to move, left shift to sprint, E to interact/mine.", canW/2,450 + textY);
@@ -719,11 +719,11 @@ function runGame(){
         }
 
         //Drain player battery
-        if(prevPlayerEnergy < gameData[6]){
-            batteryStatusMessage ="Charging";
-        }
         if(selectingSell || buyingMode || ["SOLAR","RTG"].some(s => s == tileWithPlayer.building.type)){
             batteryStatusMessage ="Paused";
+        }
+        if(prevPlayerEnergy < gameData[6]){
+            batteryStatusMessage ="Charging";
         }
         if(["Charging","Paused"].includes(batteryStatusMessage)){
             hudFlash = false;
@@ -807,7 +807,7 @@ function runGame(){
     }
     prevPlayerEnergy = gameData[6];
 
-    gameData[1] += !playerDeadState ? frameSpeedFactor/1500 : 0;
+    gameData[1] += !playerDeadState ? frameSpeedFactor/1000 : 0;
 
     if(gameData[1] > 359){
 
@@ -1298,7 +1298,7 @@ function handleTileUpdates(t) {
             }
             break;
         case "CONSTRUCTOR":
-            t.building.timer += t.building.processing ? (frameSpeedFactor/15000) * gameData[14] : 0;
+            t.building.timer += t.building.processing ? (frameSpeedFactor/8000) * gameData[14] : 0;
             if(t.building.timer >= 1){
                 t.building.processing = false;
                 t.building.storedProduct = true;
@@ -1324,7 +1324,7 @@ function handleTileUpdates(t) {
                     t.building.energy -= 1;
                     t.building.processing = true;
             } 
-            t.building.timer += t.building.processing ? (frameSpeedFactor/9000) * gameData[15] : 0;
+            t.building.timer += t.building.processing ? (frameSpeedFactor/4000) * gameData[15] : 0;
             if(t.building.timer >= 1){
                 t.building.storedResource += 1;
                 t.building.processing = false;
