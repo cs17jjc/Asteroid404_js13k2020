@@ -359,11 +359,11 @@ function componentToHex(c) {
         if(absDelta > (mapWidth * 0.005) && Math.random() > 0.85) { addResourceToTile(t,"IRON",Math.random() * 15,10,0.5)}
         if(absDelta > (mapWidth * 0.04) && Math.random() > 0.90) { addResourceToTile(t,"COPPER",Math.random() * 15,10,0.5)}
         if(absDelta > (mapWidth * 0.08) && Math.random() > 0.92) { addResourceToTile(t,"CARBON",Math.random() * 15,10,0.6)}
-        if(absDelta > (mapWidth * 0.10) && Math.random() > 0.92) { addResourceToTile(t,"SILICON",Math.random() * 15,10,0.5)}
-        if(absDelta > (mapWidth * 0.15) && Math.random() > 0.88) { addResourceToTile(t,"LITHIUM",Math.random() * 15,10,0.6)}
-        if(absDelta > (mapWidth * 0.22) && Math.random() > 0.9) { addResourceToTile(t,"PLUTONIUM",Math.random() * 15,10,0.7)}
+        if(absDelta > (mapWidth * 0.13) && Math.random() > 0.92) { addResourceToTile(t,"SILICON",Math.random() * 15,10,0.5)}
+        if(absDelta > (mapWidth * 0.18) && Math.random() > 0.88) { addResourceToTile(t,"LITHIUM",Math.random() * 15,10,0.6)}
+        if(absDelta > (mapWidth * 0.22) && Math.random() > 0.9) { addResourceToTile(t,"PLUTONIUM",Math.random() * 10,10,0.7)}
         if(t.resource.type == "PLUTONIUM") { addHazardToTile(t,t.resource.value)}
-        if(absDelta > (mapWidth * 0.10) && Math.random() > 0.8) { addHazardToTile(t,3 * Math.random())}
+        if(absDelta > (mapWidth * 0.10) && Math.random() > 0.95 && Math.sin(Math.PI * 8 * (absDelta/(mapWidth*0.5))) > 0) { addHazardToTile(t,3 * Math.random())}
     });
     gameData[0].find(t => t.x == spawnX).hasPlayer = true;
     //Generate lines for tiles with resources
@@ -384,7 +384,7 @@ function addResourceToTile(tile,type,ammount,minimum,expansion) {
 var menuItems = ["Resume","Main Menu","Save Game","Load Game","Toggle Music","Toggle Sound FX"];
 var selectedMenuItem = 0;
 
-var mainMenuItems = ["New Game","Load Game"];
+var mainMenuItems = ["New Game","Load Game","Toggle Music","Toggle Sound FX"];
 var mainMenu = true;
 
 var soundFxVolume = 0.5;
@@ -400,7 +400,7 @@ var prices = gArr(21).map(i => {
     return {type:p.type,price:p.price,ammount:[1,10,50][i - thirds*3]};
 });
 
-var shopItemsStart = [{item:"RESOURCE STORAGE",cost:200,costMulti:1.2,desc:["Increases max resource capacity","by 25%"]},
+var shopItemsStart = [{item:"RESOURCE STORAGE",cost:20,costMulti:2,desc:["Increases max resource capacity","by 25%"]},
                  {item:"BATTERY EFFICENCY",cost:100,costMulti:1.5,desc:["Increases max battery capacity","by 20%"]},
                  {item:"CRAFT HEIGHT TOLERANCE",cost:180,costMulti:1.2,desc:["Allows passage between tiles with a","larger height difference."]},
 
@@ -499,7 +499,8 @@ function intro(){
     ctx.strokeStyle = "#FFFFFF";
     ctx.fillStyle = "#000000AA";
     generateUIOverlay(0.02,0.9,0.1);
-
+    drawLogo(canW * 0.8,canH * 0.73,50);
+    drawLogo(canW * 0.2,canH * 0.73,50);
     var textX = canW * 0.13;
     var textY = canH * 0.11;
     ctx.font = "22px Arial";
@@ -508,17 +509,17 @@ function intro(){
     ctx.textAlign = "start"; 
     ctx.textBaseline = "alphabetic";
     fT("Welcome, valued Roboemployee, to the JMC™ Autonomous Mining Initative.", textX,textY);
-    fT("Over the course of the next 7 days your mining effectiveness will be assesed by", textX,50 + textY);
-    fT("your ability to meet daily monetary quotas.", textX,75 + textY);
+    fT("Over the course of the next 7 days your mining effectiveness will be assesed by your ability", textX,50 + textY);
+    fT("to meet daily quotas.", textX,75 + textY);
 
-    fT("Quotas can be met by mining and selling resources to the TELEDEPOT.", textX,100 + textY);
-
+    fT("Quotas can be met by mining and selling resources to the TELEDEPOT(₿).", textX,125 + textY);
     fT("Failure to complete these quotas will result in immediate nuclear vapourisation.", textX,150 + textY);
-    fT("JMC™ Operations & Managment regrets to inform you that terrain maps", textX,200 + textY);
-    fT("for JMC™ Planet 404 have been lost, you are required to use RADARs and uncover more terrain.", textX,225 + textY);
 
-    fT("Use the CONSTRUCTOR to create buildings, such as RADARs, from resources and energy.", textX,300 + textY);
-    fT("An RTG has been made available to provide energy and charge your JMC™ Craft.", textX,325 + textY);
+    fT("JMC™ Operations & Managment regrets to inform you that terrain maps for JMC™ Asteroid 404", textX,200 + textY);
+    fT("have been lost, you are required to use RADARs and uncover more terrain.", textX,225 + textY);
+
+    fT("Use the CONSTRUCTOR(⚒) to create buildings, such as RADARs, from resources and energy.", textX,300 + textY);
+    fT("An RTG(☢) has been made available to provide energy and charge your JMC™ Craft.", textX,325 + textY);
 
     ctx.textAlign = "center";
     fT("WASD to move, left shift to sprint, E to interact/mine.", canW/2,450 + textY);
@@ -539,7 +540,7 @@ function handleMainMenu(){
     ctx.textAlign = "center"; 
     ctx.textBaseline = "middle";
     ctx.font = "65px Tahoma";
-    fT("Planet 404",canW/2,canH*0.1);
+    fT("Asteroid 404",canW/2,canH*0.1);
 
     if(inputs.up == true && prevInputs.up == false){
         selectedMenuItem = Math.max(0,selectedMenuItem - 1);
@@ -560,7 +561,7 @@ function handleMainMenu(){
             confirmSound();
         }
         if(mainMenuItems[selectedMenuItem] == "Load Game"){
-            if(window.localStorage.getItem('Planet404_6473_DATA') != null){
+            if(window.localStorage.getItem('Asteroid404_6473_DATA') != null){
                 loadGame();
                 runGameBool = true;
                 mainMenu = false;
@@ -569,6 +570,19 @@ function handleMainMenu(){
             } else {
                 denySound();
             }
+        }
+        if(mainMenuItems[selectedMenuItem] == "Toggle Music"){
+            if(musicToggle){
+                myAudioNode.disconnect();
+            } else {
+                myAudioNode.connect(zzfxX.destination);
+            }
+            musicToggle = !musicToggle;
+            confirmSound();
+        }
+        if(mainMenuItems[selectedMenuItem] == "Toggle Sound FX"){
+            soundFxVolume = soundFxVolume == 0 ? 0.5 : 0;
+            confirmSound();
         }
     }
 
@@ -659,27 +673,31 @@ function runGame(){
         ctx.font = "24px Arial";
         ctx.textAlign = "center"; 
         ctx.textBaseline = "middle"; 
-        if(!t.isVisible){fT("404",t.screenPos.x ,t.screenPos.y)};
-
-        ctx.font = "500 100px Arial";
-        if(t.building.type == "RADAR"){ctx.drawImage(radarImg,Math.trunc(t.screenPos.x - radarImg.width/2),Math.trunc(t.screenPos.y - radarImg.height*0.9))} else
-        if(t.building.type == "SOLAR"){ctx.drawImage(solarImg,Math.trunc(t.screenPos.x - solarImg.width/2),Math.trunc(t.screenPos.y - solarImg.height*0.45))} else
-        if(t.building.type != "NONE"){
-            ctx.drawImage(buildingImg,Math.trunc(t.screenPos.x - buildingImg.width/2),Math.trunc(t.screenPos.y - buildingImg.height*0.7));
-            ctx.save();
-            ctx.translate(t.screenPos.x,t.screenPos.y);
-            drawLogo(0,0,10);
-            ctx.fillStyle = "#00FF0099";
-            ctx.fillRect(-12,-46,23,27);
-            ctx.fillStyle = "#001100FF";
-            ctx.scale(0.25,0.25);
-            fT(t.building.type == "CONSTRUCTOR" ? "⚒" :
-            t.building.type == "MINER" ? "⛏" :
-            t.building.type == "RTG" ? "☢" :
-            t.building.type == "TELEDEPOT" ? "₿" : ""
-            ,0,-130);
-            ctx.restore();
+        if(!t.isVisible){
+            fT("404",t.screenPos.x ,t.screenPos.y)
+        }else{
+            ctx.font = "500 100px Arial";
+            if(t.building.type == "RADAR"){ctx.drawImage(radarImg,Math.trunc(t.screenPos.x - radarImg.width/2),Math.trunc(t.screenPos.y - radarImg.height*0.9))} else
+            if(t.building.type == "SOLAR"){ctx.drawImage(solarImg,Math.trunc(t.screenPos.x - solarImg.width/2),Math.trunc(t.screenPos.y - solarImg.height*0.45))} else
+            if(t.building.type != "NONE"){
+                ctx.drawImage(buildingImg,Math.trunc(t.screenPos.x - buildingImg.width/2),Math.trunc(t.screenPos.y - buildingImg.height*0.7));
+                ctx.save();
+                ctx.translate(t.screenPos.x,t.screenPos.y);
+                drawLogo(0,0,10);
+                ctx.fillStyle = "#00FF0099";
+                ctx.fillRect(-12,-46,23,27);
+                ctx.fillStyle = "#001100FF";
+                ctx.scale(0.25,0.25);
+                fT(t.building.type == "CONSTRUCTOR" ? "⚒" :
+                t.building.type == "MINER" ? "⛏" :
+                t.building.type == "RTG" ? "☢" :
+                t.building.type == "TELEDEPOT" ? "₿" : ""
+                ,0,-130);
+                ctx.restore();
+            }
         }
+
+
     });
     var playerTileCoords = tileWithPlayer.screenPos;
     ctx.drawImage(roverImg,Math.trunc(playerTileCoords.x - (roverImg.width*roverImgScale/2) + playerPosOffset.x),Math.trunc((playerTileCoords.y - (roverImg.height*roverImgScale/2) - 10) + playerPosOffset.y + (Math.sin(millisOnLastFrame/400)*3)),Math.trunc(roverImg.width*roverImgScale),Math.trunc(roverImg.height*roverImgScale));
@@ -792,7 +810,7 @@ function runGame(){
         ctx.strokeStyle = "#000000";
         fT("Congratulations, you have completed all JMC™ Mining Initative quotas.", canW/2,canH * 0.2);
         fT("Due to the costs of JMC™ Craft recovery, you have been offered an", canW/2,25 + canH * 0.2);
-        fT("involutary position as head of planetary excavations.", canW/2,50 + canH * 0.2);
+        fT("involutary position as head of asteroidal excavations.", canW/2,50 + canH * 0.2);
         fT("Thanks for playing!", canW/2,canH * 0.45);
         if(gameData[1] >= 1.5){
             fT("Press E to enter endless mode",canW/2,25 + canH * 0.45);
@@ -815,7 +833,7 @@ function runGame(){
             if(gameData[5] >= quotas[gameData[2]]){
                 gameData[5] -= quotas[gameData[2]];
                 finishedQuotas = gameData[2] == 6;
-                finishedQuotas ? s([soundFxVolume,0,220,,2,.08,1.5,,,,50,.07,.1,,,,.01]) : s([soundFxVolume,0,160,,1,.04,2,,,,25,.07,.03,,,,.01]);
+                finishedQuotas ? s([soundFxVolume,0,220,,2,.08,1.5,,,,50,.07,.1,,,,.01]) : s([soundFxVolume,0,,.42,.92,.09,1,,,.4,50,.05,.2,,,,,,.01]);
             } else {
                 failedQuota = true;
                 s([soundFxVolume,,299,.01,.03,1.95,3,.1,.9,.6,,,,.5,.9,.6,,.52,.06]);
@@ -931,12 +949,12 @@ function handleMenuInput(){
             selectedMenuItem = 0;
         }
         if(opt == "Save Game"){
-            window.localStorage.setItem('Planet404_6473_DATA', JSON.stringify(gameData));
+            window.localStorage.setItem('Asteroid404_6473_DATA', JSON.stringify(gameData));
             messages.push({text:"Game Saved",time:0});
             escMenu = false;
         }
         if(opt == "Load Game"){
-            if(window.localStorage.getItem('Planet404_6473_DATA') != null){
+            if(window.localStorage.getItem('Asteroid404_6473_DATA') != null){
                 loadGame();
             } else {
                 messages.push({text:"Game Save not found",time:0});
@@ -967,7 +985,7 @@ function loadGame() {
     selectedBuilding = 0;
     selectingSell = 0;
 
-    gameData = JSON.parse(window.localStorage.getItem('Planet404_6473_DATA'));
+    gameData = JSON.parse(window.localStorage.getItem('Asteroid404_6473_DATA'));
 
     tileWithPlayer = gameData[0].find(t => t.hasPlayer);
     updatePlayerPos(0,0);
@@ -1046,8 +1064,7 @@ function handleBuildingInteraction(){
                 } else {
                     messages.push({text:"Not enough energy",time:0});
                 }
-            }
-            if(tileWithPlayer.building.recipe == null){
+            } else if(tileWithPlayer.building.recipe == null){
                 settingRecipe = true;
                 selectedBuilding = 0;
             }
@@ -1131,7 +1148,7 @@ function handleHUD(){
         fT(r.value + "/" + gameData[11] + " units of " + r.type,canW * 0.92, 25 + rightInfoHeight + (gameData[3].indexOf(r) * rightInfoStep));
     });
     
-    fT("Sol: " + (gameData[2] + 1) + " Planet Rotation: " + gameData[1].toFixed(0) + "°", canW/2,15);
+    fT("Sol: " + (gameData[2] + 1) + " Asteroid Rotation: " + gameData[1].toFixed(0) + "°", canW/2,15);
 
     if(!buildMode && !settingRecipe && !selectingSell && !buyingMode && (gameData[1] <= 5 || gameData[1] >= 355)){
         ctx.fillStyle = "#000000AA";
@@ -1189,7 +1206,7 @@ function handleHUD(){
         generateUIOverlay(0.05,0.5,0.4);
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "30px Tahoma";
-        fT("Sell Mode",canW/2,modeHeight);
+        fT("Teledepot",canW/2,modeHeight);
         ctx.font = "20px Tahoma";
         var options = prices.filter(p => gameData[3].some(r => p.type == r.type && r.value >= p.ammount) || p.type == "EXIT");
         var visableOptions = options.filter(p => Math.abs(options.indexOf(p) - selectedSell) < 5 + (Math.max(0,4 - selectedSell)));
@@ -1206,7 +1223,7 @@ function handleHUD(){
         drawLines([{x:canW * 0.5,y:canH * 0.07},{x:canW * 0.5,y:canH * 0.53}],0,0,false);
         drawLines([{x:canW * 0.5,y:canH * 0.46},{x:canW * 0.78,y:canH * 0.46}],0,0,false);
         ctx.font = "30px Tahoma";
-        fT("Buy Mode",canW * 0.36,modeHeight);
+        fT("Upgrade Shop",canW * 0.36,modeHeight);
         ctx.font = "20px Tahoma";
         var visableOptions = gameData[8].filter(p => Math.abs(gameData[8].indexOf(p) - selectedBuy) < 5 + (Math.max(0,4 - selectedBuy)));
         visableOptions.forEach(i => {
