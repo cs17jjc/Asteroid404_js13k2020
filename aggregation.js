@@ -358,7 +358,7 @@ function componentToHex(c) {
         if(absDelta < (mapWidth * 0.5) && Math.random() > 0.9) { addResourceToTile(t,"ROCK",Math.random() * 15,10,0.5)}
         if(absDelta > (mapWidth * 0.005) && Math.random() > 0.85) { addResourceToTile(t,"IRON",Math.random() * 15,10,0.5)}
         if(absDelta > (mapWidth * 0.04) && Math.random() > 0.90) { addResourceToTile(t,"COPPER",Math.random() * 15,10,0.5)}
-        if(absDelta > (mapWidth * 0.08) && Math.random() > 0.92) { addResourceToTile(t,"CARBON",Math.random() * 15,10,0.6)}
+        if(absDelta > (mapWidth * 0.08) && Math.random() > 0.9) { addResourceToTile(t,"CARBON",Math.random() * 15,10,0.2)}
         if(absDelta > (mapWidth * 0.13) && Math.random() > 0.92) { addResourceToTile(t,"SILICON",Math.random() * 15,10,0.5)}
         if(absDelta > (mapWidth * 0.18) && Math.random() > 0.88) { addResourceToTile(t,"LITHIUM",Math.random() * 15,10,0.6)}
         if(absDelta > (mapWidth * 0.22) && Math.random() > 0.9) { addResourceToTile(t,"PLUTONIUM",Math.random() * 10,10,0.7)}
@@ -376,8 +376,8 @@ function addResourceToTile(tile,type,ammount,minimum,expansion) {
   }
 
   function addHazardToTile(tile,ammount) {
-    tile.hazard = Math.ceil(ammount);
-    getSurroundingTiles(tile).forEach(t => t.hazard = Math.ceil(ammount * 0.8));
+    tile.hazard = Math.trunc(ammount);
+    getSurroundingTiles(tile).forEach(t => t.hazard = Math.trunc(ammount * 0.6));
   }
 
 //Source
@@ -540,7 +540,9 @@ function handleMainMenu(){
     ctx.textAlign = "center"; 
     ctx.textBaseline = "middle";
     ctx.font = "65px Tahoma";
-    fT("Asteroid 404",canW/2,canH*0.1);
+    fT("Asteroid 404",canW/2 + 50,canH*0.1);
+    ctx.lineWidth = 3;
+    drawLogo(canW/2 - ctx.measureText("Asteroid 404").width*0.5,canH*0.1,50);
 
     if(inputs.up == true && prevInputs.up == false){
         selectedMenuItem = Math.max(0,selectedMenuItem - 1);
@@ -659,7 +661,7 @@ function runGame(){
         t.screenPos.y = t.y * tileRadius * 2 * 0.866025 * perspRatio + canH * 0.71 + (t.x % 2 != 0 ? 0.866025 * tileRadius * perspRatio : 0) - (t.isVisible ? t.height : 0);
         ctx.lineWidth = 3;
 
-        var tileColour = new Colour(lerp(t.colour.r,0,t.hazard/5 * t.colour.r/255),lerp(t.colour.g,255,t.hazard/5 + (Math.sin(millisOnLastFrame/300)*t.hazard/20)),lerp(t.colour.b,0,t.hazard/5 * t.colour.b/255));
+        var tileColour = new Colour(lerp(t.colour.r,0,t.hazard/11),lerp(t.colour.g,255,Math.min(0.8,t.hazard/11 + t.hazard > 0 ? Math.sin(millisOnLastFrame/300)*0.2 : 0)),lerp(t.colour.b,0,t.hazard/11));
         ctx.strokeStyle = t.isVisible ? t.hazard == 0 ? tileColour.darkend(0.2).toHex() : tileColour.darkend(1.5).toHex() : "#000000";
         ctx.fillStyle = t.isVisible ? tileColour.toHex() : "#AAAAAA";
         drawHexagon(t.screenPos);
@@ -1142,7 +1144,7 @@ function handleHUD(){
     ctx.textAlign = "center"; 
     ctx.textBaseline = "middle";
     ctx.font = "25px Arial";
-    fT("Inventory",canW * 0.92,30);
+    fT("Resources",canW * 0.92,30);
     ctx.font = "15px Arial";
     gameData[3].forEach(r => {
         fT(r.value + "/" + gameData[11] + " units of " + r.type,canW * 0.92, 25 + rightInfoHeight + (gameData[3].indexOf(r) * rightInfoStep));
@@ -1244,7 +1246,7 @@ function handleHUD(){
     ctx.textBaseline = "middle";
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "20px Tahoma";
-    fT("JMC",canW * 0.05,canH * 0.14);
+    fT("JMC™",canW * 0.05,canH * 0.14);
     drawLogo(canW * 0.05,canH * 0.070,50);
     ctx.font = "25px Tahoma";
     fT("₿" + playerBalanceDisplayed.toLocaleString('en-US', {maximumFractionDigits: 0}) ,canW * 0.05,canH * 0.18);
